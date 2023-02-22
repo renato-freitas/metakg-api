@@ -1,0 +1,8 @@
+{
+    'nome': 'RFB_TESTE',
+    'uri': 'http://www.sefaz.ma.gov.br/resource/RFB/Estabelecimento/{CNPJ}',
+    'chaves': ['CNPJ'],
+    'tipos': ['', ''],
+    'propriedade_de_dados': [{'nome': 'cnpj', 'propriedades': ['sfz:cnpj'], 'tipo': 'xsd:string'}, {'nome': 'razao', 'propriedades': ['sfz:razao_social'], 'tipo': 'xsd:string'}, {'nome': 'cnpj', 'propriedades': ['sfz:cnpj'], 'tipo': 'xsd:string'}, {'nome': 'razao', 'propriedades': ['sfz:razao_social'], 'tipo': 'xsd:string'}],
+    'propriedade_de_objeto': [{'nome': 'cnpj', 'propriedades': ['sfz:cnpj'], 'uri': 'xsd:string'}, {'nome': 'razao', 'propriedades': ['sfz:razao_social'], 'uri': 'xsd:string'}]
+}

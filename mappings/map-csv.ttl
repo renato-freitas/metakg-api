@@ -1,0 +1,73 @@
+@prefix rml: <http://semweb.mmlab.be/ns/rml#> .
+@prefix rr: <http://www.w3.org/ns/r2rml#> .
+@prefix ql: <http://semweb.mmlab.be/ns/ql#> .
+@prefix csvw: <http://www.w3.org/ns/csvw#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix : <http://example.org/rules/> .
+@prefix schema: <http://schema.org/> .
+@prefix dbo: <http://dbpedia.org/ontology/> .
+
+# https://rml.io/docs/rml/data-retrieval/
+
+:csv_cidades a csvw:Table;
+    csvw:url "D:\\Pesquisa\\Triplify\\FonteDeDados\\cidades.csv";
+    csvw:dialect [ 
+      a csvw:Dialect;
+      csvw:delimiter ";";
+      csvw:encoding "UTF-8";
+      csvw:header "1"^^xsd:boolean
+    ].
+
+# 
+:TriplesMap 
+  a rr:TriplesMap;
+  rml:logicalSource [
+    rml:source :csv_cidades;
+    rml:referenceFormulation ql:CSV
+  ]; 
+  rr:subjectMap [
+    rr:template "http://example.org/cidade/{id}";
+  ];
+  rr:predicateObjectMap [
+    rr:predicate rdf:type;
+    rr:objectMap [ rr:constant dbo:City ];
+  ];
+  rr:predicateObjectMap [
+    rr:predicate schema:givenName;
+    rr:objectMap [ rml:reference "nome" ]
+  ];
+  rr:predicateObjectMap [
+    rr:predicate :uf;
+    rr:objectMap [ rml:reference "estado" ]
+  ]
+  .
+  
+
+
+
+# <#CSVW_source> 
+#     a csvw:Table;
+#     csvw:url "cidades.csv" ;
+#     csvw:dialect [ a csvw:Dialect;
+#         csvw:delimiter ";";
+#         csvw:encoding "UTF-8";
+#         csvw:header "1"^^xsd:boolean
+#     ]
+# <#CSVW_source> a csvw:Table;
+#     csvw:url "http://rml.io/data/csvw/Airport.csv" ;
+#     csvw:dialect [ a csvw:Dialect;
+#         csvw:delimiter ";";
+#         csvw:encoding "UTF-8";
+#         csvw:header "1"^^xsd:boolean
+
+# <#TriplesMapLocalFile> rml:logicalSource [
+#     rml:source "/path/to/local/file.xml" ;
+#     rml:referenceFormulation ql:CSV ] .
+
+# <#TriplesMapLocalFile> rml:logicalSource [
+#     rml:source <#DB_source> ;
+#     rr:sqlVersion rr:SQL2008;
+#     rml:query """
+# SELECT DEPTNO, DNAME, LOC,
+#        (SELECT COUNT(*) FROM EMP WHERE EMP.DEPTNO=DEPT.DEPTNO) AS STAFF
+# FROM DEPT; """ .
