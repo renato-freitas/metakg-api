@@ -1,5 +1,6 @@
-import requests
 import os
+import requests
+from unidecode import unidecode
 from models import DataSource, HighLevelMapping, DataProperty
 
   
@@ -19,6 +20,11 @@ class Functions:
       return r.text
     else:
       return 404
+  
+  def verifica_uri_existe(uri:str):
+    q = f"""SELECT * WHERE {{ {uri} ?p ?o . }}"""
+    r = requests.get(Endpoint.METAKG, params={ 'query': q })
+    return True if r.status_code == 200 else False
     
   def salvaFonteDeDados():
     """Salvar um arquivo .properties"""
@@ -28,6 +34,14 @@ class Functions:
     for file in os.listdir(path):
         if os.path.isfile(os.path.join(path, file)):
             return file
+        
+  def removeAcentosEAdicionaUnderscore(rotulo:str = ""):
+    """Usado para transformar o nome do recurso que será usado para montar a URI.
+    Remove os acentos e substitui espaço por underscore
+    Ex: até amanhã -> ate_amanha"""
+    return unidecode(rotulo).replace(" ", "_")
+
+  
   
 
   def create_high_level_mapping(data: HighLevelMapping):
@@ -45,13 +59,17 @@ class Functions:
 
 class Endpoint:
   def __init__(self): pass
-  TESTE = "http://localhost:7200/repositories/metagraph"
+  METAKG = "http://localhost:7200/repositories/metagraph"
   TIMELINE_TBOX = "http://localhost:7200/repositories/TIMELINE_TBOX"
+  SEFAZMA_VEKG_ABOX = "http://10.33.96.18:7200/repositories/VEKG"
+  METADADOS_TULIO = "http://localhost:7200/repositories/Metadados_Tulio"
 
 class NameSpaces:
   def __init__(self): pass
   SEFAZMA = "http://www.sefaz.ma.gov.br/ontology/"
   BASE = "http://www.sefaz.ma.gov.br/resource/"
+  VSKG = "http://www.arida.ufc.br/VSKG/"
+  VSKGR = "http://www.arida.ufc.br/VSKG/resource/"
 
 class Prefixies:
   def __init__(self): pass
@@ -61,11 +79,39 @@ class Prefixies:
   XSD = "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n"
   FOAF = "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\n"
   VCARD = "PREFIX vcard: <http://www.w3.org/2006/vcard/ns#>\n"
+  DC = "PREFIX dc: <http://purl.org/dc/elements/1.1/>\n"
+  DC_TERMS = "PREFIX dcterms: <http://purl.org/dc/terms/>\n"
   TL = "PREFIX tl: <http://purl.org/NET/c4dm/timeline.owl#>\n"
-  MOKG = "PREFIX mokg: <http://arida.ufc/metadata-of-kg#>\n"
-  VSKG = "PREFIX vskg: <http://arida.ufc/VSKG#>\n"
+  MOKG = "PREFIX mokg: <http://www.arida.ufc.br/metadata-of-knowledge-graph#>\n"
+  VSKG = "PREFIX vskg: <http://www.arida.ufc.br/VSKG/>\n"
+  VSKGR = "PREFIX vskgr: <http://www.arida.ufc.br/VSKG/resource/>\n"
   DRM = "PREFIX drm: <http://vocab.data.gov/def/drm#>\n"
   SEFAZMA = "PREFIX sefazma: <http://www.sefaz.ma.gov.br/ontology/>\n"
   SFZ = "PREFIX sfz: <http://www.sefaz.ma.gov.br/ontology/>\n"
   SFZR = "PREFIX sfzr: <http://www.sefaz.ma.gov.br/resource/>\n"
-  ALL = RDF + RDFS + OWL + FOAF + VCARD + XSD + TL + SFZ + SEFAZMA + SFZR + MOKG + VSKG + DRM
+  ALL = RDF + RDFS + OWL + FOAF + VCARD + XSD + DC + DC_TERMS + TL + SFZ + SEFAZMA + SFZR + MOKG + VSKG + VSKGR + DRM
+
+class Headers:
+  def __init__(self): pass
+  GET = { "Accept": "application/sparql-results+json" }
+  POST = { "Content-type": "application/rdf+xml", "Accept": "application/json" }
+
+class RoutesPath:
+  def __init__(self): pass
+  META_MASHUP = "/meta-mashup"
+  META_EKG = "/meta-ekg"
+
+class Ontology:
+  def __init__(self): pass
+  """Mantém as classes e propriedades da ontologia VSKG"""
+  P_TYPE = "rdf:type"
+  P_LABEL = "rdfs:label"
+  P_DOMAIN = "rdfs:domain"
+  P_RANGE = "rdfs:range"
+  P_DC_IDENTIFIER = "dc:identifier"
+  P_DC_DESCRIPTION = "dc:description"
+  P_HAS_APPLICATION = "vskg:hasApplication"
+
+  C_META_EKG = "vskg:MetadataGraphEKG"
+  C_META_MASHUP = "vskg:MetadataGraphMashup"
+  C_MASHUP_VIEW_SPEC = "vskg:MashupViewSpecification"
