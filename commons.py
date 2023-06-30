@@ -62,6 +62,7 @@ class Endpoint:
   METAKG = "http://localhost:7200/repositories/metagraph"
   TIMELINE_TBOX = "http://localhost:7200/repositories/TIMELINE_TBOX"
   SEFAZMA_VEKG_ABOX = "http://10.33.96.18:7200/repositories/VEKG"
+  VSKG_ABOX = "http://localhost:7200/repositories/VSKG_ABOX" # só pra testar pegando os metaEKG
   METADADOS_TULIO = "http://localhost:7200/repositories/Metadados_Tulio"
 
 class NameSpaces:
@@ -113,5 +114,6 @@ class Ontology:
   P_HAS_APPLICATION = "vskg:hasApplication"
 
   C_META_EKG = "vskg:MetadataGraphEKG"
+  # C_META_EKG = "vskg:MetadataGraphEKG"
   C_META_MASHUP = "vskg:MetadataGraphMashup"
   C_MASHUP_VIEW_SPEC = "vskg:MashupViewSpecification"

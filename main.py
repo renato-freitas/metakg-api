@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 import requests
 import platform
@@ -8,10 +8,14 @@ from uuid import uuid4
 import json
 from urllib.parse import quote_plus, quote
 from commons import Endpoint, Prefixies, Functions, NameSpaces, RoutesPath, Ontology as o
-from models import DataSource, MetaMashupModel, HighLevelMapping, DataProperty, AddGCLMashupModel, AssociaMetaMashupMOdel
+from models import DataSource, MetaMashupModel, HighLevelMapping, DataProperty, AddGCLMashupModel, AssociaMetaEKGAoMetaMashupModel
 from api import MetaEKG, MetaMashup
+# from routes import datasource
+from routes import datasource, user
 
 app = FastAPI()
+app.include_router(user.router)
+app.include_router(datasource.router)
 
 origins = [
     "http://localhost:3002",
@@ -31,7 +35,7 @@ app.add_middleware(
 # uvicorn main:app --reload
 @app.get("/")
 async def index():
-  return { "status_code": 200, "message": "metakg-api is online." }
+  return { "status_code": 200, "message": "meta-ekg-api is online." }
 
 
 # ROTAS DO META-MASHUP
@@ -67,8 +71,9 @@ def obtem_propriedades(uri):
   return m.encontra_propriedades(uri)  
 
 
-@app.post(f'{RoutesPath.META_MASHUP}/associa/')
-def associa(obj: AssociaMetaMashupMOdel):
+# O que é esse associa
+@app.post(f'{RoutesPath.META_MASHUP}/associa-meta-ekg')
+def associa_meta_ekg(obj: AssociaMetaEKGAoMetaMashupModel):
   print("associa")
   m = MetaMashup()
   return m.associa_metaEKG(obj) 
@@ -81,6 +86,7 @@ def add_gcl(data: AddGCLMashupModel):
   print(f'dados: {data}')
   m = MetaMashup()
   return m.add_gcl_visao_semantica_mashup(data) 
+
 
 @app.get(f'{RoutesPath.META_MASHUP}/{{gcl}}/')
 def obtem_gcl():
@@ -106,7 +112,7 @@ def obtem_instancias_meta_ekg():
   """Rota para instâncias de Grafo de Metadadso EKG"""
   print("obtem_instancias_meta_ekg")
   m = MetaEKG()
-  return m.encontra_recursos()  
+  return m.lista_recursos_meta_ekg()  
 
 
 @app.get("/propriedades/")

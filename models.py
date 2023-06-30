@@ -5,6 +5,7 @@ from pydantic import BaseModel
 class DataSource(BaseModel):
     identifier: Union[str, None] = None
     label: str
+    
     description: Union[str, None] = None
     subject_datasource: str
     type: str  # csv, xml, tsv, BDR
@@ -24,7 +25,7 @@ class MetaMashupModel(BaseModel):
     label: str
     identifier: Union[str, None] = None
 
-class AssociaMetaMashupMOdel(BaseModel):
+class AssociaMetaEKGAoMetaMashupModel(BaseModel):
     """Diz qual KG de metadado é usado pelo Meta Masup"""
     uri_meta_mashup: str
     uri_meta_ekg: str
