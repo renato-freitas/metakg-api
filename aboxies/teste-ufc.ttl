@@ -1,0 +1,30 @@
+@prefix : <http://example.org/rules/> .
+@prefix csvw: <http://www.w3.org/ns/csvw#> .
+@prefix d2rq: <http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#> .
+@prefix dbo: <http://dbpedia.org/ontology/> .
+@prefix ql: <http://semweb.mmlab.be/ns/ql#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rml: <http://semweb.mmlab.be/ns/rml#> .
+@prefix rr: <http://www.w3.org/ns/r2rml#> .
+@prefix schema: <http://schema.org/> .
+@prefix sfz: <http://www.sefaz.ma.org/ontology/> .
+
+<http://example.com/Estab/001> a sfz:Estab;
+  sfz:cnpj "001";
+  sfz:nome_fantasia "NOVACODE BR SOFTWARE";
+  sfz:telefone "(88)9.9999-0000" .
+
+<http://example.com/Estab/002> a sfz:Estab;
+  sfz:cnpj "002";
+  sfz:nome_fantasia "APPLE COMPANY";
+  sfz:telefone "(88)98888-0000" .
+
+<http://example.com/Estab/003> a sfz:Estab;
+  sfz:cnpj "003";
+  sfz:nome_fantasia "SOL&MAR";
+  sfz:telefone "(88)9.7777-0000" .
+
+<http://example.com/Estab/004> a sfz:Estab;
+  sfz:cnpj "004";
+  sfz:nome_fantasia "IGUATEMY";
+  sfz:telefone "(88)9.6666-0000" .

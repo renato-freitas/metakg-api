@@ -11,11 +11,13 @@ from commons import Endpoint, Prefixies, Functions, NameSpaces, RoutesPath, Onto
 from models import DataSource, MetaMashupModel, HighLevelMapping, DataProperty, AddGCLMashupModel, AssociaMetaEKGAoMetaMashupModel
 from api import MetaEKG, MetaMashup
 # from routes import datasource
-from routes import datasource, user
+from routes import datasource, user, exported_view, mapping_route
 
 app = FastAPI()
 app.include_router(user.router)
 app.include_router(datasource.router)
+app.include_router(exported_view.router)
+app.include_router(mapping_route.router)
 
 origins = [
     "http://localhost:3002",
@@ -136,60 +138,10 @@ def obtem_gcl_ekg(uri: str):
 
 
 
-@app.post("/datasources/record/")
-def register_data_source(data: DataSource):
-  """Por enquanto só relacional e csv"""
-
-  file_name = f'datasources\\{data.label.lower().replace(" ", "_")}.txt'
-  
-  print(Functions.obtem_arquivos('datasources\\'))
-  
-  with open(file_name, 'w') as file:
-    file.write(data.url_or_path)
-  # fonte_dados = Functions.encontraUm(f'<{NameSpaces.SEFAZMA}{data.label}>')
-  # uuid = uuid4()
-  # q = Prefixies.ALL + f"""
-  #   INSERT DATA {{
-  #   vskg:{data.label} rdf:type drm:DataAsset, <{data.type}> ; 
-  #     dc:identifier "{uuid}" ;
-  #     rdfs:label "{data.label}" ;
-  #     dc:description "{data.description}" .
-  # }}"""
-  
-  # sparql = { 'query': q }
-  # headers = {'Accept': 'application/x-turtle', "Content-type": "application/x-www-form-urlencoded"}
-
-  # r = requests.post(Endpoint.TESTE, params=sparql, headers=headers)
-
-  # print(r)
-  # if(r.status_code == 200):
-  #   return r.content
-  # else:
-  #   return r.content
-  return data
-
-@app.get("/datasources")
-def get_data_sources():
-  q = Prefixies.MOKG + "SELECT * WHERE { ?s a mokg:DataSource . } limit 10"
-  sparql = { 'query': q }
-  r = requests.get(Endpoint.METAKG, params=sparql)
-
-  print(r)
-  if(r.status_code == 200):
-    return r.content
-  else:
-    return r.content
 
 
 
-@app.post("/high-level-mappings")
-def register_high_level_mapping(data: HighLevelMapping):
-  """Regista Mapeamento de Alto Nível"""
 
-  Functions.create_high_level_mapping(data)
-
-
-  return data
 
 # https://janakiev.com/blog/python-shell-commands/
 @app.get("/triplify")

@@ -19,8 +19,7 @@
     ].
 
 # 
-:TriplesMap 
-  a rr:TriplesMap;
+:TriplesMap a rr:TriplesMap;
   rml:logicalSource [
     rml:source :csv_cidades;
     rml:referenceFormulation ql:CSV

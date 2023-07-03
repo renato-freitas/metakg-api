@@ -71,6 +71,7 @@ class NameSpaces:
   BASE = "http://www.sefaz.ma.gov.br/resource/"
   VSKG = "http://www.arida.ufc.br/VSKG/"
   VSKGR = "http://www.arida.ufc.br/VSKG/resource/"
+  META_EKG = "http://www.arida.ufc.br/meta-ekg/resource/"
 
 class Prefixies:
   def __init__(self): pass
@@ -90,7 +91,11 @@ class Prefixies:
   SEFAZMA = "PREFIX sefazma: <http://www.sefaz.ma.gov.br/ontology/>\n"
   SFZ = "PREFIX sfz: <http://www.sefaz.ma.gov.br/ontology/>\n"
   SFZR = "PREFIX sfzr: <http://www.sefaz.ma.gov.br/resource/>\n"
+  META_EKG = "PREFIX metaekg: <http://www.arida.ufc.br/meta-ekg/>\n"
   ALL = RDF + RDFS + OWL + FOAF + VCARD + XSD + DC + DC_TERMS + TL + SFZ + SEFAZMA + SFZR + MOKG + VSKG + VSKGR + DRM
+  DATASOURCE = RDF + RDFS + VSKG + DRM + DC
+  EXPORTED_VIEW = RDF + RDFS + VSKG + DRM + DC
+  MAPPING = RDF + RDFS + DC + VSKG + META_EKG
 
 class Headers:
   def __init__(self): pass
@@ -117,3 +122,5 @@ class Ontology:
   # C_META_EKG = "vskg:MetadataGraphEKG"
   C_META_MASHUP = "vskg:MetadataGraphMashup"
   C_MASHUP_VIEW_SPEC = "vskg:MashupViewSpecification"
+  C_DATA_ASSET = "drm:DataAsset"
+  C_EXPORTED_VIEW = "vskg:LocalGraph"

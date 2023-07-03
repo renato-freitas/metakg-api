@@ -4,13 +4,57 @@ import requests
 from commons import Prefixies, NameSpaces as ns, Endpoint, Headers, Functions, Ontology as o
 from models import DataSource, MetaMashupModel, HighLevelMapping, DataProperty, AddGCLMashupModel, AssociaMetaEKGAoMetaMashupModel
 
-def create_resource(sparql):
+def create_resource(sparql, classe, label):
     try:
-        return sparql
+        # verificar se o recurso já existe pela URI (genérico)
+        existe = obtem_recurso(classe, label)
+        if (len(existe) > 0):
+            return {"code": 409, "message": "Um recurso dessa classe com essa label já existe!"}
+
+        
+        r = requests.post(Endpoint.METAKG + "/statements", params=sparql, headers=Headers.POST)
+        print('response', r)
+        if(r.status_code == 200 or r.status_code == 201 or r.status_code == 204):
+            return {"code": 204, "message": "Criado com Sucesso!"}
+        else:
+            return {"code": 400, "message": "Não foi criado!"}
     except Exception as err:
         return err
 
+def update_resource(sparql):
+    try:
+        r = requests.post(Endpoint.METAKG + "/statements", params=sparql, headers=Headers.POST)
+        print('response', r)
+        if(r.status_code == 200 or r.status_code == 201 or r.status_code == 204):
+            return {"code": 204, "message": "Criado com Sucesso!"}
+        else:
+            return {"code": 400, "message": "Não foi criado!"}
+    except Exception as err:
+        return err
 
+def obtem_recurso(classe:str, label:str):
+    try:
+        q = Prefixies.ALL + \
+            f"""SELECT DISTINCT ?l WHERE {{ ?s a {classe}; rdfs:label "{label}". }}"""
+        sparql = {'query': q}
+        r = requests.get(Endpoint.METAKG, params=sparql, headers=Headers.GET)
+        return r.json()['results']['bindings']
+    except Exception as err:
+        return err
+    
+def read_resources(query):
+    try:
+        r = requests.get(Endpoint.METAKG, params=query, headers=Headers.GET)
+        return r.json()['results']['bindings']
+    except Exception as err:
+        return err
+
+def read_resource(query):
+    try:
+        r = requests.get(Endpoint.METAKG, params=query, headers=Headers.GET)
+        return r.json()['results']['bindings']
+    except Exception as err:
+        return err
 
 class MetaMashup:
     def __init__(self): pass
@@ -132,15 +176,16 @@ class MetaMashup:
     def obtem_gcl(self):
         """Obtém a partir de uma uri do gcl"""
         try:
-            q = Prefixies.ALL + \
-                f"""SELECT * WHERE {{ 
-                    <{uri_meta_mashup}> ?p ?o . 
-                }}"""
-            print(f'query: {q}')
-            sparql = {'query': q}
-            r = requests.get(Endpoint.METADADOS_TULIO,
-                            params=sparql, headers=Headers.GET)
-            return r.json()['results']['bindings']
+            return None
+            # q = Prefixies.ALL + \
+            #     f"""SELECT * WHERE {{ 
+            #         <{uri_meta_mashup}> ?p ?o . 
+            #     }}"""
+            # print(f'query: {q}')
+            # sparql = {'query': q}
+            # r = requests.get(Endpoint.METADADOS_TULIO,
+            #                 params=sparql, headers=Headers.GET)
+            # return r.json()['results']['bindings']
         except Exception as err:
             return err
 

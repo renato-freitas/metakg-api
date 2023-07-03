@@ -3,23 +3,21 @@ import api
 from commons import NameSpaces as ns, Functions, Prefixies
 from uuid import uuid4
 from model.datasource_model import DataSourceModel
+from model.mapping_model import MappingModel
 
-CLASSE = 'drm:DataAsset'
+CLASSE = "vskg:Mappings"
 
-def create(data: DataSourceModel):
+def create(data: MappingModel):
     uuid = uuid4()
-    uri = f'{ns.VSKGR}DataSource/{uuid}'
+    uri = f'{ns.META_EKG}Mapping/{uuid}'
 
-    query = Prefixies.DATASOURCE + f"""INSERT DATA {{
+    query = Prefixies.MAPPING + f"""INSERT DATA {{
         <{uri}> rdf:type {CLASSE}; 
             rdfs:label "{data.label}"; 
             dc:description "{data.description}";
-            vskg:type "{data.type}";
-            vskg:connection_url "{data.connection_url}";    
-            vskg:username "{data.user}";
-            vskg:password "{data.password}";
-            vskg:jdbc_driver "{data.jdbc}".
+            vskg:file_path '{data.file_path}'.
         }}"""
+    print('q:', query)
     sparql = {"update": query}
 
     response = api.create_resource(sparql, CLASSE, data.label)
