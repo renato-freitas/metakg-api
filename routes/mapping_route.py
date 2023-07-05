@@ -5,25 +5,15 @@ from commons import NameSpaces as ns
 from controller import mapping_controller
 
 router = APIRouter()
-TAG = "mappings" 
-ROTA = f'/{TAG}/'
-# PADRAO_URI = f'{ns.VSKGR}DataSource'
+TAG = "Mappings" 
+ROTA = "/mappings"
 
 
-# @router.get(ROTA, tags=[TAG])
-# async def read_data_sources():
-#     response = datasource_controller.read_resources()
-#     return response
+@router.get(ROTA, tags=[TAG])
+async def read_mappings():
+    response = mapping_controller.read_resources()
+    return response
 
-
-# @router.get(ROTA+"me", tags=[TAG])
-# async def read_data_source():
-#     return {"username": "fakecurrentuser"}
-
-
-# @router.get(ROTA+"{username}", tags=[TAG])
-# async def read_user(username: str):
-#     return {"username": username}
 
 
 @router.post(ROTA, tags=[TAG])

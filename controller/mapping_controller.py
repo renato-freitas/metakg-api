@@ -1,3 +1,4 @@
+import os
 from urllib.parse import quote_plus, unquote_plus
 import api
 from commons import NameSpaces as ns, Functions, Prefixies
@@ -11,11 +12,12 @@ def create(data: MappingModel):
     uuid = uuid4()
     uri = f'{ns.META_EKG}Mapping/{uuid}'
 
+
     query = Prefixies.MAPPING + f"""INSERT DATA {{
         <{uri}> rdf:type {CLASSE}; 
             rdfs:label "{data.label}"; 
             dc:description "{data.description}";
-            vskg:file_path '{data.file_path}'.
+            vskg:file_path \"{data.file_path}\".
         }}"""
     print('q:', query)
     sparql = {"update": query}
@@ -24,17 +26,12 @@ def create(data: MappingModel):
     return response
 
 def read_resources():
-    # classe = 'drm:DataAsset'
-
-    # Montar SPARQL
     sparql = Prefixies.DATASOURCE + f""" select * where {{ 
             ?s rdf:type {CLASSE};
                rdfs:label ?l.
         }} limit 100 
         """
     query = {"query": sparql}
-
-    # Chamar a API
     response = api.read_resources(query)
     return response
 

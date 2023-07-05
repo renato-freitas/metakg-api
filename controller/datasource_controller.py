@@ -8,7 +8,7 @@ CLASSE = 'drm:DataAsset'
 
 def create(data: DataSourceModel):
     uuid = uuid4()
-    uri = f'{ns.VSKGR}DataSource/{uuid}'
+    uri = f'{ns.META_EKG}DataSource/{uuid}'
 
     query = Prefixies.DATASOURCE + f"""INSERT DATA {{
         <{uri}> rdf:type {CLASSE}; 
@@ -16,9 +16,9 @@ def create(data: DataSourceModel):
             dc:description "{data.description}";
             vskg:type "{data.type}";
             vskg:connection_url "{data.connection_url}";    
-            vskg:username "{data.user}";
+            vskg:username "{data.username}";
             vskg:password "{data.password}";
-            vskg:jdbc_driver "{data.jdbc}".
+            vskg:jdbc_driver "{data.jdbc_driver}".
         }}"""
     sparql = {"update": query}
 
@@ -70,6 +70,26 @@ def update(uri:str, data:DataSourceModel):
         sparql = {"update": query}
 
         # Chamar a API
+        response = api.update_resource(sparql)
+        return response
+
+
+def delete(uri:str):
+    uri_decoded = unquote_plus(uri)
+    
+    existe = check_resource(uri_decoded) # Primeiro, pegar o recurso que existe
+    if(existe is None):
+        return "not found"
+    else:
+        print('E', existe)
+        query = Prefixies.DATASOURCE + f"""
+            DELETE WHERE {{ 
+                <{uri_decoded}> ?o ?p .
+            }}
+        """
+        print('',query)
+        sparql = {"update": query}
+
         response = api.update_resource(sparql)
         return response
 

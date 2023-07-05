@@ -1,0 +1,25 @@
+@prefix csvw: <http://www.w3.org/ns/csvw#> .
+@prefix d2rq: <http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#> .
+@prefix ex: <http://example.org/ns#> .
+@prefix fnml: <http://semweb.mmlab.be/ns/fnml#> .
+@prefix fno: <https://w3id.org/function/ontology#> .
+@prefix grel: <http://users.ugent.be/~bjdmeest/function/grel.ttl#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix ql: <http://semweb.mmlab.be/ns/ql#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rml: <http://semweb.mmlab.be/ns/rml#> .
+@prefix rr: <http://www.w3.org/ns/r2rml#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<http://example.org/Estab/001> a ex:Estab;
+  ex:aProperty "NOVACODE BR SOFTWARE" .
+
+<http://example.org/Estab/002> a ex:Estab;
+  ex:aProperty "APPLE COMPANY" .
+
+<http://example.org/Estab/003> a ex:Estab;
+  ex:aProperty "SOL&MAR" .
+
+<http://example.org/Estab/004> a ex:Estab;
+  ex:aProperty "IGUATEMY" .

@@ -1,0 +1,59 @@
+@base <http://example.org/data> .
+# @prefix sfz: <http://www.sefaz.ma.org/ontology/> .
+@prefix ex: <http://example.org/ns#> .
+@prefix rr: <http://www.w3.org/ns/r2rml#> .
+@prefix rml: <http://semweb.mmlab.be/ns/rml#> .
+@prefix d2rq: <http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#> .
+@prefix ql: <http://semweb.mmlab.be/ns/ql#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix csvw: <http://www.w3.org/ns/csvw#> .
+@prefix fnml: <http://semweb.mmlab.be/ns/fnml#> .
+@prefix fno: <https://w3id.org/function/ontology#> .
+@prefix grel: <http://users.ugent.be/~bjdmeest/function/grel.ttl#> .
+
+# https://stackoverflow.com/questions/66414992/rml-and-fno-fails-to-run-together
+
+<#DB_source> a d2rq:Database;
+    d2rq:jdbcDSN "jdbc:postgresql://localhost:5432/postgres";
+    d2rq:jdbcDriver "org.postgresql.Driver";
+    d2rq:username "postgres";
+    d2rq:password "123456" .
+
+<#LogicalSource> a rml:LogicalSource;
+    rml:source <#DB_source>;
+    rr:sqlVersion rr:SQL2008;
+    rr:tableName "\"UFC2\".\"RFB_ESTAB\"";
+    rml:query "SELECT * FROM \"UFC2\".\"RFB_ESTAB\"";
+    rml:referenceFormulation ql:CSV.
+
+
+<#MyTriplesMap> a rr:TriplesMap;
+    rml:logicalSource <#LogicalSource>;
+
+    rr:subjectMap [
+        rr:template "http://example.org/Estab/{cnpj}";
+        rr:class ex:Estab
+    ];
+
+    rr:predicateObjectMap [
+        rr:predicate ex:aProperty;
+        rr:objectMap <#FunctionMap>;
+    ].
+
+<#FunctionMap>
+    fnml:functionValue [
+        rml:logicalSource <#LogicalSource> ;
+        rr:predicateObjectMap [
+            rr:predicate fno:executes ;
+            rr:objectMap [ rr:constant grel:toUpperCase ]
+        ] ;
+        rr:predicateObjectMap [
+            rr:predicate grel:valueParameter ;                  
+            rr:objectMap [
+                rml:reference "nome_fantasia"                           
+            ]
+        ]
+    ] .

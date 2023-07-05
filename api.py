@@ -56,6 +56,49 @@ def read_resource(query):
     except Exception as err:
         return err
 
+
+def delete_resourde(query):
+    try:
+        r = requests.post(Endpoint.METAKG, params=query, headers=Headers.GET)
+        return r.json()['results']['bindings']
+    except Exception as err:
+        return err
+
+def get_properties(uri:str):
+    try:
+        sparql = f"""SELECT ?p ?o WHERE {{
+                    <{uri}> ?p ?o.    
+                }} ORDER BY ?p"""
+        query = {'query': sparql}
+        r = requests.get(Endpoint.METAKG, params=query, headers=Headers.GET)
+        print('rr',r)
+        return r.json()['results']['bindings']
+    except Exception as err:
+        return err
+
+
+class ExportedView:
+    def __init__(self): pass
+
+    def get_datasource_properties(self, exported_view_uri:str):
+        try:
+            sparql = Prefixies.EXPORTED_VIEW + f"""SELECT * WHERE {{
+                        <{exported_view_uri}> vskg:hasDataSource ?ds;
+                            vskg:hasMappings ?m.
+                        ?ds vskg:connection_url ?conn;
+                            vskg:jdbc_driver ?jdbc_driver;
+                            vskg:password ?pwd;
+                            vskg:username ?un.
+                        ?m vskg:file_path ?f. 
+                    }}"""
+            query = {'query': sparql}
+            # print('q', query)
+            r = requests.get(Endpoint.METAKG, params=query, headers=Headers.GET)
+            print('rr',r)
+            return r.json()['results']['bindings']
+        except Exception as err:
+            return err
+
 class MetaMashup:
     def __init__(self): pass
 

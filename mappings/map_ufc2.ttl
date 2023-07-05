@@ -8,11 +8,16 @@
 @prefix schema: <http://schema.org/> .
 @prefix dbo: <http://dbpedia.org/ontology/> .
 @prefix sfz: <http://www.sefaz.ma.org/ontology/> .
+@prefix ql: <http://semweb.mmlab.be/ns/ql#> .
+@prefix fnml:   <http://semweb.mmlab.be/ns/fnml#> .
+@prefix fno: 	<https://w3id.org/function/ontology#> .
+@prefix grel: <http://users.ugent.be/~bjdmeest/function/grel.ttl#> .
+
 
 @base <http://example.org/rules/> .
   
 
-<TriplesMap1> a rr:TriplesMap;
+<TriplesMapRFB_Estabelecimento> a rr:TriplesMap;
   rml:logicalSource [
     rml:source <#DB_source>;
     rr:sqlVersion rr:SQL2008;
@@ -20,13 +25,10 @@
     rml:query "SELECT * FROM \"UFC2\".\"RFB_ESTAB\"";
     rml:referenceFormulation ql:CSV
   ];
-
   rr:subjectMap [
     rr:template "http://example.com/Estab/{cnpj}";
     rr:class sfz:Estab 
   ];
- 
-
   rr:predicateObjectMap [
     rr:predicate sfz:cnpj ;
     rr:objectMap [ rml:reference "cnpj" ]
@@ -38,6 +40,10 @@
   rr:predicateObjectMap [
     rr:predicate sfz:telefone ;
     rr:objectMap [ rml:reference "telefone" ]
+  ];
+  rr:predicateObjectMap [
+    rr:predicate sfz:big_name ;
+    rr:objectMap <#FunctionMapUpperCaseName>
   ]
   .
 
@@ -47,3 +53,24 @@
     d2rq:jdbcDriver "org.postgresql.Driver";
     d2rq:username "postgres";
     d2rq:password "123456" .
+
+
+
+<#FunctionMapUpperCaseName>
+    fnml:functionValue [                                  # The object is the result of the function
+       rml:logicalSource [
+          rml:source <#DB_source>;
+          rr:sqlVersion rr:SQL2008;
+          rr:tableName "\"UFC2\".\"RFB_ESTAB\"";
+          rml:query "SELECT * FROM \"UFC2\".\"RFB_ESTAB\"";
+          rml:referenceFormulation ql:CSV
+        ];            # Use the same data source for input
+        rr:predicateObjectMap [
+            rr:predicate fno:executes ;                   # Execute the function…
+            rr:objectMap [ rr:constant grel:toUpperCase ] # grel:toUppercase
+        ] ;
+        rr:predicateObjectMap [
+            rr:predicate grel:inputString ;
+            rr:objectMap [ rml:reference "nome_fantasia" ]         # Use as input the "name" reference
+        ]
+    ] .

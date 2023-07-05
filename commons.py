@@ -57,6 +57,18 @@ class Functions:
       file.write(txt)
 
 
+  def get_r2rml_code_db_credentials(conn, jdbc_driver, username, password):
+    return f"""<#DB_source> a d2rq:Database;
+    d2rq:jdbcDSN "{conn}";
+    d2rq:jdbcDriver "{jdbc_driver}";
+    d2rq:username "{username}";
+    d2rq:password "{password}"."""
+
+class OperationalSystem:
+  def __init__(self): pass
+  WINDOWS = "Windows"
+  LINUX = "Linux"
+
 class Endpoint:
   def __init__(self): pass
   METAKG = "http://localhost:7200/repositories/metagraph"
@@ -117,6 +129,12 @@ class Ontology:
   P_DC_IDENTIFIER = "dc:identifier"
   P_DC_DESCRIPTION = "dc:description"
   P_HAS_APPLICATION = "vskg:hasApplication"
+  # FONTE DE DADOS
+  P_CONNECTION_URL = "http://www.arida.ufc.br/VSKG/connection_url"
+  P_PASSWORD = "http://www.arida.ufc.br/VSKG/password"
+  P_USERNAME = "http://www.arida.ufc.br/VSKG/username"
+  P_JDBC_DRIVER = "http://www.arida.ufc.br/VSKG/jdbc_driver"
+
 
   C_META_EKG = "vskg:MetadataGraphEKG"
   # C_META_EKG = "vskg:MetadataGraphEKG"
