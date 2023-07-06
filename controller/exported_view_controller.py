@@ -79,7 +79,9 @@ def check_resource(uri:str):
     response = api.read_resource(query)
     return response
 
+
 def materialize(visao_exportada):
+    """Essa função considera que o arquivo RML já existe"""
     uri_decoded = unquote_plus(visao_exportada)
     existe = check_resource(uri_decoded) # 1. verificar se a visão exportada existe.
     if(existe is None):
@@ -94,7 +96,7 @@ def materialize(visao_exportada):
         # print('**str_materializacao', str_materializacao)
 
         # 3. Adicionar o código que define o acesso ao BD ao arquivo de mapeamento RML.IO
-        code = Functions.get_r2rml_code_db_credentials(propriedade_para_str_triplificacao['conn']['value'],
+        code = Functions.construct_rml_code_db_credentials(propriedade_para_str_triplificacao['conn']['value'],
                                              propriedade_para_str_triplificacao['jdbc_driver']['value'],
                                              propriedade_para_str_triplificacao['un']['value'],
                                              propriedade_para_str_triplificacao['pwd']['value'])

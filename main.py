@@ -11,13 +11,15 @@ from commons import Endpoint, Prefixies, Functions, NameSpaces, RoutesPath, Onto
 from models import DataSource, MetaMashupModel, HighLevelMapping, DataProperty, AddGCLMashupModel, AssociaMetaEKGAoMetaMashupModel
 from api import MetaEKG, MetaMashup
 # from routes import datasource
-from routes import datasource_route, user, exported_view_route, mapping_route
+from routes import datasource_route, user, exported_view_route, mapping_route, global_routes, meta_mashup_route
 
 app = FastAPI()
 # app.include_router(user.router)
 app.include_router(datasource_route.router)
 app.include_router(exported_view_route.router)
 app.include_router(mapping_route.router)
+app.include_router(global_routes.router)
+app.include_router(meta_mashup_route.router)
 
 origins = [
     "http://localhost:3002",

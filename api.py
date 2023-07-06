@@ -64,6 +64,32 @@ def delete_resourde(query):
     except Exception as err:
         return err
 
+
+# métodos globais
+def check_resource(uri:str):
+    sparql = Prefixies.DATASOURCE + f""" select * where {{ 
+        <{uri}> ?p ?o. 
+    }} limit 1"""
+    query = {"query": sparql}
+    response = execute_query(query)
+    return response
+
+def execute_query(query):
+    """Função genérica. Entrada: sparql. Saída: json."""
+    try:
+        r = requests.get(Endpoint.METAKG, params=query, headers=Headers.GET)
+        return r.json()['results']['bindings']
+    except Exception as err:
+        return err
+
+def execute_query_production(query):
+    """Função genérica. Entrada: sparql. Saída: json."""
+    try:
+        r = requests.get(Endpoint.SEFAZMA_VEKG_ABOX, params=query, headers=Headers.GET)
+        return r.json()['results']['bindings']
+    except Exception as err:
+        return err
+
 def get_properties(uri:str):
     try:
         sparql = f"""SELECT ?p ?o WHERE {{
@@ -71,7 +97,7 @@ def get_properties(uri:str):
                 }} ORDER BY ?p"""
         query = {'query': sparql}
         r = requests.get(Endpoint.METAKG, params=query, headers=Headers.GET)
-        print('rr',r)
+        # print('rr',r.json())
         return r.json()['results']['bindings']
     except Exception as err:
         return err

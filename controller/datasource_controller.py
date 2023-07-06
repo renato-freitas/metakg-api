@@ -26,24 +26,20 @@ def create(data: DataSourceModel):
     return response
 
 def read_resources():
-    # classe = 'drm:DataAsset'
-
-    # Montar SPARQL
     sparql = Prefixies.DATASOURCE + f""" select * where {{ 
-            ?s rdf:type {CLASSE};
-               rdfs:label ?l.
-        }} limit 100 
+            ?uri rdf:type {CLASSE};
+               rdfs:label ?label.
+        }}
         """
     query = {"query": sparql}
 
-    # Chamar a API
-    response = api.read_resources(query)
+    response = api.execute_query(query)
     return response
 
 def update(uri:str, data:DataSourceModel):
     uri_decoded = unquote_plus(uri)
     
-    existe = check_resource(uri_decoded) # Primeiro, pegar o recurso que existe
+    existe = api.check_resource(uri_decoded) # Primeiro, pegar o recurso que existe
     if(existe is None):
         return "not found"
     else:
@@ -94,15 +90,15 @@ def delete(uri:str):
         return response
 
 
-def check_resource(uri:str):
-    sparql = Prefixies.DATASOURCE + f""" select * where {{ 
-            <{uri}> ?p ?o.
-        }} limit 1
-        """
-    print('sparql, ', sparql)
-    query = {"query": sparql}
-    response = api.read_resource(query)
-    return response
+# def check_resource(uri:str):
+#     sparql = Prefixies.DATASOURCE + f""" select * where {{ 
+#             <{uri}> ?p ?o.
+#         }} limit 1
+#         """
+#     print('sparql, ', sparql)
+#     query = {"query": sparql}
+#     response = api.read_resource(query)
+#     return response
 
 # $ java -jar r2rml.jar --connectionURL jdbc:mysql://localhost/r2rml \
 #   --user foo --password bar \

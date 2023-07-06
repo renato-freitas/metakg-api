@@ -57,12 +57,51 @@ class Functions:
       file.write(txt)
 
 
-  def get_r2rml_code_db_credentials(conn, jdbc_driver, username, password):
+  
+
+class RMLConstructs:
+  def __init__(self): pass
+
+  def construct_rml_code_source(conn, jdbc_driver, username, password):
+    """Constrói o trecho com as credencias do BD"""
     return f"""<#DB_source> a d2rq:Database;
     d2rq:jdbcDSN "{conn}";
     d2rq:jdbcDriver "{jdbc_driver}";
     d2rq:username "{username}";
     d2rq:password "{password}"."""
+  
+  def construct_rml_code_logical_source(tableName, sqlQuery):
+    return f"""<#LogicalSource> a rml:LogicalSource;
+    rml:source <#DB_source>;
+    rr:sqlVersion rr:SQL2008;
+    rr:tableName "{tableName}"; 
+    rml:query "{sqlQuery}";
+    rml:referenceFormulation ql:CSV."""
+  
+  def construct_rml_code_subject(template, classe):
+    return f"""rr:subjectMap [
+        rr:template {template};
+        rr:class {classe}
+    ];"""
+
+
+  def construct_rml_code_datatype_property(ontology_property, column):
+    return f""" rr:predicateObjectMap [
+      rr:predicate {ontology_property} ;
+      rr:objectMap [ rml:reference "{column}" ]
+    ];"""
+  
+  # Falta o object property
+
+  def construct_rml_code_triple_map(subject, properties):
+    return f"""<#MyTriplesMap> a rr:TriplesMap;
+      rml:logicalSource <#LogicalSource>;
+
+      {subject}
+
+      {properties}
+      ."""
+
 
 class OperationalSystem:
   def __init__(self): pass
@@ -96,6 +135,7 @@ class Prefixies:
   DC = "PREFIX dc: <http://purl.org/dc/elements/1.1/>\n"
   DC_TERMS = "PREFIX dcterms: <http://purl.org/dc/terms/>\n"
   TL = "PREFIX tl: <http://purl.org/NET/c4dm/timeline.owl#>\n"
+  RR = "PREFIX rr: <http://www.w3.org/ns/r2rml#>\n"
   MOKG = "PREFIX mokg: <http://www.arida.ufc.br/metadata-of-knowledge-graph#>\n"
   VSKG = "PREFIX vskg: <http://www.arida.ufc.br/VSKG/>\n"
   VSKGR = "PREFIX vskgr: <http://www.arida.ufc.br/VSKG/resource/>\n"
@@ -103,11 +143,13 @@ class Prefixies:
   SEFAZMA = "PREFIX sefazma: <http://www.sefaz.ma.gov.br/ontology/>\n"
   SFZ = "PREFIX sfz: <http://www.sefaz.ma.gov.br/ontology/>\n"
   SFZR = "PREFIX sfzr: <http://www.sefaz.ma.gov.br/resource/>\n"
+  RFB = "PREFIX rfb: <http://www.sefaz.ma.gov.br/RFB/ontology/>\n"
   META_EKG = "PREFIX metaekg: <http://www.arida.ufc.br/meta-ekg/>\n"
   ALL = RDF + RDFS + OWL + FOAF + VCARD + XSD + DC + DC_TERMS + TL + SFZ + SEFAZMA + SFZR + MOKG + VSKG + VSKGR + DRM
   DATASOURCE = RDF + RDFS + VSKG + DRM + DC
   EXPORTED_VIEW = RDF + RDFS + VSKG + DRM + DC
   MAPPING = RDF + RDFS + DC + VSKG + META_EKG
+  META_MASHUP = RDFS + VSKG + RR + RFB
 
 class Headers:
   def __init__(self): pass
