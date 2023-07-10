@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 import requests
 import platform
@@ -7,11 +7,11 @@ from pydantic import BaseModel
 from uuid import uuid4
 import json
 from urllib.parse import quote_plus, quote
-from commons import Endpoint, Prefixies, Functions, NameSpaces, RoutesPath, Ontology as o
+from commons import Endpoint, Prefixies, Functions, NameSpaces, RoutesPath, VSKG as o
 from models import DataSource, MetaMashupModel, HighLevelMapping, DataProperty, AddGCLMashupModel, AssociaMetaEKGAoMetaMashupModel
 from api import MetaEKG, MetaMashup
 # from routes import datasource
-from routes import datasource_route, user, exported_view_route, mapping_route, global_routes, meta_mashup_route
+from routes import datasource_route, user, exported_view_route, mapping_route, global_routes, meta_mashup_route, meta_ekg_route
 
 app = FastAPI()
 # app.include_router(user.router)
@@ -20,6 +20,7 @@ app.include_router(exported_view_route.router)
 app.include_router(mapping_route.router)
 app.include_router(global_routes.router)
 app.include_router(meta_mashup_route.router)
+app.include_router(meta_ekg_route.router)
 
 origins = [
     "http://localhost:3002",
@@ -39,7 +40,7 @@ app.add_middleware(
 # uvicorn main:app --reload
 @app.get("/")
 async def index():
-  return { "status_code": 200, "message": "meta-ekg-api is online." }
+  return { "status_code": status.HTTP_200_OK, "message": "meta-ekg-api is online." }
 
 
 # ROTAS DO META-MASHUP

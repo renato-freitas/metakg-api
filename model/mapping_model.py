@@ -1,6 +1,8 @@
 from typing import Union
-from .resource import ResourceModel
+from .resource_model import ResourceModel
 
 class MappingModel(ResourceModel):
     description: Union[str, None] = None # mapeamento da rfb
-    file_path: str
+    prefixies: str
+    # file_path: str
+    # o nome do arquivo rml é o label da visão exportada, por ser única ao usar o prefixo "ev (exported view)"

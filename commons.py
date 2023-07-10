@@ -62,7 +62,19 @@ class Functions:
 class RMLConstructs:
   def __init__(self): pass
 
-  def construct_rml_code_source(conn, jdbc_driver, username, password):
+  def construct_rml_prefixies(mapping_prefixies):
+    return f"""{mapping_prefixies}
+  @prefix rml: <http://semweb.mmlab.be/ns/rml#> .
+  @prefix d2rq: <http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#> .
+  @prefix ql: <http://semweb.mmlab.be/ns/ql#> .
+  @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+  @prefix csvw: <http://www.w3.org/ns/csvw#> .
+  @prefix fnml: <http://semweb.mmlab.be/ns/fnml#> .
+  @prefix fno: <https://w3id.org/function/ontology#> .
+  @prefix grel: <http://users.ugent.be/~bjdmeest/function/grel.ttl#> .
+  @base <http://arida.ufc.br/meta-ekg/resource> ."""
+
+  def construct_rml_source(conn, jdbc_driver, username, password):
     """Constrói o trecho com as credencias do BD"""
     return f"""<#DB_source> a d2rq:Database;
     d2rq:jdbcDSN "{conn}";
@@ -70,37 +82,45 @@ class RMLConstructs:
     d2rq:username "{username}";
     d2rq:password "{password}"."""
   
-  def construct_rml_code_logical_source(tableName, sqlQuery):
+  def construct_rml_logical_source(tableName, sqlQuery):
     return f"""<#LogicalSource> a rml:LogicalSource;
     rml:source <#DB_source>;
     rr:sqlVersion rr:SQL2008;
     rr:tableName "{tableName}"; 
-    rml:query "{sqlQuery}";
+    rml:query "\"\"{sqlQuery}\"\"";
     rml:referenceFormulation ql:CSV."""
   
-  def construct_rml_code_subject(template, classe):
+  def construct_rml_subject(template, classe):
     return f"""rr:subjectMap [
         rr:template {template};
-        rr:class {classe}
+        rr:class <{classe}>
     ];"""
 
 
-  def construct_rml_code_datatype_property(ontology_property, column):
-    return f""" rr:predicateObjectMap [
-      rr:predicate {ontology_property} ;
-      rr:objectMap [ rml:reference "{column}" ]
-    ];"""
+  def construct_rml_datatype_or_object_property(props):
+    print('', props)
+    last_key = list(props) [-1]
+    _props = ""
+    for k in props:
+      print(k, props[k])
+      if(props[k][1] == "DatatypeProperty"):
+        _props += f"""rr:predicateObjectMap [
+       rr:predicate <{props[k][2]}> ;
+       rr:objectMap [ rml:reference "{k}" ]
+    ]"""
+      else:
+        _props += f""""""
+      _props += "." if k == last_key else ";\n\t"
+    return _props
   
-  # Falta o object property
+  
 
-  def construct_rml_code_triple_map(subject, properties):
+  def construct_rml_triple_map(subject, properties):
     return f"""<#MyTriplesMap> a rr:TriplesMap;
-      rml:logicalSource <#LogicalSource>;
-
-      {subject}
-
-      {properties}
-      ."""
+    rml:logicalSource <#LogicalSource>;
+    {subject}
+    {properties}
+    """
 
 
 class OperationalSystem:
@@ -138,14 +158,16 @@ class Prefixies:
   RR = "PREFIX rr: <http://www.w3.org/ns/r2rml#>\n"
   MOKG = "PREFIX mokg: <http://www.arida.ufc.br/metadata-of-knowledge-graph#>\n"
   VSKG = "PREFIX vskg: <http://www.arida.ufc.br/VSKG/>\n"
+  VSKG2 = "PREFIX vskg2: <http://www.arida.ufc.br/VSKG#>\n"
   VSKGR = "PREFIX vskgr: <http://www.arida.ufc.br/VSKG/resource/>\n"
+  VSKGR2 = "PREFIX vskgr2: <http://www.arida.ufc.br/VSKG#resource/>\n"
   DRM = "PREFIX drm: <http://vocab.data.gov/def/drm#>\n"
   SEFAZMA = "PREFIX sefazma: <http://www.sefaz.ma.gov.br/ontology/>\n"
   SFZ = "PREFIX sfz: <http://www.sefaz.ma.gov.br/ontology/>\n"
   SFZR = "PREFIX sfzr: <http://www.sefaz.ma.gov.br/resource/>\n"
   RFB = "PREFIX rfb: <http://www.sefaz.ma.gov.br/RFB/ontology/>\n"
   META_EKG = "PREFIX metaekg: <http://www.arida.ufc.br/meta-ekg/>\n"
-  ALL = RDF + RDFS + OWL + FOAF + VCARD + XSD + DC + DC_TERMS + TL + SFZ + SEFAZMA + SFZR + MOKG + VSKG + VSKGR + DRM
+  ALL = RDF + RDFS + OWL + FOAF + VCARD + XSD + DC + DC_TERMS + RR + TL + SFZ + SEFAZMA + SFZR + MOKG + VSKG + VSKGR + DRM + VSKG2 + VSKGR2
   DATASOURCE = RDF + RDFS + VSKG + DRM + DC
   EXPORTED_VIEW = RDF + RDFS + VSKG + DRM + DC
   MAPPING = RDF + RDFS + DC + VSKG + META_EKG
@@ -161,7 +183,7 @@ class RoutesPath:
   META_MASHUP = "/meta-mashup"
   META_EKG = "/meta-ekg"
 
-class Ontology:
+class VSKG:
   def __init__(self): pass
   """Mantém as classes e propriedades da ontologia VSKG"""
   P_TYPE = "rdf:type"
@@ -176,6 +198,8 @@ class Ontology:
   P_PASSWORD = "http://www.arida.ufc.br/VSKG/password"
   P_USERNAME = "http://www.arida.ufc.br/VSKG/username"
   P_JDBC_DRIVER = "http://www.arida.ufc.br/VSKG/jdbc_driver"
+  # META-MASHUP
+  P_MASHU_CLASS = "vskg:mashupClass" 
 
 
   C_META_EKG = "vskg:MetadataGraphEKG"

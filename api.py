@@ -1,7 +1,8 @@
+from fastapi import FastAPI, HTTPException, status
 import uuid
 import requests
 # from unidecode import unidecode
-from commons import Prefixies, NameSpaces as ns, Endpoint, Headers, Functions, Ontology as o
+from commons import Prefixies, NameSpaces as ns, Endpoint, Headers, Functions, VSKG as o
 from models import DataSource, MetaMashupModel, HighLevelMapping, DataProperty, AddGCLMashupModel, AssociaMetaEKGAoMetaMashupModel
 
 def create_resource(sparql, classe, label):
@@ -9,15 +10,14 @@ def create_resource(sparql, classe, label):
         # verificar se o recurso já existe pela URI (genérico)
         existe = obtem_recurso(classe, label)
         if (len(existe) > 0):
-            return {"code": 409, "message": "Um recurso dessa classe com essa label já existe!"}
-
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Um recurso dessa classe com essa label já existe!")
         
         r = requests.post(Endpoint.METAKG + "/statements", params=sparql, headers=Headers.POST)
         print('response', r)
         if(r.status_code == 200 or r.status_code == 201 or r.status_code == 204):
             return {"code": 204, "message": "Criado com Sucesso!"}
         else:
-            return {"code": 400, "message": "Não foi criado!"}
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Não foi criado!")
     except Exception as err:
         return err
 

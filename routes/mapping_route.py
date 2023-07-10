@@ -6,7 +6,7 @@ from controller import mapping_controller
 
 router = APIRouter()
 TAG = "Mappings" 
-ROTA = "/mappings"
+ROTA = "/mappings/"
 
 
 @router.get(ROTA, tags=[TAG])
@@ -15,11 +15,16 @@ async def read_mappings():
     return response
 
 
+@router.get(ROTA + "{uri_exported_view}", tags=[TAG])
+async def read_mapping_from_Exported_View(uri_exported_view:str):
+    response = mapping_controller.read_resource(uri_exported_view)
+    return response
+
 
 @router.post(ROTA, tags=[TAG])
 async def create_mapping(data: MappingModel):
     """
-    Cria um recurso de mapeamento R2ML do tipo vskg:Mappings.
+    Cria um recurso de mapeamento RML do tipo vskg:Mappings.
     """
     try:
         response = mapping_controller.create(data)

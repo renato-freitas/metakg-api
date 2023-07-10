@@ -3,4 +3,6 @@ from pydantic import BaseModel
 
 class ResourceModel(BaseModel):
   identifier: Union[str, None] = None
+  uri: Union[str, None] = None
   label: str
+  description: Union[str, None] = None

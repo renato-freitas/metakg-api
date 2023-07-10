@@ -5,7 +5,7 @@ from controller import datasource_controller
 router = APIRouter()
 
 TAG = "DataSources" 
-ROTA = "/datasources"
+ROTA = "/datasources/"
 
 
 @router.get(ROTA, tags=[TAG])
@@ -39,6 +39,7 @@ async def update_data_source(uri:str, data: DataSourceModel):
     Atualiza um recurso fonte de dados do tipo drm:DataAsset.
     """
     try:
+        print('update_data_source()')
         response = datasource_controller.update(uri, data)
         return response
     except Exception as err:

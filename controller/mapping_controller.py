@@ -12,25 +12,36 @@ def create(data: MappingModel):
     uuid = uuid4()
     uri = f'{ns.META_EKG}Mapping/{uuid}'
 
-
-    query = Prefixies.MAPPING + f"""INSERT DATA {{
+    sparql = Prefixies.MAPPING + f"""INSERT DATA {{
         <{uri}> rdf:type {CLASSE}; 
             rdfs:label "{data.label}"; 
-            dc:description "{data.description}";
-            vskg:file_path \"{data.file_path}\".
+            dc:description "{data.description}".
         }}"""
-    print('q:', query)
-    sparql = {"update": query}
+    print('q:', sparql)
+    query = {"update": sparql}
 
-    response = api.create_resource(sparql, CLASSE, data.label)
+    response = api.create_resource(query, CLASSE, data.label)
     return response
 
 def read_resources():
-    sparql = Prefixies.DATASOURCE + f""" select * where {{ 
-            ?s rdf:type {CLASSE};
-               rdfs:label ?l.
-        }} limit 100 
+    sparql = Prefixies.ALL + f""" select * where {{ 
+            ?uri rdf:type {CLASSE};
+                 rdfs:label ?label.
+        }} 
         """
+    query = {"query": sparql}
+    response = api.read_resources(query)
+    return response
+
+def read_resource(uri_exported_view):
+    uri_decoded = unquote_plus(uri_exported_view)
+    sparql = Prefixies.ALL + f""" select * where {{ 
+        <{uri_decoded}> vskg:hasMappings ?uri.
+            ?uri rdf:type vskg:Mappings;
+                 rdfs:label ?label.
+        }} 
+        """
+    print('><><', sparql)
     query = {"query": sparql}
     response = api.read_resources(query)
     return response
@@ -79,8 +90,3 @@ def check_resource(uri:str):
     response = api.read_resource(query)
     return response
 
-# $ java -jar r2rml.jar --connectionURL jdbc:mysql://localhost/r2rml \
-#   --user foo --password bar \
-#   --mappingFile mapping.ttl \
-#   --outputFile output.ttl \
-#   --format TURTLE

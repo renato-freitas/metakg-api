@@ -1,7 +1,8 @@
 from typing import Union
-from .resource import ResourceModel
+from .resource_model import ResourceModel
 
 class DataSourceModel(ResourceModel):
+    label: str # para ler temperaturas dos ar-cond
     description: Union[str, None] = None # para ler temperaturas dos ar-cond
     subject_datasource: Union[str, None] = None              # Temperatura
     type: str                            # csv, xml, tsv, BDR (select)
@@ -10,9 +11,3 @@ class DataSourceModel(ResourceModel):
     password: Union[str, None] = None
     jdbc_driver: Union[str, None] = None # org.postgresql.Driver
     csv_file: Union[str, None] = None
-    
-# configuração de mapeamento    r2rml-f (https://github.com/chrdebru/r2rml-tutorial)
-# CSVFiles = weatherstations.csv
-# mappingFile = ./weather-mapping.ttl
-# outputFile = ./weather-output.ttl
-# format = TURTLE

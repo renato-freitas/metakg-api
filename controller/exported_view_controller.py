@@ -2,7 +2,7 @@ import os
 import platform
 from urllib.parse import quote_plus, unquote_plus
 import api
-from commons import NameSpaces as ns, Functions, Prefixies, Ontology as o, OperationalSystem
+from commons import NameSpaces as ns, Functions, Prefixies, VSKG as o, OperationalSystem
 from uuid import uuid4
 from model.exported_view_model import ExportedViewModel
 
@@ -60,9 +60,10 @@ def update(uri:str, data:ExportedViewModel):
 
 def read_resources():
     sparql = Prefixies.EXPORTED_VIEW + f""" select * where {{ 
-            ?s rdf:type {CLASSE};
-               rdfs:label ?l.
-        }} limit 100 
+            ?uri rdf:type {CLASSE};
+               rdfs:label ?label;
+               OPTIONAL {{ ?uri dc:description ?description. }}
+        }}
         """
     query = {"query": sparql}
 

@@ -28,7 +28,8 @@ def create(data: DataSourceModel):
 def read_resources():
     sparql = Prefixies.DATASOURCE + f""" select * where {{ 
             ?uri rdf:type {CLASSE};
-               rdfs:label ?label.
+               rdfs:label ?label;
+               dc:description ?description.
         }}
         """
     query = {"query": sparql}
@@ -38,10 +39,10 @@ def read_resources():
 
 def update(uri:str, data:DataSourceModel):
     uri_decoded = unquote_plus(uri)
-    
+    print('como tá chegando', uri_decoded)
     existe = api.check_resource(uri_decoded) # Primeiro, pegar o recurso que existe
     if(existe is None):
-        return "not found"
+        return "not found$$$"
     else:
         print('E', existe)
         query = Prefixies.DATASOURCE + f"""
@@ -73,7 +74,7 @@ def update(uri:str, data:DataSourceModel):
 def delete(uri:str):
     uri_decoded = unquote_plus(uri)
     
-    existe = check_resource(uri_decoded) # Primeiro, pegar o recurso que existe
+    existe = api.check_resource(uri_decoded) # Primeiro, pegar o recurso que existe
     if(existe is None):
         return "not found"
     else:
