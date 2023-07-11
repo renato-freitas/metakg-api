@@ -50,8 +50,10 @@ async def update_meta_mashup(uri:str, data: MetaMashupModel):
     except Exception as err:
         return err
     
+    
 @router.put(ROTA + "{uri}/add-exported-views", tags=[TAG])
 async def add_exported_views(uri:str, data: AddExporteViewsModel):
+    """Adiciona as visões exportadas selecionadas do EKG para o MetaMashup."""
     try:
         print('ENTRADA:', data)
         response = meta_mashup_controller.add_exported_views(uri, data)
