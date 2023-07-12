@@ -5,14 +5,14 @@ import api
 from commons import NameSpaces as ns, Functions, Prefixies, RMLConstructs, OperationalSystem, VSKG
 from uuid import uuid4
 from model.datasource_model import DataSourceModel
-from model.meta_mashup_model import MetaMashupModel, AddExporteViewsModel
+from model.meta_mashup_model import MetaMashupModel, AddExporteViewsModel, AddSparqlQueryParamsModel
 
 
 def create(data: MetaMashupModel):
     uuid = uuid4()
-    uri = f'{ns.META_EKG}MetaMashup/{uuid}'
+    uri = f'{ns.META_EKG}MetaMashup_{uuid}'
 
-    sparql = Prefixies.DATASOURCE + f"""INSERT DATA {{
+    sparql = Prefixies.META_MASHUP + f"""INSERT DATA {{
         <{uri}> rdf:type {VSKG.C_META_MASHUP}; 
             rdfs:label "{data.label}"; 
             dc:description "{data.description}";
@@ -37,7 +37,7 @@ def read_resources():
 
 def update(uri:str, data:MetaMashupModel):
     uri_decoded = unquote_plus(uri)
-    existe = api.check_resource(uri_decoded) # Primeiro, pegar o recurso que existe
+    existe = api.check_resource(uri_decoded) # Primeiro, verificar se o recurso existe
     if(existe is None):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Recurso não existe!")
     else:
@@ -109,6 +109,38 @@ def add_exported_views(uri:str, data:AddExporteViewsModel):
     response = api.update_resource(query)
     return response
 
+
+def add_sparql_params_to_reuse_mappings(uri:str, data:AddSparqlQueryParamsModel):
+    uuid = uuid4()
+    uri_sqp = f'{ns.META_EKG}SparqlQueryParams_{uuid}'
+
+    print('>uri_meta_mashup<', uri)
+    _uri_meta_mashup = unquote_plus(uri)
+
+    sparql = Prefixies.META_MASHUP + f"""INSERT DATA {{
+        <{uri_sqp}> rdf:type {VSKG.C_META_MASHUP_SPARQL_QUERY_PARAMS}; 
+            rdfs:label "{data.label}"; 
+            vskg:exportedViewURI "{data.exportedViewURI}";
+            vskg:localOntologyClass "{data.localOntologyClass}";
+            vskg:sqpCol "{data.sqpCol}".
+        <{_uri_meta_mashup}> vskg:sparqlQueryParams <{uri_sqp}>.
+        }}"""
+    query = {"update": sparql}
+    response = api.create_resource(query, VSKG.C_META_MASHUP_SPARQL_QUERY_PARAMS, data.label)
+    return response
+
+def reade_sparql_params_to_reuse_mappings(uri:str):
+    uri_decoded = unquote_plus(uri)
+    sparql = Prefixies.ALL + f""" select * where {{ 
+            <{uri_decoded}> rdf:type {VSKG.C_META_MASHUP};
+              vskg:sparqlQueryParams ?sqp.
+              ?sqp rdfs:label ?label. 
+        }}
+        """
+    query = {"query": sparql}
+    print('...', query)
+    response = api.execute_query(query)
+    return response
 
 def check_exist_exported_view_on_meta_mashup(uri:str):
     sparql = Prefixies.ALL + f""" select * where {{ 

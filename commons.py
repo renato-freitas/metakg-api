@@ -157,21 +157,20 @@ class Prefixies:
   TL = "PREFIX tl: <http://purl.org/NET/c4dm/timeline.owl#>\n"
   RR = "PREFIX rr: <http://www.w3.org/ns/r2rml#>\n"
   MOKG = "PREFIX mokg: <http://www.arida.ufc.br/metadata-of-knowledge-graph#>\n"
-  VSKG = "PREFIX vskg: <http://www.arida.ufc.br/VSKG/>\n"
-  VSKG2 = "PREFIX vskg2: <http://www.arida.ufc.br/VSKG#>\n"
-  VSKGR = "PREFIX vskgr: <http://www.arida.ufc.br/VSKG/resource/>\n"
-  VSKGR2 = "PREFIX vskgr2: <http://www.arida.ufc.br/VSKG#resource/>\n"
+  VSKG = "PREFIX vskg: <http://www.arida.ufc.br/VSKG#>\n"
   DRM = "PREFIX drm: <http://vocab.data.gov/def/drm#>\n"
   SEFAZMA = "PREFIX sefazma: <http://www.sefaz.ma.gov.br/ontology/>\n"
   SFZ = "PREFIX sfz: <http://www.sefaz.ma.gov.br/ontology/>\n"
   SFZR = "PREFIX sfzr: <http://www.sefaz.ma.gov.br/resource/>\n"
   RFB = "PREFIX rfb: <http://www.sefaz.ma.gov.br/RFB/ontology/>\n"
-  META_EKG = "PREFIX metaekg: <http://www.arida.ufc.br/meta-ekg/>\n"
-  ALL = RDF + RDFS + OWL + FOAF + VCARD + XSD + DC + DC_TERMS + RR + TL + SFZ + SEFAZMA + SFZR + MOKG + VSKG + VSKGR + DRM + VSKG2 + VSKGR2
+  META_EKG = "PREFIX metaekg: <http://www.arida.ufc.br/meta-ekg/resource/>\n"
+  ALL = RDF + RDFS + OWL + FOAF + VCARD + XSD + DC + DC_TERMS + RR + TL + SFZ + SEFAZMA + SFZR + MOKG + VSKG + DRM
   DATASOURCE = RDF + RDFS + VSKG + DRM + DC
   EXPORTED_VIEW = RDF + RDFS + VSKG + DRM + DC
   MAPPING = RDF + RDFS + DC + VSKG + META_EKG
-  META_MASHUP = RDFS + VSKG + RR + RFB
+  META_MASHUP = RDF + RDFS + DC + META_EKG + VSKG
+
+  
 
 class Headers:
   def __init__(self): pass
@@ -186,6 +185,7 @@ class RoutesPath:
 class VSKG:
   def __init__(self): pass
   """Mantém as classes e propriedades da ontologia VSKG"""
+
   P_TYPE = "rdf:type"
   P_LABEL = "rdfs:label"
   P_DOMAIN = "rdfs:domain"
@@ -194,17 +194,24 @@ class VSKG:
   P_DC_DESCRIPTION = "dc:description"
   P_HAS_APPLICATION = "vskg:hasApplication"
   # FONTE DE DADOS
-  P_CONNECTION_URL = "http://www.arida.ufc.br/VSKG/connection_url"
-  P_PASSWORD = "http://www.arida.ufc.br/VSKG/password"
-  P_USERNAME = "http://www.arida.ufc.br/VSKG/username"
-  P_JDBC_DRIVER = "http://www.arida.ufc.br/VSKG/jdbc_driver"
+  P_CONNECTION_URL = "http://www.arida.ufc.br/VSKG#connection_url"
+  P_PASSWORD = "http://www.arida.ufc.br/VSKG#password"
+  P_USERNAME = "http://www.arida.ufc.br/VSKG#username"
+  P_JDBC_DRIVER = "http://www.arida.ufc.br/VSKG#jdbc_driver"
   # META-MASHUP
   P_MASHU_CLASS = "vskg:mashupClass" 
+  P_META_MASHUP_EXPORTED_VIEW_URI = "vskg:exportedViewURI"
+  P_META_MASHUP_LOCAL_ONTOLOGY_CLASS = "vskg:localOntologyClass"
+  P_META_MASHUP_SQP_COLUMN = "vskg:sqpCol"
 
 
+  #====================
   C_META_EKG = "vskg:MetadataGraphEKG"
-  # C_META_EKG = "vskg:MetadataGraphEKG"
-  C_META_MASHUP = "vskg:MetadataGraphMashup"
-  C_MASHUP_VIEW_SPEC = "vskg:MashupViewSpecification"
   C_DATA_ASSET = "drm:DataAsset"
   C_EXPORTED_VIEW = "vskg:LocalGraph"
+  
+  C_META_MASHUP = "vskg:MetadataGraphMashup"
+  C_MASHUP_VIEW_SPEC = "vskg:MashupViewSpecification"
+  C_META_MASHUP_SPARQL_QUERY_PARAMS = "vskg:SparqlQueryParams"
+  C_META_MASHUP_SPARQL_QUERY_PARAMS = "vskg:SparqlQueryParams"
+  

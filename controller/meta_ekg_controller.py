@@ -20,7 +20,7 @@ def read_resources():
     return response
 
 
-def sugest_exported_views(uri: str, mashupClass: str):
+def suggested_exported_views(uri: str, mashupClass: str):
     uri_decoded = unquote_plus(uri)
 
 	  # Primeiro, pegar o recurso que existe
@@ -30,12 +30,12 @@ def sugest_exported_views(uri: str, mashupClass: str):
     else:
         sparql = Prefixies.ALL + f""" select ?uri ?label where {{
 			<{uri_decoded}> {VSKG.P_TYPE} <http://www.arida.ufc.br/VSKG#MetadataGraphEKG>;
-        vskg2:hasSemanticMetadata ?sm.
-    ?sm vskg2:hasSemanticView ?sv.
-    ?sv vskg2:hasLocalGraph ?ev.
-    ?ev vskg2:hasMappings ?m;
+        vskg:hasSemanticMetadata ?sm.
+    ?sm vskg:hasSemanticView ?sv.
+    ?sv vskg:hasLocalGraph ?ev.
+    ?ev vskg:hasMappings ?m;
     	rdfs:label ?label.
-    ?m vskg2:hasTriplesMap ?tm.
+    ?m vskg:hasTriplesMap ?tm.
     ?tm rr:subject ?sub.
     ?sub rr:class ?classes.
     filter(regex(str(?classes),"{mashupClass}","i"))

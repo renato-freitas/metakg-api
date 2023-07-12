@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from model.datasource_model import DataSourceModel
-from model.meta_mashup_model import MetaMashupModel, AddExporteViewsModel
+from model.meta_mashup_model import MetaMashupModel, AddExporteViewsModel, AddSparqlQueryParamsModel
 from commons import NameSpaces as ns
 from controller import datasource_controller, meta_mashup_controller
 router = APIRouter()
@@ -8,7 +8,7 @@ router = APIRouter()
 TAG = "Meta Mashup" 
 ROTA = "/meta-mashups/"
 
-@router.post(ROTA, tags=[TAG])
+@router.post("/meta-mashups/", tags=[TAG])
 async def create_meta_mashup(data: MetaMashupModel):
     try:
         response = meta_mashup_controller.create(data)
@@ -17,12 +17,13 @@ async def create_meta_mashup(data: MetaMashupModel):
         return err
 
 
-@router.get(ROTA, tags=[TAG])
+@router.get("/meta-mashups/", tags=[TAG])
 async def read_meta_mashups():
     response = meta_mashup_controller.read_resources()
     return response
 
-@router.get(ROTA + "exported-view/mat/" + "{uri}", tags=[TAG])
+
+@router.get("/meta-mashups/exported-view/mat/{uri}", tags=[TAG])
 async def read_meta_mashup(uri:str):
     response = meta_mashup_controller.materialize_exported_view(uri)
     return response
@@ -30,19 +31,20 @@ async def read_meta_mashup(uri:str):
 
 
 
-@router.post(ROTA + "reuse-meta-ekg", tags=[TAG])
-async def associate_metaekg(data:MetaMashupModel):
-    try:
-        response = meta_mashup_controller.update(data)
-        return response
-    except Exception as err:
-        return err
+# @router.post("/meta-mashups/reuse-meta-ekg", tags=[TAG])
+# async def associate_metaekg(data:MetaMashupModel):
+#     try:
+#         response = meta_mashup_controller.update(data)
+#         return response
+#     except Exception as err:
+#         return err
 
-@router.put(ROTA + "{uri}", tags=[TAG])
+
+@router.put("/meta-mashups/{uri}", tags=[TAG])
 async def update_meta_mashup(uri:str, data: MetaMashupModel):
     """
     Atualiza um recurso vskg:MetadataGraphMashup.
-    A classe do mashup só pode ser alterada se não tiver visões exportadas selecionadas.
+    A vskg:mashupClass só pode ser alterada se não tiver visões exportadas selecionadas.
     """
     try:
         response = meta_mashup_controller.update(uri, data)
@@ -51,7 +53,7 @@ async def update_meta_mashup(uri:str, data: MetaMashupModel):
         return err
     
     
-@router.put(ROTA + "{uri}/add-exported-views", tags=[TAG])
+@router.put("/meta-mashups/{uri}/add-exported-views", tags=[TAG])
 async def add_exported_views(uri:str, data: AddExporteViewsModel):
     """Adiciona as visões exportadas selecionadas do EKG para o MetaMashup."""
     try:
@@ -61,6 +63,31 @@ async def add_exported_views(uri:str, data: AddExporteViewsModel):
     except Exception as err:
         return err
 
+
+@router.get("/meta-mashups/{uri}/sparql-query-params", tags=[TAG])
+async def reade_sparql_params_to_reuse_mappings(uri:str):
+    """
+    uri: URI do MetaMashup
+    """
+    try:
+        response = meta_mashup_controller.reade_sparql_params_to_reuse_mappings(uri)
+        return response
+    except Exception as err:
+        return err
+
+
+@router.put("/meta-mashups/{uri_meta_mashup}/sparql-query-params", tags=[TAG])
+async def add_sparql_params_to_reuse_mappings(uri_meta_mashup:str, data: AddSparqlQueryParamsModel):
+    """Adiciona os parametros a consulta SPARQL para reutilizar os metadados dos mapeamentos das
+    visões exportadas.
+    uri: URI do MetaMashup
+    """
+    try:
+        print('ENTRADA:', data)
+        response = meta_mashup_controller.add_sparql_params_to_reuse_mappings(uri_meta_mashup, data)
+        return response
+    except Exception as err:
+        return err
 # @router.delete(ROTA + "{uri}", tags=[TAG])
 # async def delete_data_source(uri:str):
 #     """

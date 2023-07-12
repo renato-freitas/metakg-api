@@ -20,7 +20,7 @@ async def read_meta_ekgs():
 async def sugest_exported_views(uri:str, mashupClass:str):
     print('[1]', uri)
     print('[2]', mashupClass)
-    response = meta_ekg_controller.sugest_exported_views(uri, mashupClass)
+    response = meta_ekg_controller.suggested_exported_views(uri, mashupClass)
     return response
 
 # @router.post(ROTA, tags=[TAG])

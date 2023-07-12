@@ -4,11 +4,13 @@ import requests
 # from unidecode import unidecode
 from commons import Prefixies, NameSpaces as ns, Endpoint, Headers, Functions, VSKG as o
 from models import DataSource, MetaMashupModel, HighLevelMapping, DataProperty, AddGCLMashupModel, AssociaMetaEKGAoMetaMashupModel
+import api
 
 def create_resource(sparql, classe, label):
     try:
         # verificar se o recurso já existe pela URI (genérico)
         existe = obtem_recurso(classe, label)
+
         if (len(existe) > 0):
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Um recurso dessa classe com essa label já existe!")
         
@@ -92,12 +94,12 @@ def execute_query_production(query):
 
 def get_properties(uri:str):
     try:
-        sparql = f"""SELECT ?p ?o WHERE {{
-                    <{uri}> ?p ?o.    
+        sparql = f"""SELECT ?p ?o ?label WHERE {{
+                    <{uri}> ?p ?o. 
+                    OPTIONAL {{ ?o rdfs:label ?label .}}   
                 }} ORDER BY ?p"""
         query = {'query': sparql}
         r = requests.get(Endpoint.METAKG, params=query, headers=Headers.GET)
-        # print('rr',r.json())
         return r.json()['results']['bindings']
     except Exception as err:
         return err

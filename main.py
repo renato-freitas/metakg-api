@@ -40,7 +40,7 @@ app.add_middleware(
 # uvicorn main:app --reload
 @app.get("/")
 async def index():
-  return { "status_code": status.HTTP_200_OK, "message": "meta-ekg-api is online." }
+  return { "status_code": status.HTTP_200_OK, "message": "meta-ekg api is online." }
 
 
 # ROTAS DO META-MASHUP

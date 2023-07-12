@@ -12,6 +12,12 @@ class MetaMashupModel(ResourceModel):
   
 class AddExporteViewsModel(BaseModel):
   exportedViewCheckeds: list = []
+
+
+class AddSparqlQueryParamsModel(ResourceModel):
+  exportedViewURI: str
+  localOntologyClass: str
+  sqpCol: str
   
 
   
