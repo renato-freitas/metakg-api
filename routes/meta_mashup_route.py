@@ -6,7 +6,7 @@ from controller import datasource_controller, meta_mashup_controller
 router = APIRouter()
 
 TAG = "Meta Mashup" 
-ROTA = "/meta-mashups/"
+# ROTA = "/meta-mashups/"
 
 @router.post("/meta-mashups/", tags=[TAG])
 async def create_meta_mashup(data: MetaMashupModel):
@@ -52,6 +52,18 @@ async def update_meta_mashup(uri:str, data: MetaMashupModel):
     except Exception as err:
         return err
     
+
+@router.delete("/meta-mashups/{uri}", tags=[TAG])
+async def delete_meta_mashup(uri:str):
+    """
+    Apaga um recurso Meta-Mashup do tipo vskg:MetadataGraphMashup.
+    """
+    try:
+        response = meta_mashup_controller.delete(uri)
+        return response
+    except Exception as err:
+        return err
+    
     
 @router.put("/meta-mashups/{uri}/add-exported-views", tags=[TAG])
 async def add_exported_views(uri:str, data: AddExporteViewsModel):
@@ -63,6 +75,9 @@ async def add_exported_views(uri:str, data: AddExporteViewsModel):
     except Exception as err:
         return err
 
+
+
+    
 
 @router.get("/meta-mashups/{uri}/sparql-query-params", tags=[TAG])
 async def reade_sparql_params_to_reuse_mappings(uri:str):

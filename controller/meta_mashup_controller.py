@@ -11,21 +11,27 @@ from model.meta_mashup_model import MetaMashupModel, AddExporteViewsModel, AddSp
 def create(data: MetaMashupModel):
     uuid = uuid4()
     uri = f'{ns.META_EKG}MetaMashup_{uuid}'
+    # uri_fusion_kg = f'{ns.META_EKG}FusionKG_{uuid}'
+    # uri_fusion_rules = f'{ns.META_EKG}FusionRules_{uuid}'
 
     sparql = Prefixies.META_MASHUP + f"""INSERT DATA {{
         <{uri}> rdf:type {VSKG.C_META_MASHUP}; 
             rdfs:label "{data.label}"; 
-            dc:description "{data.description}";
-            vskg:mashupClass "{data.mashupClass}".
+            dc:description "{data.description}".
         }}"""
     query = {"update": sparql}
     response = api.create_resource(query, VSKG.C_META_MASHUP, data.label)
     return response
 
+
 def read_resources():
     sparql = Prefixies.ALL + f""" select * where {{ 
             ?uri rdf:type {VSKG.C_META_MASHUP};
                rdfs:label ?label;
+               OPTIONAL {{ ?uri vskg:hasFusionKG ?fusionKG.
+                    ?fusionKG vskg:hasFusionRules ?fusionRules.
+                    ?fusionRules vskg:hasFusionClass ?fusionClass.
+                 }}
                OPTIONAL {{ ?uri vskg:mashupClass ?mashupClass. }}
                OPTIONAL {{ ?uri dc:description ?description. }}
         }}
@@ -37,7 +43,7 @@ def read_resources():
 
 def update(uri:str, data:MetaMashupModel):
     uri_decoded = unquote_plus(uri)
-    existe = api.check_resource(uri_decoded) # Primeiro, verificar se o recurso existe
+    existe = api.check_resource(uri_decoded)
     if(existe is None):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Recurso não existe!")
     else:
@@ -46,24 +52,37 @@ def update(uri:str, data:MetaMashupModel):
             DELETE {{ 
                 <{uri_decoded}> rdf:type {VSKG.C_META_MASHUP} ; 
                     rdfs:label ?l; 
-                    dc:description ?d;
-                    vskg:mashupClass ?mashupClass.
+                    dc:description ?d.
             }}
             INSERT {{
                 <{uri_decoded}> rdf:type {VSKG.C_META_MASHUP} ; 
                     rdfs:label "{data.label}"; 
                     dc:description "{data.description}";
-                    vskg:mashupClass "{data.mashupClass}".
             }}
             WHERE {{
                 <{uri_decoded}> rdf:type {VSKG.C_META_MASHUP} ; 
                     rdfs:label ?l; 
-                    dc:description ?d;
-                    vskg:mashupClass ?mashupClass.
+                    dc:description ?d.
             }}
         """
         query = {"update": sparql}
         response = api.update_resource(query)
+        return response
+
+
+def delete(uri:str):
+    uri_decoded = unquote_plus(uri)
+    existe = api.check_resource(uri_decoded) 
+    if(existe is None):
+        return "not found"
+    else:
+        query = Prefixies.ALL + f"""
+            DELETE WHERE {{ 
+                <{uri_decoded}> ?o ?p .
+            }}
+        """
+        sparql = {"update": query}
+        response = api.update_resource(sparql)
         return response
 
 

@@ -5,11 +5,11 @@ from pydantic import BaseModel
 
 
 class MetaMashupModel(ResourceModel):
-  mashupClass: str                          # Deveria ser uma classe da ontologia
-  hasMashupView: Union[str, None] = None  
-  reuse_metaekg: Union[str, None] = None    # range: vskg:MetadataGraphEKG     
+  hasMashupView: Union[str, None] = None     
   hasExportedView: Union[str, None] = None  # devia ser uma lista de EV   
+  hasFusionKG: Union[str, None] = None     
   
+
 class AddExporteViewsModel(BaseModel):
   exportedViewCheckeds: list = []
 

@@ -8,7 +8,7 @@ CLASSE = 'drm:DataAsset'
 
 def create(data: DataSourceModel):
     uuid = uuid4()
-    uri = f'{ns.META_EKG}DataSource/{uuid}'
+    uri = f'{ns.META_EKG}DataSource_{uuid}'
 
     query = Prefixies.DATASOURCE + f"""INSERT DATA {{
         <{uri}> rdf:type {CLASSE}; 
