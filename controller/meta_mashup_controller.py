@@ -11,13 +11,11 @@ from model.meta_mashup_model import MetaMashupModel, AddExporteViewsModel, AddSp
 def create(data: MetaMashupModel):
     uuid = uuid4()
     uri = f'{ns.META_EKG}MetaMashup_{uuid}'
-    # uri_fusion_kg = f'{ns.META_EKG}FusionKG_{uuid}'
-    # uri_fusion_rules = f'{ns.META_EKG}FusionRules_{uuid}'
-
     sparql = Prefixies.META_MASHUP + f"""INSERT DATA {{
         <{uri}> rdf:type {VSKG.C_META_MASHUP}; 
             rdfs:label "{data.label}"; 
-            dc:description "{data.description}".
+            dc:description "{data.description}";
+            vskg:fusionClass "{data.fusionClass}".
         }}"""
     query = {"update": sparql}
     response = api.create_resource(query, VSKG.C_META_MASHUP, data.label)
@@ -27,11 +25,12 @@ def create(data: MetaMashupModel):
 def read_resources():
     sparql = Prefixies.ALL + f""" select * where {{ 
             ?uri rdf:type {VSKG.C_META_MASHUP};
-               rdfs:label ?label;
+               rdfs:label ?label.
                OPTIONAL {{ ?uri vskg:hasFusionKG ?fusionKG.
                     ?fusionKG vskg:hasFusionRules ?fusionRules.
                     ?fusionRules vskg:hasFusionClass ?fusionClass.
                  }}
+               OPTIONAL {{ ?uri vskg:fusionClass ?fusionClass. }}
                OPTIONAL {{ ?uri vskg:mashupClass ?mashupClass. }}
                OPTIONAL {{ ?uri dc:description ?description. }}
         }}
@@ -52,17 +51,20 @@ def update(uri:str, data:MetaMashupModel):
             DELETE {{ 
                 <{uri_decoded}> rdf:type {VSKG.C_META_MASHUP} ; 
                     rdfs:label ?l; 
-                    dc:description ?d.
+                    dc:description ?d;
+                    vskg:fusionClass ?fusionClass.
             }}
             INSERT {{
                 <{uri_decoded}> rdf:type {VSKG.C_META_MASHUP} ; 
                     rdfs:label "{data.label}"; 
                     dc:description "{data.description}";
+                    vskg:fusionClass "{data.fusionClass}".
             }}
             WHERE {{
                 <{uri_decoded}> rdf:type {VSKG.C_META_MASHUP} ; 
                     rdfs:label ?l; 
-                    dc:description ?d.
+                    dc:description ?d;
+                    vskg:fusionClass ?fusionClass.
             }}
         """
         query = {"update": sparql}

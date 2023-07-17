@@ -4,10 +4,10 @@ from .exported_view_model import ExportedViewModel
 from pydantic import BaseModel
 
 
-class MetaMashupModel(ResourceModel):
-  hasMashupView: Union[str, None] = None     
+class MetaMashupModel(ResourceModel):     
   hasExportedView: Union[str, None] = None  # devia ser uma lista de EV   
-  hasFusionKG: Union[str, None] = None     
+  fusionClass: Union[str, None] = None     
+  propertyClass: Union[str, None] = None     
   
 
 class AddExporteViewsModel(BaseModel):

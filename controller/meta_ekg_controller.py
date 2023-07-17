@@ -11,7 +11,7 @@ def read_resources():
     sparql = Prefixies.ALL + f""" select * where {{ 
             ?uri rdf:type <http://www.arida.ufc.br/VSKG#MetadataGraphEKG>;
                rdfs:label ?label.
-              #  OPTIONAL {{ ?uri dc:description ?description. }}
+               OPTIONAL {{ ?uri dc:description ?description. }}
         }}
         """
     query = {"query": sparql}
@@ -20,7 +20,7 @@ def read_resources():
     return response
 
 
-def suggested_exported_views(uri: str, mashupClass: str):
+def suggested_exported_views(uri: str, fusionClass: str):
     uri_decoded = unquote_plus(uri)
 
 	  # Primeiro, pegar o recurso que existe
@@ -30,19 +30,23 @@ def suggested_exported_views(uri: str, mashupClass: str):
     else:
         sparql = Prefixies.ALL + f""" select ?uri ?label where {{
 			<{uri_decoded}> {VSKG.P_TYPE} <http://www.arida.ufc.br/VSKG#MetadataGraphEKG>;
-        vskg:hasSemanticMetadata ?sm.
-    ?sm vskg:hasSemanticView ?sv.
-    ?sv vskg:hasLocalGraph ?ev.
-    ?ev vskg:hasMappings ?m;
-    	rdfs:label ?label.
-    ?m vskg:hasTriplesMap ?tm.
-    ?tm rr:subject ?sub.
-    ?sub rr:class ?classes.
-    filter(regex(str(?classes),"{mashupClass}","i"))
-    bind(?ev as ?uri)
+        vskg:hasSemanticMetadata ?semanticMetadata.
+    ?semanticMetadata vskg:hasSemanticView ?semanticView.
+    ?semanticView vskg:hasLocalGraph ?exportedView.
+    ?exportedView vskg:hasLocalOntology ?local_ontology;
+                  rdfs:label ?label.
+ 	?local_ontology void:vocabulary ?vocabulary.
+ 	?vocabulary vskg:hasClasses ?classes .
+    filter regex(str(?classes), "{fusionClass}", "i")
+    
+    ?semanticview vskg:hasLinksetView ?linksetview.
+    ?linksetview vskg:hasLinkageRule ?linkagerule.
+	?linkagerule vskg:hasMatchClass ?matchclass.
+	filter regex(str(?matchclass), "{fusionClass}", "i")
+    bind(?exportedView as ?uri)
         }}"""
         query = {"query": sparql}
-        print('{**}', query)
+        print('[3]', query)
         response = api.execute_query(query)
         return response
 

@@ -10,6 +10,7 @@ TAG = "Meta Mashup"
 
 @router.post("/meta-mashups/", tags=[TAG])
 async def create_meta_mashup(data: MetaMashupModel):
+    """Instanciar o Grafo com os metadados do Mashup de Dados Especializado."""
     try:
         response = meta_mashup_controller.create(data)
         return response
@@ -29,6 +30,17 @@ async def read_meta_mashup(uri:str):
     return response
 
 
+@router.put("/meta-mashups/{uri}", tags=[TAG])
+async def update_meta_mashup(uri:str, data: MetaMashupModel):
+    """
+    Atualiza um recurso vskg:MetadataGraphMashup.
+    A vskg:fusionClass só pode ser alterada se não tiver visões exportadas selecionadas. (ainda não foi implementado)
+    """
+    try:
+        response = meta_mashup_controller.update(uri, data)
+        return response
+    except Exception as err:
+        return err
 
 
 # @router.post("/meta-mashups/reuse-meta-ekg", tags=[TAG])
@@ -40,17 +52,7 @@ async def read_meta_mashup(uri:str):
 #         return err
 
 
-@router.put("/meta-mashups/{uri}", tags=[TAG])
-async def update_meta_mashup(uri:str, data: MetaMashupModel):
-    """
-    Atualiza um recurso vskg:MetadataGraphMashup.
-    A vskg:mashupClass só pode ser alterada se não tiver visões exportadas selecionadas.
-    """
-    try:
-        response = meta_mashup_controller.update(uri, data)
-        return response
-    except Exception as err:
-        return err
+
     
 
 @router.delete("/meta-mashups/{uri}", tags=[TAG])

@@ -16,11 +16,12 @@ async def read_meta_ekgs():
     return response
 
 
-@router.get(ROTA + "{uri}/mashupClass/{mashupClass}", tags=[TAG])
-async def sugest_exported_views(uri:str, mashupClass:str):
+@router.get("/meta-ekgs/{uri}/fusion-class/{fusionClass}", tags=[TAG])
+async def get_suggested_exported_views(uri:str, fusionClass:str):
+    """Obtém as visões exportadas que têm links semânticos entre si e que dão MATCH com a classe de fusão"""
     print('[1]', uri)
-    print('[2]', mashupClass)
-    response = meta_ekg_controller.suggested_exported_views(uri, mashupClass)
+    print('[2]', fusionClass)
+    response = meta_ekg_controller.suggested_exported_views(uri, fusionClass)
     return response
 
 # @router.post(ROTA, tags=[TAG])
