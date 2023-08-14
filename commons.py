@@ -136,6 +136,26 @@ class Endpoint:
   VSKG_ABOX = "http://localhost:7200/repositories/VSKG_ABOX" # só pra testar pegando os metaEKG
   METADADOS_TULIO = "http://localhost:7200/repositories/Metadados_Tulio"
 
+class EndpointDEV:
+  def __init__(self): pass
+  # ONTOLOGIA_DOMINIO = "http://localhost:7200/repositories/metagraph"
+  METAKG = "http://localhost:7200/repositories/metagraph"
+  TIMELINE_TBOX = "http://localhost:7200/repositories/TIMELINE_TBOX"
+  SEFAZMA_VEKG_ABOX = "http://10.33.96.18:7200/repositories/VEKG"
+  VSKG_ABOX = "http://localhost:7200/repositories/VSKG_ABOX" # só pra testar pegando os metaEKG
+  METADADOS_TULIO = "http://localhost:7200/repositories/Metadados_Tulio"
+  
+  ONTOLOGIA_DOMINIO = "http://localhost:7200/repositories/ONTOLOGIA_DOMINIO"
+  RESOURCES = "http://localhost:7200/repositories/GRAFO_PRODUCAO_MATERIALIZADO"
+  GRAPHDB_BROWSER = "http://localhost:7200/graphs-visualizations"
+  GRAPHDB_BROWSER_CONFIG = "&config=63b76b9865064cd8a9775e1e2f46ff4d"
+  ENDPOINT_HISTORY = "http://localhost:7200/repositories/GRAFO_PRODUCAO_MATERIALIZADO"
+  USE_N_ARY_RELATIONS = False
+  USE_LABELS = True #Set True to get labels for resources. When querying virtual repositories maybe be better set to False
+  HIGHLIGHT_CLASSES = ['http://xmlns.com/foaf/0.1/Organization','http://www.sefaz.ma.gov.br/ontology/Estabelecimento', 'http://xmlns.com/foaf/0.1/Person', 'http://www.sefaz.ma.gov.br/ontology/Sociedade'] #A list with URIs of highlighted classes
+
+
+
 class NameSpaces:
   def __init__(self): pass
   SEFAZMA = "http://www.sefaz.ma.gov.br/ontology/"

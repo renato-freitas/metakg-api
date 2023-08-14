@@ -89,7 +89,7 @@ def materialize(visao_exportada):
         return "not found"
     else:
         ev = api.ExportedView()
-        response = ev.get_datasource_properties(uri_decoded) # 2. trazer os dados de acesso à fonte.
+        response = ev.get_datasource_properties(uri_decoded) # 2. trazer os dados de acesso à fonte (VisExp tem DataSource[dados_acesso]).
         # print('get get', response[0])
         propriedade_para_str_triplificacao = response[0]
         file_path_witH_separator_slash = str(propriedade_para_str_triplificacao['f']['value']).replace('/', os.sep)

@@ -1,12 +1,9 @@
 from fastapi import APIRouter
-from model.datasource_model import DataSourceModel
 from model.meta_mashup_model import MetaMashupModel, AddExporteViewsModel, AddSparqlQueryParamsModel
-from commons import NameSpaces as ns
-from controller import datasource_controller, meta_mashup_controller
+from controller import meta_mashup_controller
 router = APIRouter()
 
 TAG = "Meta Mashup" 
-# ROTA = "/meta-mashups/"
 
 @router.post("/meta-mashups/", tags=[TAG])
 async def create_meta_mashup(data: MetaMashupModel):

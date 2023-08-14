@@ -266,7 +266,7 @@ def materialize_exported_view(uri: str):
             return r
 
         return res_exp_view
-
+        return mapping_file
 
 
 

@@ -45,7 +45,7 @@ async def update_exported_view(uri:str, data: ExportedViewModel):
 # https://janakiev.com/blog/python-shell-commands/
 @router.get(ROTA + "triplify/" + "{uri}", tags=[TAG])
 async def run_triplification(uri):
-    """Materializa uma fonte de dados de acordo com as regras de mapeamentos.
+    """Materializa uma visão exportada de acordo com as regras de mapeamentos.
     
     É mais um teste com arquivos fixos
     """

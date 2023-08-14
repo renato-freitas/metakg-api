@@ -2,9 +2,10 @@ from fastapi import FastAPI, HTTPException, status
 import uuid
 import requests
 # from unidecode import unidecode
-from commons import Prefixies, NameSpaces as ns, Endpoint, Headers, Functions, VSKG as o
+from commons import Prefixies, NameSpaces as ns, Endpoint, EndpointDEV, Headers, Functions, VSKG as o
 from models import DataSource, MetaMashupModel, HighLevelMapping, DataProperty, AddGCLMashupModel, AssociaMetaEKGAoMetaMashupModel
-import api
+
+ENVIROMENT = "DEV"
 
 def create_resource(sparql, classe, label):
     try:
@@ -76,10 +77,26 @@ def check_resource(uri:str):
     response = execute_query(query)
     return response
 
-def execute_query(query):
+
+
+def execute_query(query, enviroment="DEV"):
     """Função genérica. Entrada: sparql. Saída: json."""
     try:
-        r = requests.get(Endpoint.METAKG, params=query, headers=Headers.GET)
+        if enviroment == "DEV":
+            r = requests.get(EndpointDEV.ONTOLOGIA_DOMINIO, params=query, headers=Headers.GET)
+        else:
+            r = requests.get(Endpoint.METAKG, params=query, headers=Headers.GET)
+        return r.json()['results']['bindings']
+    except Exception as err:
+        return err
+
+def execute_query_resources(query, enviroment="DEV"):
+    """Função genérica. Entrada: sparql. Saída: json."""
+    try:
+        if enviroment == "DEV":
+            r = requests.get(EndpointDEV.RESOURCES, params=query, headers=Headers.GET)
+        else:
+            r = requests.get(Endpoint.METAKG, params=query, headers=Headers.GET)
         return r.json()['results']['bindings']
     except Exception as err:
         return err
@@ -99,7 +116,10 @@ def get_properties(uri:str):
                     OPTIONAL {{ ?o rdfs:label ?label .}}   
                 }} ORDER BY ?p"""
         query = {'query': sparql}
-        r = requests.get(Endpoint.METAKG, params=query, headers=Headers.GET)
+        if(ENVIROMENT=="DEV"):
+            r = requests.get(EndpointDEV.RESOURCES, params=query, headers=Headers.GET)
+        else:
+            r = requests.get(Endpoint.METAKG, params=query, headers=Headers.GET)
         return r.json()['results']['bindings']
     except Exception as err:
         return err
