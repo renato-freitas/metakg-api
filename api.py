@@ -109,13 +109,30 @@ def execute_query_production(query):
     except Exception as err:
         return err
 
-def get_properties(uri:str):
+def get_properties(uri:str, expande_sameas:bool):
     try:
+        selection_triple = f"<{uri}> ?p ?o. "
+        if expande_sameas == True:
+            print('VISÃO UNIFICADA DEVE SER EXIBIDA')
+            selection_triple= f"""
+                {{
+                    <{uri}> ?p ?o .
+                }}
+                UNION{{
+                    {{
+                        <{uri}> owl:sameAs ?same.
+                        ?same ?p ?o.
+                        FILTER(!CONTAINS(STR(?same),"http://www.sefaz.ma.gov.br/resource/App"))
+                    }}
+                }}
+                FILTER(?p != owl:sameAs)
+            """
         sparql = f"""SELECT ?p ?o ?label WHERE {{
-                    <{uri}> ?p ?o. 
+                    {selection_triple}
                     OPTIONAL {{ ?o rdfs:label ?label .}}   
                 }} ORDER BY ?p"""
         query = {'query': sparql}
+
         if(ENVIROMENT=="DEV"):
             r = requests.get(EndpointDEV.RESOURCES, params=query, headers=Headers.GET)
         else:

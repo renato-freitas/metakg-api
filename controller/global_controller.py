@@ -6,43 +6,12 @@ from model.datasource_model import DataSourceModel
 
 CLASSE = 'drm:DataAsset'
 
-# def get_properties(uri:str):
-#     uri_decoded = unquote_plus(uri)
-#     existe = check_resource(uri_decoded) 
-#     if(existe is None):
-#         return "not found"
-#     else:
-#         response = api.get_properties(uri_decoded)
-#         return response
-
-
-def find_properties(uri:str):
-    uri_decoded = unquote_plus(uri)
-    existe = check_resource(uri_decoded) 
-    if(existe is None):
-        return "not found"
-    else:
-        response = api.get_properties(uri_decoded)
-        return response
-
-
-
-def check_resource(uri:str):
-    sparql = Prefixies.DATASOURCE + f""" select * where {{ 
-            <{uri}> ?p ?o.
-        }} limit 1
-        """
-    query = {"query": sparql}
-    response = api.read_resource(query)
-    return response
-
 
 def find_resources(classRDF, page):
     offset = int(page) * 50
     # search = request.args.get('search',default="")
     uri_decoded = unquote_plus(classRDF)
 
-    print('ops ops', page, classRDF)
     # filterSearch = ""
     # if search != None and search != '':
     #     filterSearch = f"""FILTER(REGEX(STR(?resource),"{search}","i") || REGEX(STR(?label),"{search}","i"))"""
@@ -82,10 +51,35 @@ def find_resources(classRDF, page):
             LIMIT 50
             OFFSET {offset}
         """
-    print(sparql)
     query = {"query": sparql}
     response = api.execute_query_resources(query, enviroment="DEV")
     return response
+
+
+
+
+def find_properties(uri:str, expand_sameas:bool):
+    expandSameAs = bool(expand_sameas)
+    uri_decoded = unquote_plus(uri)
+    existe = check_resource(uri_decoded) 
+    if(existe is None):
+        return "not found"
+    else:
+        response = api.get_properties(uri_decoded, expandSameAs)
+        return response
+
+
+
+def check_resource(uri:str):
+    sparql = Prefixies.DATASOURCE + f""" select * where {{ 
+            <{uri}> ?p ?o.
+        }} limit 1
+        """
+    query = {"query": sparql}
+    response = api.read_resource(query)
+    return response
+
+
 
 
 # update

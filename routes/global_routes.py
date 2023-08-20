@@ -14,15 +14,18 @@ async def read_resources(classRDF:str, page:int):
     except Exception as err:
         return err
 
-@router.get("/properties/{uri}", tags=[TAG])
-async def get_properties(uri:str):
+
+
+@router.get("/properties/{uri}/{expand_sameas}", tags=[TAG])
+async def get_properties(uri:str, expand_sameas:bool):
     """
     Obtém as propriedades de um recurso.
     """
     try:
-        response = global_controller.find_properties(uri)
+        response = global_controller.find_properties(uri, expand_sameas)
         return response
     except Exception as err:
+        print(err)
         return err
     
 
