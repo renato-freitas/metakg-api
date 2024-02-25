@@ -22,6 +22,7 @@ async def get_properties(uri:str, expand_sameas:bool):
     Obtém as propriedades de um recurso.
     """
     try:
+        print('OBTEM PROPRIEDADES DE UM RECURSO SELECIONADO', expand_sameas, type(expand_sameas))
         response = global_controller.find_properties(uri, expand_sameas)
         return response
     except Exception as err:

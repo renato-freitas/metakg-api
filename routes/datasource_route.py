@@ -15,7 +15,7 @@ async def read_data_sources():
 
 
 @router.post(ROTA, tags=[TAG])
-async def create_data_source(data: DataSourceModel):
+async def create_datasource(data: DataSourceModel):
     """
     Cria um recurso fonte de dados do tipo drm:DataAsset.
 
@@ -24,9 +24,10 @@ async def create_data_source(data: DataSourceModel):
     No Pentaho existem as Conexões que podem ser globais. 
     No MetaEKG teremos as FD.
     """
-    # chamar o controller
     try:
+        print('TENTANDO CRIAR UMA FONTE DE DADOS')
         response = datasource_controller.create(data)
+        print('RESPOSTA DA TENTATIVA', response)
         return response
     except Exception as err:
         print('err',err)

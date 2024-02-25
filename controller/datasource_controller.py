@@ -4,11 +4,13 @@ from commons import NameSpaces as ns, Functions, Prefixies
 from uuid import uuid4
 from model.datasource_model import DataSourceModel
 
-CLASSE = 'drm:DataAsset'
+CLASSE = "dcat:Dataset"
 
 def create(data: DataSourceModel):
     uuid = uuid4()
-    uri = f'{ns.META_EKG}DataSource_{uuid}'
+    uri = f'{ns.META_EKG}DataSource/{uuid}'
+
+    print('URI DA NOVA FONTE DE DADOS', uri)
 
     query = Prefixies.DATASOURCE + f"""INSERT DATA {{
         <{uri}> rdf:type {CLASSE}; 
@@ -21,19 +23,21 @@ def create(data: DataSourceModel):
             vskg:jdbc_driver "{data.jdbc_driver}".
         }}"""
     sparql = {"update": query}
-
+    print('RDF QUE SERÁ INSERIDO', sparql)
     response = api.create_resource(sparql, CLASSE, data.label)
     return response
 
 def read_resources():
-    sparql = Prefixies.DATASOURCE + f""" select * where {{ 
+    sparql = Prefixies.DATASOURCE + f""" SELECT * WHERE {{ 
             ?uri rdf:type {CLASSE};
+                vskg:type ?type;
                rdfs:label ?label;
                dc:description ?description.
         }}
         """
     query = {"query": sparql}
 
+    print('CONSULTA SPARQL PARA OBTER AS FONTES DE DADOS', query)
     response = api.execute_query(query)
     return response
 

@@ -12,7 +12,9 @@ def create_resource(sparql, classe, label):
         # verificar se o recurso já existe pela URI (genérico)
         existe = obtem_recurso(classe, label)
 
+
         if (len(existe) > 0):
+            print('O RECURSO JÁ EXISTE', existe)
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Um recurso dessa classe com essa label já existe!")
         
         r = requests.post(Endpoint.METAKG + "/statements", params=sparql, headers=Headers.POST)
@@ -22,6 +24,7 @@ def create_resource(sparql, classe, label):
         else:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Não foi criado!")
     except Exception as err:
+        print('EXCEÇÃO', err)
         return err
 
 def update_resource(sparql):
@@ -82,10 +85,10 @@ def check_resource(uri:str):
 def execute_query(query, enviroment="DEV"):
     """Função genérica. Entrada: sparql. Saída: json."""
     try:
-        if enviroment == "DEV":
-            r = requests.get(EndpointDEV.ONTOLOGIA_DOMINIO, params=query, headers=Headers.GET)
-        else:
-            r = requests.get(Endpoint.METAKG, params=query, headers=Headers.GET)
+        # if enviroment == "DEV":
+        #     r = requests.get(EndpointDEV.ONTOLOGIA_DOMINIO, params=query, headers=Headers.GET)
+        # else:
+        r = requests.get(Endpoint.METAKG, params=query, headers=Headers.GET)
         return r.json()['results']['bindings']
     except Exception as err:
         return err
@@ -109,14 +112,73 @@ def execute_query_production(query):
     except Exception as err:
         return err
 
-def get_properties(uri:str, expande_sameas:bool):
+# def get_properties(uri:str, expande_sameas:bool):
+#     try:
+#         selection_triple = f"<{uri}> ?p ?o. "
+#         if expande_sameas == True:
+#             print('VISÃO UNIFICADA DEVE SER EXIBIDA')
+#             selection_triple= f"""
+#                 {{
+#                     <{uri}> ?p ?o .
+#                 }}
+#                 UNION{{
+#                     {{
+#                         <{uri}> owl:sameAs ?same.
+#                         ?same ?p ?o.
+#                         FILTER(!CONTAINS(STR(?same),"http://www.sefaz.ma.gov.br/resource/App"))
+#                     }}
+#                 }}
+#                 FILTER(?p != owl:sameAs)
+#             """
+#         sparql = f"""SELECT ?p ?o ?label WHERE {{
+#                     {selection_triple}
+#                     OPTIONAL {{ ?o rdfs:label ?label .}}   
+#                 }} ORDER BY ?p"""
+#         query = {'query': sparql}
+
+#         if(ENVIROMENT=="DEV"):
+#             r = requests.get(EndpointDEV.RESOURCES, params=query, headers=Headers.GET)
+#         else:
+#             r = requests.get(Endpoint.METAKG, params=query, headers=Headers.GET)
+#         return r.json()['results']['bindings']
+#     except Exception as err:
+#         return err
+
+
+def get_properties(uri:str, expand_sameas:bool):
+    print('OBTEM AS PROPRIEDADES DE UM RECURSO SELECIONADO')
+    properties_o = {}
     try:
-        selection_triple = f"<{uri}> ?p ?o. "
-        if expande_sameas == True:
+        select = f"""SELECT DISTINCT ?same ?p ?o WHERE {{"""
+        selection_triple = f"""{{ 
+                <{uri}> ?p ?o. 
+                BIND(<{uri}> as ?same).
+            }}
+            UNION
+            {{
+                ?uri owl:sameAs <{uri}>. 
+                ?uri owl:sameAs ?sam.
+                # FILTER(!CONTAINS(STR(?sam),"http://www.sefaz.ma.gov.br/resource/App")).
+                FILTER(!CONTAINS(STR(?sam),"{uri}")).
+                BIND(<{uri}> as ?same).
+                BIND(owl:sameAs as ?p).
+                BIND(?sam as ?o).
+            }}
+            UNION
+            {{
+                ?u owl:sameAs <{uri}>. 
+                BIND(<{uri}> as ?same).
+                BIND(owl:sameAs as ?p).
+                BIND(?u as ?o).
+            }}
+            """
+        if expand_sameas == True:
             print('VISÃO UNIFICADA DEVE SER EXIBIDA')
+            select = f"select ?same ?p ?o where {{"
             selection_triple= f"""
                 {{
                     <{uri}> ?p ?o .
+                    BIND (<{uri}> AS ?same)
                 }}
                 UNION{{
                     {{
@@ -124,22 +186,41 @@ def get_properties(uri:str, expande_sameas:bool):
                         ?same ?p ?o.
                         FILTER(!CONTAINS(STR(?same),"http://www.sefaz.ma.gov.br/resource/App"))
                     }}
+                    UNION{{ 
+                        ?same owl:sameAs <{uri}>.
+                        ?same ?p ?o.
+                        FILTER(!CONTAINS(STR(?same),"http://www.sefaz.ma.gov.br/resource/App")).
+                    }}
                 }}
                 FILTER(?p != owl:sameAs)
-            """
-        sparql = f"""SELECT ?p ?o ?label WHERE {{
-                    {selection_triple}
-                    OPTIONAL {{ ?o rdfs:label ?label .}}   
-                }} ORDER BY ?p"""
+        """
+        # sparql = f"""SELECT ?p ?o ?label WHERE {{
+        #             {selection_triple}
+        #             OPTIONAL {{ ?o rdfs:label ?label .}}   
+        #         }} ORDER BY ?p"""
+        sparql = f"""{select}
+            {selection_triple} 
+        }} ORDER BY ?same ?p"""
+
         query = {'query': sparql}
 
-        if(ENVIROMENT=="DEV"):
-            r = requests.get(EndpointDEV.RESOURCES, params=query, headers=Headers.GET)
-        else:
-            r = requests.get(Endpoint.METAKG, params=query, headers=Headers.GET)
-        return r.json()['results']['bindings']
+        # if(ENVIROMENT=="DEV"):
+        #     results = requests.get(EndpointDEV.RESOURCES, params=query, headers=Headers.GET)
+        # else:
+        results = requests.get(Endpoint.METAKG, params=query, headers=Headers.GET)
+        # print(r.json()['results']['bindings'])
+        for r in results.json()['results']['bindings']:
+            print(r, end='\n\n')
+            if not r['p']['value'] in properties_o:
+                properties_o[r['p']['value']] = [r]
+            else:
+                properties_o[r['p']['value']].append(r)
+        # return r.json()['results']['bindings']
+        print()
+        return properties_o
     except Exception as err:
         return err
+
 
 
 class ExportedView:

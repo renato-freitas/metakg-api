@@ -177,6 +177,7 @@ class Prefixies:
   RR = "PREFIX rr: <http://www.w3.org/ns/r2rml#>\n"
   VOID = "PREFIX void: <http://rdfs.org/ns/void#>\n"
   DRM = "PREFIX drm: <http://vocab.data.gov/def/drm#>\n"
+  DCAT = "PREFIX dcat: <http://www.w3.org/ns/dcat#>\n"
   TL = "PREFIX tl: <http://purl.org/NET/c4dm/timeline.owl#>\n"
   VSKG = "PREFIX vskg: <http://www.arida.ufc.br/VSKG#>\n"
   MOKG = "PREFIX mokg: <http://www.arida.ufc.br/metadata-of-knowledge-graph#>\n"
@@ -185,8 +186,8 @@ class Prefixies:
   SFZR = "PREFIX sfzr: <http://www.sefaz.ma.gov.br/resource/>\n"
   RFB = "PREFIX rfb: <http://www.sefaz.ma.gov.br/RFB/ontology/>\n"
   META_EKG = "PREFIX metaekg: <http://www.arida.ufc.br/meta-ekg/resource/>\n"
-  ALL = RDF + RDFS + OWL + FOAF + VCARD + XSD + DC + DC_TERMS + RR + VOID + DRM + TL + VSKG + SFZ + SEFAZMA + SFZR + MOKG 
-  DATASOURCE = RDF + RDFS + VSKG + DRM + DC
+  ALL = RDF + RDFS + OWL + FOAF + VCARD + XSD + DC + DC_TERMS + RR + VOID + DCAT + DRM + TL + VSKG + SFZ + SEFAZMA + SFZR + MOKG 
+  DATASOURCE = RDF + RDFS + VSKG + DCAT + DRM + DC 
   EXPORTED_VIEW = RDF + RDFS + VSKG + DRM + DC
   MAPPING = RDF + RDFS + DC + VSKG + META_EKG
   META_MASHUP = RDF + RDFS + DC + META_EKG + VSKG
