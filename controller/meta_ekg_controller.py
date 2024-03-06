@@ -29,7 +29,7 @@ def suggested_exported_views(uri: str, fusionClass: str):
        return "not found"
     else:
         sparql = Prefixies.ALL + f""" select ?uri ?label where {{
-			<{uri_decoded}> {VSKG.P_TYPE} <http://www.arida.ufc.br/VSKG#MetadataGraphEKG>;
+			<{uri_decoded}> {VSKG.P_IS_A} <http://www.arida.ufc.br/VSKG#MetadataGraphEKG>;
         vskg:hasSemanticMetadata ?semanticMetadata.
     ?semanticMetadata vskg:hasSemanticView ?semanticView.
     ?semanticView vskg:hasLocalGraph ?exportedView.

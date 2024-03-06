@@ -1,42 +1,58 @@
 from urllib.parse import quote_plus, unquote_plus
 import api
-from commons import NameSpaces as ns, Functions, Prefixies
+from commons import NameSpaces as ns, Functions, Prefixies, VSKG
 from uuid import uuid4
 from model.datasource_model import DataSourceModel
+from controller import global_controller
+import json
+# import tboxies as file
 
-CLASSE = "dcat:Dataset"
+# CLASSE = "dcat:Dataset"
+# vskg_tbox = json.loads(file)
+
+
 
 def create(data: DataSourceModel):
     uuid = uuid4()
     uri = f'{ns.META_EKG}DataSource/{uuid}'
 
-    print('URI DA NOVA FONTE DE DADOS', uri)
-
     query = Prefixies.DATASOURCE + f"""INSERT DATA {{
-        <{uri}> rdf:type {CLASSE}; 
-            rdfs:label "{data.label}"; 
-            dc:description "{data.description}";
-            vskg:type "{data.type}";
-            vskg:connection_url "{data.connection_url}";    
-            vskg:username "{data.username}";
-            vskg:password "{data.password}";
-            vskg:jdbc_driver "{data.jdbc_driver}".
+        <{uri}> {VSKG.P_IS_A} {VSKG.C_DATA_SOURCE}; 
+            {VSKG.P_LABEL} "{data.label}"; 
+            {VSKG.P_DC_DESCRIPTION} "{data.description}";
+            {VSKG.P_DATASOURCE_TYPE} "{data.type}";
+        """
+    
+    if data.type == "http://rdbs-o#Relational_Database":
+        query += f"""
+            {VSKG.P_DB_CONNECTION_URL} "{data.connection_url}";    
+            {VSKG.P_DB_USERNAME} "{data.username}";
+            {VSKG.P_DB_PASSWORD} "{data.password}";
+            {VSKG.P_DB_JDBC_DRIVER} "{data.jdbc_driver}".
         }}"""
+    elif data.type == "https://www.ntnu.no/ub/ontologies/csv#CsvDocument":
+        query += f"""
+            {VSKG.P_CSV_FILE_PATH} "{data.csv_file}". 
+        }}"""
+    
+
     sparql = {"update": query}
     print('RDF QUE SERÁ INSERIDO', sparql)
-    response = api.create_resource(sparql, CLASSE, data.label)
+    response = api.create_resource(sparql, VSKG.C_DATA_SOURCE, data.label)
     return response
 
+
+
 def read_resources():
+
     sparql = Prefixies.DATASOURCE + f""" SELECT * WHERE {{ 
-            ?uri rdf:type {CLASSE};
-                vskg:type ?type;
-               rdfs:label ?label;
-               dc:description ?description.
+            ?uri {VSKG.P_IS_A} {VSKG.C_DATA_SOURCE};
+                {VSKG.P_DATASOURCE_TYPE} ?type;
+                {VSKG.P_LABEL} ?label;
+                {VSKG.P_DC_DESCRIPTION} ?description.
         }}
         """
     query = {"query": sparql}
-
     print('CONSULTA SPARQL PARA OBTER AS FONTES DE DADOS', query)
     response = api.execute_query(query)
     return response
@@ -54,19 +70,27 @@ def update(uri:str, data:DataSourceModel):
                 <{uri_decoded}> ?o ?p .
             }}
             INSERT {{
-                <{uri_decoded}> rdf:type {CLASSE} ; 
-                    rdfs:label "{data.label}"; 
-                    dc:description "{data.description}";
-                    vskg:type "{data.type}";
-                    vskg:connection_url "{data.connection_url}";    
-                    vskg:username "{data.username}";
-                    vskg:password "{data.password}";
-                    vskg:jdbc_driver "{data.jdbc_driver}".
-            }}
-            WHERE {{
-                <{uri_decoded}> ?o ?p .
-            }}
+                <{uri_decoded}> {VSKG.P_IS_A} {VSKG.C_DATA_SOURCE} ; 
+                    {VSKG.P_LABEL} "{data.label}"; 
+                    {VSKG.P_DC_DESCRIPTION} "{data.description}";
+                    {VSKG.P_DATASOURCE_TYPE} "{data.type}";
         """
+
+        if data.type == "http://rdbs-o#Relational_Database":
+            query += f"""
+                {VSKG.P_DB_CONNECTION_URL} "{data.connection_url}";    
+                {VSKG.P_DB_USERNAME} "{data.username}";
+                {VSKG.P_DB_PASSWORD} "{data.password}";
+                {VSKG.P_DB_JDBC_DRIVER} "{data.jdbc_driver}".
+            """
+        elif data.type == "https://www.ntnu.no/ub/ontologies/csv#CsvDocument":
+            query += f"""
+                {VSKG.P_CSV_FILE_PATH} "{data.csv_file}". 
+            """
+        query += f"""}}
+                WHERE {{
+                    <{uri_decoded}> ?o ?p .
+                }}"""
         print('',query)
         sparql = {"update": query}
 

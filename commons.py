@@ -163,6 +163,7 @@ class NameSpaces:
   VSKG = "http://www.arida.ufc.br/VSKG/"
   VSKGR = "http://www.arida.ufc.br/VSKG/resource/"
   META_EKG = "http://www.arida.ufc.br/meta-ekg/resource/"
+  D2RQ = "http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#"
 
 class Prefixies:
   def __init__(self): pass
@@ -171,6 +172,7 @@ class Prefixies:
   OWL = "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n"
   FOAF = "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\n"
   VCARD = "PREFIX vcard: <http://www.w3.org/2006/vcard/ns#>\n"
+  D2RQ = "PREFIX d2rq: <http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#>\n"
   XSD = "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n"
   DC = "PREFIX dc: <http://purl.org/dc/elements/1.1/>\n"
   DC_TERMS = "PREFIX dcterms: <http://purl.org/dc/terms/>\n"
@@ -186,8 +188,8 @@ class Prefixies:
   SFZR = "PREFIX sfzr: <http://www.sefaz.ma.gov.br/resource/>\n"
   RFB = "PREFIX rfb: <http://www.sefaz.ma.gov.br/RFB/ontology/>\n"
   META_EKG = "PREFIX metaekg: <http://www.arida.ufc.br/meta-ekg/resource/>\n"
-  ALL = RDF + RDFS + OWL + FOAF + VCARD + XSD + DC + DC_TERMS + RR + VOID + DCAT + DRM + TL + VSKG + SFZ + SEFAZMA + SFZR + MOKG 
-  DATASOURCE = RDF + RDFS + VSKG + DCAT + DRM + DC 
+  ALL = RDF + RDFS + OWL + FOAF + VCARD + D2RQ + XSD + DC + DC_TERMS + RR + VOID + DCAT + DRM + TL + VSKG + SFZ + SEFAZMA + SFZR + MOKG 
+  DATASOURCE = RDF + RDFS + VSKG + DCAT + DRM +  D2RQ + DC 
   EXPORTED_VIEW = RDF + RDFS + VSKG + DRM + DC
   MAPPING = RDF + RDFS + DC + VSKG + META_EKG
   META_MASHUP = RDF + RDFS + DC + META_EKG + VSKG
@@ -208,7 +210,7 @@ class VSKG:
   def __init__(self): pass
   """Mantém as classes e propriedades da ontologia VSKG"""
 
-  P_TYPE = "rdf:type"
+  P_IS_A = "rdf:type"
   P_LABEL = "rdfs:label"
   P_DOMAIN = "rdfs:domain"
   P_RANGE = "rdfs:range"
@@ -216,10 +218,12 @@ class VSKG:
   P_DC_DESCRIPTION = "dc:description"
   P_HAS_APPLICATION = "vskg:hasApplication"
   # FONTE DE DADOS
-  P_CONNECTION_URL = "http://www.arida.ufc.br/VSKG#connection_url"
-  P_PASSWORD = "http://www.arida.ufc.br/VSKG#password"
-  P_USERNAME = "http://www.arida.ufc.br/VSKG#username"
-  P_JDBC_DRIVER = "http://www.arida.ufc.br/VSKG#jdbc_driver"
+  P_DATASOURCE_TYPE = "vskg:datasourceType"
+  P_DB_USERNAME = "d2rq:username"
+  P_DB_PASSWORD = "d2rq:password"
+  P_DB_JDBC_DRIVER = "d2rq:jdbcDriver"
+  P_DB_CONNECTION_URL = "d2rq:jdbcDSN"
+  P_CSV_FILE_PATH = "vskg:csvFilePath"
   # META-MASHUP
   P_MASHU_CLASS = "vskg:mashupClass" 
   P_META_MASHUP_EXPORTED_VIEW_URI = "vskg:exportedViewURI"
@@ -229,7 +233,7 @@ class VSKG:
 
   #====================
   C_META_EKG = "vskg:MetadataGraphEKG"
-  C_DATA_ASSET = "drm:DataAsset"
+  C_DATA_SOURCE = "dcat:DataAsset"
   C_EXPORTED_VIEW = "vskg:LocalGraph"
   
   C_META_MASHUP = "vskg:MetadataGraphMashup"

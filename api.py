@@ -14,17 +14,17 @@ def create_resource(sparql, classe, label):
 
 
         if (len(existe) > 0):
-            print('O RECURSO JÁ EXISTE', existe)
+            # print('O RECURSO JÁ EXISTE', existe)
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Um recurso dessa classe com essa label já existe!")
         
         r = requests.post(Endpoint.METAKG + "/statements", params=sparql, headers=Headers.POST)
-        print('response', r)
+        # print('response', r)
         if(r.status_code == 200 or r.status_code == 201 or r.status_code == 204):
             return {"code": 204, "message": "Criado com Sucesso!"}
         else:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Não foi criado!")
     except Exception as err:
-        print('EXCEÇÃO', err)
+        # print('EXCEÇÃO', err)
         return err
 
 def update_resource(sparql):
@@ -274,7 +274,7 @@ class MetaMashup:
                     {o.P_LABEL} "{obj.label}" ;
                     {o.P_DC_IDENTIFIER} "{identifier}" ;
                     vskg:has_mashup_view <{ns.VSKGR}MVS_{rotulo_com_underscore}> .
-                <{ns.VSKGR}MVS_{rotulo_com_underscore}> {o.P_TYPE} {o.C_MASHUP_VIEW_SPEC} ;
+                <{ns.VSKGR}MVS_{rotulo_com_underscore}> {o.P_IS_A} {o.C_MASHUP_VIEW_SPEC} ;
                     {o.P_LABEL} "MVS {obj.label}" .
               }} """
             sparql = {"update": q}
@@ -425,7 +425,7 @@ class MetaEKG:
         """Encontra instâncias de META-EKG"""
         try:
             sparql = Prefixies.ALL + f"""SELECT * WHERE {{ 
-                ?uri {o.P_TYPE} {o.C_META_EKG} ;
+                ?uri {o.P_IS_A} {o.C_META_EKG} ;
                     {o.P_LABEL} ?uri_l .
             }}"""
             

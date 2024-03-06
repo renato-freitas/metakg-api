@@ -8,16 +8,10 @@ TAG = "DataSources"
 ROTA = "/datasources/"
 
 
-@router.get(ROTA, tags=[TAG])
-async def read_data_sources():
-    response = datasource_controller.read_resources()
-    return response
-
-
 @router.post(ROTA, tags=[TAG])
 async def create_datasource(data: DataSourceModel):
     """
-    Cria um recurso fonte de dados do tipo drm:DataAsset.
+    Cria um recurso fonte de dados do tipo dcat:Dataset.
 
     Propriedades da Fonte de dados:
     nome, tipo de conexão (Mysql, Postgres,), nome_host, nome_banco_dados, num_porta, nome_usuario, senha
@@ -32,6 +26,13 @@ async def create_datasource(data: DataSourceModel):
     except Exception as err:
         print('err',err)
         return err
+
+
+@router.get(ROTA, tags=[TAG])
+async def read_data_sources():
+    response = datasource_controller.read_resources()
+    return response
+
 
 
 @router.put(ROTA + "{uri}", tags=[TAG])

@@ -8,7 +8,8 @@ CLASSE = 'drm:DataAsset'
 
 
 def find_resources(classRDF, page):
-    offset = int(page) * 50
+    print(f'PROCURANDO R DA CLASSE {classRDF}')
+    offset = int(page) * 20
     # search = request.args.get('search',default="")
     uri_decoded = unquote_plus(classRDF)
 
@@ -30,7 +31,7 @@ def find_resources(classRDF, page):
                 FILTER(!CONTAINS(STR(?uri),"http://www.sefaz.ma.gov.br/resource/AppNomeFantasia/"))
             }}
             ORDER BY ?label
-            LIMIT 50
+            LIMIT 20
             OFFSET {offset}
         """
     else:
@@ -51,6 +52,7 @@ def find_resources(classRDF, page):
             LIMIT 50
             OFFSET {offset}
         """
+    print(f'sparql: {sparql}')
     query = {"query": sparql}
     response = api.execute_query_resources(query, enviroment="DEV")
     return response

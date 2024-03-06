@@ -1,0 +1,17 @@
+{
+  "classes": {
+    "relational_database": "http://rdbs-o#Relational_Database",
+    "csv_file": "https://www.ntnu.no/ub/ontologies/csv#CsvDocument"
+  },
+  "property": {
+    "rdf_type": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+    "has_semantic_exported_view": "http://www.arida.ufc.br/VSKG#hasExportedView",
+    "X": "http://www.arida.ufc.br/VSKG#hasExportedView",
+
+    "datasource_type": "http://www.arida.ufc.br/VSKG#datasourceType",
+    "db_user_name": "http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#username",
+    "db_password": "http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#password",
+    "db_jdbc_driver": "http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#jdbcDriver",
+    "db_connection_url": "http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#jdbcDSN"
+  }
+}
