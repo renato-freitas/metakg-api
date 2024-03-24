@@ -67,9 +67,18 @@ def find_properties(uri:str, expand_sameas:bool):
     if(existe is None):
         return "not found"
     else:
-        response = api.get_properties(uri_decoded, expandSameAs)
+        response = api.get_properties_kg_metadata(uri_decoded, expandSameAs)
         return response
 
+
+def read_properties_in_kg_metadata(uri:str):
+    uri_decoded = unquote_plus(uri)
+    existe = api.check_resource_in_kg_metadata(uri_decoded) 
+    if(existe is None):
+        return "not found"
+    else:
+        response = api.get_properties_kg_metadata(uri_decoded)
+        return response
 
 
 def check_resource(uri:str):
@@ -78,7 +87,7 @@ def check_resource(uri:str):
         }} limit 1
         """
     query = {"query": sparql}
-    response = api.read_resource(query)
+    response = api.read_one_resource_metakg(query)
     return response
 
 

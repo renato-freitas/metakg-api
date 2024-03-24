@@ -22,7 +22,7 @@ def create(data: ExportedViewModel):
         }}"""
     sparql = {"update": query}
 
-    response = api.create_resource(sparql, CLASSE, data.label)
+    response = api.create_resource_kg_metadata(sparql, CLASSE, data.label)
     return response
 
 
@@ -54,7 +54,7 @@ def update(uri:str, data:ExportedViewModel):
         sparql = {"update": query}
 
         # Chamar a API
-        response = api.update_resource(sparql)
+        response = api.update_resource_kg_metadata(sparql)
         return response
 
 
@@ -67,7 +67,7 @@ def read_resources():
         """
     query = {"query": sparql}
 
-    response = api.read_resources(query)
+    response = api.read_resources_metakg(query)
     return response
 
 
@@ -77,7 +77,7 @@ def check_resource(uri:str):
         }} limit 1
         """
     query = {"query": sparql}
-    response = api.read_resource(query)
+    response = api.read_one_resource_metakg(query)
     return response
 
 

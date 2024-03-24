@@ -16,7 +16,7 @@ def read_resources():
         """
     query = {"query": sparql}
     print('{**}', query)
-    response = api.execute_query(query)
+    response = api.execute_query_on_kg_metadata(query)
     return response
 
 
@@ -24,7 +24,7 @@ def suggested_exported_views(uri: str, fusionClass: str):
     uri_decoded = unquote_plus(uri)
 
 	  # Primeiro, pegar o recurso que existe
-    existe = api.check_resource(uri_decoded)
+    existe = api.check_resource_in_kg_metadata(uri_decoded)
     if(existe is None):
        return "not found"
     else:
@@ -47,7 +47,7 @@ def suggested_exported_views(uri: str, fusionClass: str):
         }}"""
         query = {"query": sparql}
         print('[3]', query)
-        response = api.execute_query(query)
+        response = api.execute_query_on_kg_metadata(query)
         return response
 
 

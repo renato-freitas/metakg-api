@@ -18,7 +18,7 @@ def create(data: MetaMashupModel):
             vskg:fusionClass "{data.fusionClass}".
         }}"""
     query = {"update": sparql}
-    response = api.create_resource(query, VSKG.C_META_MASHUP, data.label)
+    response = api.create_resource_kg_metadata(query, VSKG.C_META_MASHUP, data.label)
     return response
 
 
@@ -36,13 +36,13 @@ def read_resources():
         }}
         """
     query = {"query": sparql}
-    response = api.execute_query(query)
+    response = api.execute_query_on_kg_metadata(query)
     return response
 
 
 def update(uri:str, data:MetaMashupModel):
     uri_decoded = unquote_plus(uri)
-    existe = api.check_resource(uri_decoded)
+    existe = api.check_resource_in_kg_metadata(uri_decoded)
     if(existe is None):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Recurso não existe!")
     else:
@@ -68,13 +68,13 @@ def update(uri:str, data:MetaMashupModel):
             }}
         """
         query = {"update": sparql}
-        response = api.update_resource(query)
+        response = api.update_resource_kg_metadata(query)
         return response
 
 
 def delete(uri:str):
     uri_decoded = unquote_plus(uri)
-    existe = api.check_resource(uri_decoded) 
+    existe = api.check_resource_in_kg_metadata(uri_decoded) 
     if(existe is None):
         return "not found"
     else:
@@ -84,7 +84,7 @@ def delete(uri:str):
             }}
         """
         sparql = {"update": query}
-        response = api.update_resource(sparql)
+        response = api.update_resource_kg_metadata(sparql)
         return response
 
 
@@ -127,7 +127,7 @@ def add_exported_views(uri:str, data:AddExporteViewsModel):
 
     query = {"update": sparql}
     print('', query)
-    response = api.update_resource(query)
+    response = api.update_resource_kg_metadata(query)
     return response
 
 
@@ -147,7 +147,7 @@ def add_sparql_params_to_reuse_mappings(uri:str, data:AddSparqlQueryParamsModel)
         <{_uri_meta_mashup}> vskg:sparqlQueryParams <{uri_sqp}>.
         }}"""
     query = {"update": sparql}
-    response = api.create_resource(query, VSKG.C_META_MASHUP_SPARQL_QUERY_PARAMS, data.label)
+    response = api.create_resource_kg_metadata(query, VSKG.C_META_MASHUP_SPARQL_QUERY_PARAMS, data.label)
     return response
 
 def reade_sparql_params_to_reuse_mappings(uri:str):
@@ -160,7 +160,7 @@ def reade_sparql_params_to_reuse_mappings(uri:str):
         """
     query = {"query": sparql}
     print('...', query)
-    response = api.execute_query(query)
+    response = api.execute_query_on_kg_metadata(query)
     return response
 
 def check_exist_exported_view_on_meta_mashup(uri:str):
@@ -169,7 +169,7 @@ def check_exist_exported_view_on_meta_mashup(uri:str):
             vskg:hasExportedView ?evs.
     }} limit 1"""
     query = {"query": sparql}
-    response = api.execute_query(query)
+    response = api.execute_query_on_kg_metadata(query)
     return response
 
 def materialize_exported_view(uri: str):
@@ -179,7 +179,7 @@ def materialize_exported_view(uri: str):
     uri_decoded = unquote_plus(uri)
 
 	# Primeiro, pegar o recurso que existe
-    existe = api.check_resource(uri_decoded)
+    existe = api.check_resource_in_kg_metadata(uri_decoded)
     if(existe is None):
        return "not found"
     else:
@@ -204,7 +204,7 @@ def materialize_exported_view(uri: str):
         }}"""
 
         query = {"query": sparql}
-        res_exp_view = api.execute_query(query)
+        res_exp_view = api.execute_query_on_kg_metadata(query)
 
         prefixies = res_exp_view[0]['prefixies']['value']
         sql_query = res_exp_view[0]['sqlQuery']['value']

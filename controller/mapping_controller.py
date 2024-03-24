@@ -20,7 +20,7 @@ def create(data: MappingModel):
     print('q:', sparql)
     query = {"update": sparql}
 
-    response = api.create_resource(query, CLASSE, data.label)
+    response = api.create_resource_kg_metadata(query, CLASSE, data.label)
     return response
 
 def read_resources():
@@ -30,7 +30,7 @@ def read_resources():
         }} 
         """
     query = {"query": sparql}
-    response = api.read_resources(query)
+    response = api.read_resources_metakg(query)
     return response
 
 def read_resource(uri_exported_view):
@@ -43,7 +43,7 @@ def read_resource(uri_exported_view):
         """
     print('><><', sparql)
     query = {"query": sparql}
-    response = api.read_resources(query)
+    response = api.read_resources_metakg(query)
     return response
 
 def update(uri:str, data:DataSourceModel):
@@ -76,7 +76,7 @@ def update(uri:str, data:DataSourceModel):
         sparql = {"update": query}
 
         # Chamar a API
-        response = api.update_resource(sparql)
+        response = api.update_resource_kg_metadata(sparql)
         return response
 
 
@@ -87,6 +87,6 @@ def check_resource(uri:str):
         """
     print('sparql, ', sparql)
     query = {"query": sparql}
-    response = api.read_resource(query)
+    response = api.read_one_resource_metakg(query)
     return response
 

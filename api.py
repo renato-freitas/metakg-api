@@ -2,16 +2,19 @@ from fastapi import FastAPI, HTTPException, status
 import uuid
 import requests
 # from unidecode import unidecode
-from commons import Prefixies, NameSpaces as ns, Endpoint, EndpointDEV, Headers, Functions, VSKG as o
+from commons import Prefixies, NameSpaces as ns, Endpoint, EndpointDEV, Headers, Functions, VSKG as o, NamedGraph
+from commons import VSKG
 from models import DataSource, MetaMashupModel, HighLevelMapping, DataProperty, AddGCLMashupModel, AssociaMetaEKGAoMetaMashupModel
+import psycopg2
+from sqlalchemy import create_engine, text
+import pandas as pd
 
 ENVIROMENT = "DEV"
 
-def create_resource(sparql, classe, label):
+def create_resource_kg_metadata(sparql, classe, label):
     try:
-        # verificar se o recurso já existe pela URI (genérico)
-        existe = obtem_recurso(classe, label)
-
+        # verificar se o recurso já existe, pela URI (genérico)
+        existe = get_one_resource_kg_metadata(classe, label)
 
         if (len(existe) > 0):
             # print('O RECURSO JÁ EXISTE', existe)
@@ -27,10 +30,17 @@ def create_resource(sparql, classe, label):
         # print('EXCEÇÃO', err)
         return err
 
-def update_resource(sparql):
+def read_resources_metakg(query):
     try:
-        r = requests.post(Endpoint.METAKG + "/statements", params=sparql, headers=Headers.POST)
-        print('response', r)
+        r = requests.get(Endpoint.METAKG, params=query, headers=Headers.GET)
+        return r.json()['results']['bindings']
+    except Exception as err:
+        return err
+    
+def update_resource_kg_metadata(sparql):
+    try:
+        r = requests.post(EndpointDEV.PRODUCTION + "/statements", params=sparql, headers=Headers.POST)
+        print('*** response', r)
         if(r.status_code == 200 or r.status_code == 201 or r.status_code == 204):
             return {"code": 204, "message": "Criado com Sucesso!"}
         else:
@@ -38,32 +48,7 @@ def update_resource(sparql):
     except Exception as err:
         return err
 
-def obtem_recurso(classe:str, label:str):
-    try:
-        q = Prefixies.ALL + \
-            f"""SELECT DISTINCT ?l WHERE {{ ?s a {classe}; rdfs:label "{label}". }}"""
-        sparql = {'query': q}
-        r = requests.get(Endpoint.METAKG, params=sparql, headers=Headers.GET)
-        return r.json()['results']['bindings']
-    except Exception as err:
-        return err
-    
-def read_resources(query):
-    try:
-        r = requests.get(Endpoint.METAKG, params=query, headers=Headers.GET)
-        return r.json()['results']['bindings']
-    except Exception as err:
-        return err
-
-def read_resource(query):
-    try:
-        r = requests.get(Endpoint.METAKG, params=query, headers=Headers.GET)
-        return r.json()['results']['bindings']
-    except Exception as err:
-        return err
-
-
-def delete_resourde(query):
+def delete_resource_metakg(query):
     try:
         r = requests.post(Endpoint.METAKG, params=query, headers=Headers.GET)
         return r.json()['results']['bindings']
@@ -72,26 +57,47 @@ def delete_resourde(query):
 
 
 # métodos globais
-def check_resource(uri:str):
-    sparql = Prefixies.DATASOURCE + f""" select * where {{ 
+def get_one_resource_kg_metadata(classe:str, label:str):
+    try:
+        sparql = Prefixies.ALL + \
+            f"""SELECT DISTINCT ?l FROM <{NamedGraph.KG_METADATA}> {{ ?s a {classe}; rdfs:label "{label}". }}"""
+        query = {'query': sparql}
+        response = requests.get(Endpoint.METAKG, params=query, headers=Headers.GET)
+        return response.json()['results']['bindings']
+    except Exception as err:
+        return err
+    
+def check_resource_in_kg_metadata(uri:str):
+    """Verifica se o recurso existe no grafo nomeado de metadados"""
+    sparql = Prefixies.DATASOURCE + f""" SELECT * FROM <{NamedGraph.KG_METADATA}> {{ 
         <{uri}> ?p ?o. 
     }} limit 1"""
     query = {"query": sparql}
-    response = execute_query(query)
+    response = execute_query_on_kg_metadata(query)
     return response
 
-
-
-def execute_query(query, enviroment="DEV"):
+def execute_query_on_kg_metadata(query):
     """Função genérica. Entrada: sparql. Saída: json."""
     try:
-        # if enviroment == "DEV":
-        #     r = requests.get(EndpointDEV.ONTOLOGIA_DOMINIO, params=query, headers=Headers.GET)
-        # else:
-        r = requests.get(Endpoint.METAKG, params=query, headers=Headers.GET)
+        r = requests.get(url=EndpointDEV.PRODUCTION, params=query, headers=Headers.GET)
         return r.json()['results']['bindings']
     except Exception as err:
         return err
+
+def execute_sparql_query_in_kg_metadata(query):
+    """Função genérica. Entrada: sparql. Saída: json."""
+    try:
+        print('*** api ***')
+        r = requests.post(EndpointDEV.METAKG + "/statements", params=query, headers=Headers.POST)
+        # r = requests.post(EndpointDEV.METAKG, params=query, headers=Headers.POST)
+        print('*** r',r)
+        if(r.status_code == 200 or r.status_code == 201 or r.status_code == 204):
+            return {"code": 204, "message": "Criado com Sucesso!"}
+        else:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Não foi criado!")
+    except Exception as err:
+        return err
+    
 
 def execute_query_resources(query, enviroment="DEV"):
     """Função genérica. Entrada: sparql. Saída: json."""
@@ -104,13 +110,23 @@ def execute_query_resources(query, enviroment="DEV"):
     except Exception as err:
         return err
 
-def execute_query_production(query):
-    """Função genérica. Entrada: sparql. Saída: json."""
-    try:
-        r = requests.get(Endpoint.SEFAZMA_VEKG_ABOX, params=query, headers=Headers.GET)
-        return r.json()['results']['bindings']
-    except Exception as err:
-        return err
+
+
+# SELECT DISTINCT ?same ?p ?o 
+# FROM <http://localhost:7200/repositories/metagraph/rdf-graphs/KG-METADATA> {
+# 	?s ?p ?o. 
+#     BIND(?s as ?same).
+# }
+# ORDER BY ?same ?p
+
+
+# def execute_query_production(query):
+#     """Função genérica. Entrada: sparql. Saída: json."""
+#     try:
+#         r = requests.get(Endpoint.SEFAZMA_VEKG_ABOX, params=query, headers=Headers.GET)
+#         return r.json()['results']['bindings']
+#     except Exception as err:
+#         return err
 
 # def get_properties(uri:str, expande_sameas:bool):
 #     try:
@@ -145,7 +161,70 @@ def execute_query_production(query):
 #         return err
 
 
-def get_properties(uri:str, expand_sameas:bool):
+def get_properties_kg_metadata(uri:str):
+    try:
+        sparql = f"""{Prefixies.DATASOURCE} SELECT DISTINCT ?p ?o FROM <{NamedGraph.KG_METADATA}> {{
+                <{uri}> ?p ?o. 
+                FILTER(?p != {VSKG.P_DB_HAS_TABLE})
+            }}
+            ORDER BY ?same ?p"""
+        query = {'query': sparql}
+        # print('*** query', query)
+        r = requests.get(EndpointDEV.PRODUCTION, params=query, headers=Headers.GET)
+        # print('*** resulta get properties:',r.json())
+        return r.json()['results']['bindings']
+    except Exception as err:
+        return err
+
+
+def get_schema_from_datasource(db_conn_url, db_name, db_username, db_password):
+    # print('*** obter schemas 5 ***')
+    # dialect+driver://username:password@host:port/database
+    engine = create_engine(f"postgresql://{db_username}:{db_password}@{db_conn_url}:5432/{db_name}")
+    schema = dict()
+    with engine.connect() as connection:
+        result = connection.execute(text("select  * from information_schema.tables where table_schema not in ('pg_catalog', 'information_schema') AND table_type = 'BASE TABLE';"))
+        # df =pd.DataFrame(result)
+        # print(df)
+        for row in result:
+            table_name = row['table_name']
+            schema[table_name] = []
+            result_col = connection.execute(text(f"SELECT column_name, data_type, is_nullable, maximum_cardinality FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = '{table_name}';"))
+            for _x in result_col:
+                schema[table_name].append(_x)
+    # print(schema)
+
+    # connection =  get_connection(db_conn_url, db_name, db_username, db_password)
+    # df = pd.read_sql("select  * from information_schema.tables where table_schema not in ('pg_catalog', 'information_schema') AND table_type = 'BASE TABLE';", con=connection)
+    # tables = df['table_name']
+    # for key, value in tables.items():
+    #     query = f"SELECT column_name, data_type, is_nullable, maximum_cardinality FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = '{value}';"
+    #     df_col = pd.read_sql(query, con=connection)
+    #     schemas.update({ f"{value}": df_col })
+    # connection.close()
+    return schema
+
+
+def get_columns_from_table(table_name, db_conn_url, db_name, db_username, db_password):
+    print('get_columns_from_table')
+    connection =  get_connection(db_conn_url, db_name, db_username, db_password)
+    query = f"SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = '{table_name}';"
+    df_col = pd.read_sql(query, con=connection)
+    print('colunas da table', table_name, df_col)
+
+    connection.close()
+    return df_col
+
+def get_connection(host, dbname, user, password):
+    conn_str = "host={} dbname={} user={} password={}".format(host, dbname, user, password)
+    # print(conn_str)
+    conn = psycopg2.connect(conn_str)
+    print('**** STATUS DA CONEXÃO COM A FONTE DE DADOS', conn.status)
+    return conn
+    
+
+# def record_tables(connection):
+def get_properties_datakg(uri:str, expand_sameas:bool):
     print('OBTEM AS PROPRIEDADES DE UM RECURSO SELECIONADO')
     properties_o = {}
     try:
@@ -220,7 +299,6 @@ def get_properties(uri:str, expand_sameas:bool):
         return properties_o
     except Exception as err:
         return err
-
 
 
 class ExportedView:
@@ -493,3 +571,38 @@ class MetaEKG:
                 return {"code": 400, "message": "Não Encontrado!"}
         except Exception as err:
             return err
+        
+
+
+class KG_Metadata:
+    def __init__(self): pass
+
+    def add_rdf(self, rdf:str):
+        try:
+            r = requests.post(url=f"http://localhost:7200/repositories/metagraph/rdf-graphs/KG-METADATA", data=rdf, headers=Headers.POST_KG_METADATA)
+            print('*** r',r)
+            if(r.status_code == 200 or r.status_code == 201 or r.status_code == 204):
+                return {"code": 204, "message": "Criado com Sucesso!"}
+            else:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Não foi criado!")
+        except Exception as err:
+            return err
+
+# default
+# engine = create_engine("mysql://scott:tiger@localhost/foo")
+
+# mysqlclient (a maintained fork of MySQL-Python)
+# engine = create_engine("mysql+mysqldb://scott:tiger@localhost/foo")
+
+# PyMySQL
+# engine = create_engine("mysql+pymysql://scott:tiger@localhost/foo")
+        
+# engine = create_engine("oracle://scott:tiger@127.0.0.1:1521/sidname")
+
+# engine = create_engine("oracle+cx_oracle://scott:tiger@tnsname")
+        
+        # pyodbc
+# engine = create_engine("mssql+pyodbc://scott:tiger@mydsn")
+
+# pymssql
+# engine = create_engine("mssql+pymssql://scott:tiger@hostname:port/dbname")

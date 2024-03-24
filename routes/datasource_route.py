@@ -3,15 +3,18 @@ from model.datasource_model import DataSourceModel
 from commons import NameSpaces as ns
 from controller import datasource_controller
 router = APIRouter()
-
 TAG = "DataSources" 
-ROTA = "/datasources/"
 
+# para avaliar a qualidade observar:
+# Completude: de todos os registros fornecidos, qual porcentagem dos campos disponíveis tem um valor? 
+# Duplicação: qual porcentagem de todos os registros são duplicados? Taxa de duplicação = [# duplicatas detectadas] / [# total de registros no conjunto de dados]
+# Consistência: quão consistentes são os dados em formato e estrutura dentro e entre conjuntos de dados? 
+# Cobertura: Field Coverage = [# real-world entities in the dataset] / [# real-world entities]
 
-@router.post(ROTA, tags=[TAG])
+@router.post("/datasources/", tags=[TAG])
 async def create_datasource(data: DataSourceModel):
     """
-    Cria um recurso fonte de dados do tipo dcat:Dataset.
+    Cria um recurso do tipo dcat:Dataset.
 
     Propriedades da Fonte de dados:
     nome, tipo de conexão (Mysql, Postgres,), nome_host, nome_banco_dados, num_porta, nome_usuario, senha
@@ -19,36 +22,43 @@ async def create_datasource(data: DataSourceModel):
     No MetaEKG teremos as FD.
     """
     try:
-        print('TENTANDO CRIAR UMA FONTE DE DADOS')
         response = datasource_controller.create(data)
-        print('RESPOSTA DA TENTATIVA', response)
         return response
     except Exception as err:
-        print('err',err)
         return err
 
 
-@router.get(ROTA, tags=[TAG])
+@router.get("/datasources/", tags=[TAG])
 async def read_data_sources():
     response = datasource_controller.read_resources()
     return response
 
 
+@router.get("/datasources/{uri}/properties/", tags=[TAG])
+async def read_properties(uri:str):
+    """Obtém as propriedades de uma FD."""
+    try:
+        response = datasource_controller.read_properties(uri)
+        # print('response ',response)
+        return response
+    except Exception as err:
+        return err
 
-@router.put(ROTA + "{uri}", tags=[TAG])
+
+@router.put("/datasources/{uri}", tags=[TAG])
 async def update_data_source(uri:str, data: DataSourceModel):
     """
     Atualiza um recurso fonte de dados do tipo drm:DataAsset.
     """
     try:
-        print('update_data_source()')
         response = datasource_controller.update(uri, data)
         return response
     except Exception as err:
         return err
 
-@router.delete(ROTA + "{uri}", tags=[TAG])
-async def delete_data_source(uri:str):
+
+@router.delete("/datasources/{uri}", tags=[TAG])
+async def delete_table(uri:str):
     """
     Apaga um recurso fonte de dados do tipo drm:DataAsset.
     """
@@ -58,6 +68,55 @@ async def delete_data_source(uri:str):
     except Exception as err:
         return err
 
+
+
+    
+
+@router.post("/datasources/{uri}/schema/", tags=[TAG])
+async def add_schema_metadata(uri:str):
+    """ Obter e registrar o esquema de uma fonte de dados no kg de metadados. """
+    try:
+        print('*** 1. router post ***')
+        response = datasource_controller.add_schema_metadata(uri)
+        # print('*** response',response)
+        return response
+    except Exception as err:
+        return err
+
+
+@router.get("/datasources/{uri}/schema/", tags=[TAG])
+async def get_tables_schemas(uri:str):
+    """ Obter o esquema de uma fonte de dados no grafo de metadados. """
+    try:
+        print('*** 1. router get ***')
+        response = datasource_controller.read_tables_schemas(uri)
+        return response
+    except Exception as err:
+        return err
+    
+
+@router.delete("/tables/{uri_table}", tags=[TAG])
+async def delete_table(uri_table:str):
+    """
+    Apaga um recurso fonte de dados do tipo vskg:Table.
+    """
+    try:
+        print('*** del table start')
+        response = datasource_controller.delete(uri_table)
+        return response
+    except Exception as err:
+        return err
+    
+
+@router.get("/datasources/tables/{uri_table}/columns/", tags=[TAG])
+async def read_columns(uri_table:str):
+    """ Ler colunas do tipo vskg:Column. """
+    try:
+        print('*** route get columns')
+        response = datasource_controller.get_columns_schemas(uri_table)
+        return response
+    except Exception as err:
+        return err
 # @router.post("/datasources/record/")
 # def register_data_source(data: DataSource):
 #   """Por enquanto só relacional e csv"""

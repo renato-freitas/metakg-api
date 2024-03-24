@@ -41,7 +41,7 @@ def find_classes():
         ORDER BY ?label     
     """
     query = {"query": sparql}
-    response = api.execute_query(query, enviroment="DEV")
+    response = api.execute_query_on_kg_metadata(query, enviroment="DEV")
     return response
 
 

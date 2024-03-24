@@ -140,6 +140,7 @@ class EndpointDEV:
   def __init__(self): pass
   # ONTOLOGIA_DOMINIO = "http://localhost:7200/repositories/metagraph"
   METAKG = "http://localhost:7200/repositories/metagraph"
+  PRODUCTION = "http://localhost:7200/repositories/metagraph"
   TIMELINE_TBOX = "http://localhost:7200/repositories/TIMELINE_TBOX"
   SEFAZMA_VEKG_ABOX = "http://10.33.96.18:7200/repositories/VEKG"
   VSKG_ABOX = "http://localhost:7200/repositories/VSKG_ABOX" # só pra testar pegando os metaEKG
@@ -154,6 +155,9 @@ class EndpointDEV:
   USE_LABELS = True #Set True to get labels for resources. When querying virtual repositories maybe be better set to False
   HIGHLIGHT_CLASSES = ['http://xmlns.com/foaf/0.1/Organization','http://www.sefaz.ma.gov.br/ontology/Estabelecimento', 'http://xmlns.com/foaf/0.1/Person', 'http://www.sefaz.ma.gov.br/ontology/Sociedade'] #A list with URIs of highlighted classes
 
+class NamedGraph:
+   def __init__(self): pass
+   KG_METADATA = "http://localhost:7200/repositories/metagraph/rdf-graphs/KG-METADATA"
 
 
 class NameSpaces:
@@ -189,7 +193,7 @@ class Prefixies:
   RFB = "PREFIX rfb: <http://www.sefaz.ma.gov.br/RFB/ontology/>\n"
   META_EKG = "PREFIX metaekg: <http://www.arida.ufc.br/meta-ekg/resource/>\n"
   ALL = RDF + RDFS + OWL + FOAF + VCARD + D2RQ + XSD + DC + DC_TERMS + RR + VOID + DCAT + DRM + TL + VSKG + SFZ + SEFAZMA + SFZR + MOKG 
-  DATASOURCE = RDF + RDFS + VSKG + DCAT + DRM +  D2RQ + DC 
+  DATASOURCE = RDF + RDFS + VSKG + DCAT + DRM +  D2RQ + DC + FOAF
   EXPORTED_VIEW = RDF + RDFS + VSKG + DRM + DC
   MAPPING = RDF + RDFS + DC + VSKG + META_EKG
   META_MASHUP = RDF + RDFS + DC + META_EKG + VSKG
@@ -200,6 +204,7 @@ class Headers:
   def __init__(self): pass
   GET = { "Accept": "application/sparql-results+json" }
   POST = { "Content-type": "application/rdf+xml", "Accept": "application/json" }
+  POST_KG_METADATA = { "Content-type": "text/turtle", "Accept": "application/json" }
 
 class RoutesPath:
   def __init__(self): pass
@@ -212,6 +217,7 @@ class VSKG:
 
   P_IS_A = "rdf:type"
   P_LABEL = "rdfs:label"
+  P_NAME = "foaf:name"
   P_DOMAIN = "rdfs:domain"
   P_RANGE = "rdfs:range"
   P_DC_IDENTIFIER = "dc:identifier"
@@ -224,6 +230,11 @@ class VSKG:
   P_DB_JDBC_DRIVER = "d2rq:jdbcDriver"
   P_DB_CONNECTION_URL = "d2rq:jdbcDSN"
   P_CSV_FILE_PATH = "vskg:csvFilePath"
+  P_DB_HAS_TABLE = "vskg:hasTable"
+  P_DB_HAS_COLUMN = "vskg:hasColumn"
+  P_DB_COL_DATATYPE = "vskg:datatype"
+  P_DB_COL_NULLABLE = "vskg:nullable"
+  P_DB_COL_CARDINALITY = "vskg:cardinality"
   # META-MASHUP
   P_MASHU_CLASS = "vskg:mashupClass" 
   P_META_MASHUP_EXPORTED_VIEW_URI = "vskg:exportedViewURI"
@@ -234,6 +245,10 @@ class VSKG:
   #====================
   C_META_EKG = "vskg:MetadataGraphEKG"
   C_DATA_SOURCE = "dcat:DataAsset"
+  C_RDB = "http://rdbs-o#Relational_Database"
+  C_RDB_TABLE = "vskg:Table"
+  C_RDB_COLUMN = "vskg:Column"
+  C_CSV_FILE = "https://www.ntnu.no/ub/ontologies/csv#CsvDocument"
   C_EXPORTED_VIEW = "vskg:LocalGraph"
   
   C_META_MASHUP = "vskg:MetadataGraphMashup"
