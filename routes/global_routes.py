@@ -6,23 +6,49 @@ router = APIRouter()
 
 TAG = "Global" 
 
-@router.get("/classes/{classRDF}/resources/{page}", tags=[TAG])
-async def read_resources(classRDF:str, page:int):
+@router.get("/resources/", tags=[TAG])
+async def retrieve_resources(classURI:str, page:int):
     try:
-        response = global_controller.find_resources(classRDF, page)
+        response = global_controller.retrieve_resources(classURI, page)
         return response
     except Exception as err:
         return err
+    
 
 
-@router.get("/resource/{uri}/properties", tags=[TAG])
-async def read_resources(uri:str):
+@router.get("/resources/{uri}", tags=[TAG])
+async def retrieve_one_resource(uri:str):
+    """Usado quando clica em um owl:ObjectProperty que é só uma URI com o objetivo de retornar o recurso."""
+    try:
+        print('***')
+        response = global_controller.retrieve_one_resource(uri)
+        return response
+    except Exception as err:
+        return err
+    
+
+@router.get("/links/", tags=[TAG])
+async def retrieve_sameas(sameas:str):
+    """"""
+    try:
+        response = global_controller.retrieve_sameAs(sameas)
+        return response
+    except Exception as err:
+        return err
+    
+
+
+
+@router.get("/properties/", tags=[TAG])
+async def retrieve_properties(resourceURI:str):
     """Obtém as propriedades de um recurso."""
     try:
-        response = global_controller.read_properties_in_kg_metadata(uri)
+        response = global_controller.retrieve_properties_from_exported_view(resourceURI)
         return response
     except Exception as err:
         return err
+
+
 
 # @router.get("/properties/{uri}/{expand_sameas}", tags=[TAG])
 # async def get_properties(uri:str, expand_sameas:bool):

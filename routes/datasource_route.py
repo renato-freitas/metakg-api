@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from model.datasource_model import DataSourceModel
+from model.datasource_model import DataSourceModel, TableQualityModel
 from commons import NameSpaces as ns
 from controller import datasource_controller
 router = APIRouter()
@@ -30,7 +30,8 @@ async def create_datasource(data: DataSourceModel):
 
 @router.get("/datasources/", tags=[TAG])
 async def read_data_sources():
-    response = datasource_controller.read_resources()
+    print('*** ROUTE, read data sources')
+    response = datasource_controller.read_data_sources()
     return response
 
 
@@ -38,6 +39,7 @@ async def read_data_sources():
 async def read_properties(uri:str):
     """Obtém as propriedades de uma FD."""
     try:
+        print('*** ROUTE, read data sources properties')
         response = datasource_controller.read_properties(uri)
         # print('response ',response)
         return response
@@ -71,12 +73,23 @@ async def delete_table(uri:str):
 
 
     
+@router.get("/datasources/{uri}/schema/", tags=[TAG])
+async def get_tables_schemas(uri:str):
+    """ Obter o esquema de uma fonte de dados no grafo de metadados. """
+    try:
+        print('*** ROUTE, GET TABLES SCHEMAS ***')
+        response = datasource_controller.read_tables_schemas(uri)
+        return response
+    except Exception as err:
+        return err
+    
+
 
 @router.post("/datasources/{uri}/schema/", tags=[TAG])
 async def add_schema_metadata(uri:str):
     """ Obter e registrar o esquema de uma fonte de dados no kg de metadados. """
     try:
-        print('*** 1. router post ***')
+        print('*** ROUTE,  add schema ***')
         response = datasource_controller.add_schema_metadata(uri)
         # print('*** response',response)
         return response
@@ -84,15 +97,7 @@ async def add_schema_metadata(uri:str):
         return err
 
 
-@router.get("/datasources/{uri}/schema/", tags=[TAG])
-async def get_tables_schemas(uri:str):
-    """ Obter o esquema de uma fonte de dados no grafo de metadados. """
-    try:
-        print('*** 1. router get ***')
-        response = datasource_controller.read_tables_schemas(uri)
-        return response
-    except Exception as err:
-        return err
+
     
 
 @router.delete("/tables/{uri_table}", tags=[TAG])
@@ -108,6 +113,19 @@ async def delete_table(uri_table:str):
         return err
     
 
+
+@router.get("/datasources/{uri}/quality", tags=[TAG])
+async def quality_table(uri:str):
+    """Avalia a qualidade de um tabela"""
+    try:
+        print('*** ROUTE, QUALITY DATA SOURCE ***', uri)
+        response = datasource_controller.quality_datasource(uri)
+        return response
+    except Exception as err:
+        return err
+
+
+
 @router.get("/datasources/tables/{uri_table}/columns/", tags=[TAG])
 async def read_columns(uri_table:str):
     """ Ler colunas do tipo vskg:Column. """
@@ -117,6 +135,22 @@ async def read_columns(uri_table:str):
         return response
     except Exception as err:
         return err
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # @router.post("/datasources/record/")
 # def register_data_source(data: DataSource):
 #   """Por enquanto só relacional e csv"""

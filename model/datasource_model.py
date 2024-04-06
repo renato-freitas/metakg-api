@@ -22,3 +22,8 @@ class ColumnModel(ResourceModel):
     maxLength: Union[int, None] = None 
     datatype: Union[str, None] = None 
     
+
+class TableQualityModel(ResourceModel):
+    uri_datasource: str 
+    uri_table: str 
+    table_name: str

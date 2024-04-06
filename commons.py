@@ -3,6 +3,13 @@ import requests
 from unidecode import unidecode
 from models import DataSource, HighLevelMapping, DataProperty
 
+ENVIROMENT:str = "DEV"
+EKG:str = "EKG_CONTEXT"
+class TEXTS:  
+  def __init__(self): pass
+  GENERALIZATION = "0"
+  EXPORTED = "1"
+
   
 def transforma_basemodel_em_json(p):
   return dict(p)
@@ -130,6 +137,7 @@ class OperationalSystem:
 
 class Endpoint:
   def __init__(self): pass
+  PRODUCTION = "http://localhost:7200/repositories/metagraph"
   METAKG = "http://localhost:7200/repositories/metagraph"
   TIMELINE_TBOX = "http://localhost:7200/repositories/TIMELINE_TBOX"
   SEFAZMA_VEKG_ABOX = "http://10.33.96.18:7200/repositories/VEKG"
@@ -140,7 +148,7 @@ class EndpointDEV:
   def __init__(self): pass
   # ONTOLOGIA_DOMINIO = "http://localhost:7200/repositories/metagraph"
   METAKG = "http://localhost:7200/repositories/metagraph"
-  PRODUCTION = "http://localhost:7200/repositories/metagraph"
+  PRODUCTION = "http://localhost:7200/repositories/EKG_CONTEXT"
   TIMELINE_TBOX = "http://localhost:7200/repositories/TIMELINE_TBOX"
   SEFAZMA_VEKG_ABOX = "http://10.33.96.18:7200/repositories/VEKG"
   VSKG_ABOX = "http://localhost:7200/repositories/VSKG_ABOX" # só pra testar pegando os metaEKG
@@ -156,8 +164,9 @@ class EndpointDEV:
   HIGHLIGHT_CLASSES = ['http://xmlns.com/foaf/0.1/Organization','http://www.sefaz.ma.gov.br/ontology/Estabelecimento', 'http://xmlns.com/foaf/0.1/Person', 'http://www.sefaz.ma.gov.br/ontology/Sociedade'] #A list with URIs of highlighted classes
 
 class NamedGraph:
-   def __init__(self): pass
-   KG_METADATA = "http://localhost:7200/repositories/metagraph/rdf-graphs/KG-METADATA"
+  def __init__(self): pass
+  KG_METADATA = "http://localhost:7200/repositories/metagraph/rdf-graphs/KG-METADATA"
+  KG_TBOX = "http://www.sefaz.ma.gov.br/named-graph/TBOX"
 
 
 class NameSpaces:
@@ -244,7 +253,7 @@ class VSKG:
 
   #====================
   C_META_EKG = "vskg:MetadataGraphEKG"
-  C_DATA_SOURCE = "dcat:DataAsset"
+  C_DATA_SOURCE = "dcat:Dataset"
   C_RDB = "http://rdbs-o#Relational_Database"
   C_RDB_TABLE = "vskg:Table"
   C_RDB_COLUMN = "vskg:Column"

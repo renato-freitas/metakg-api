@@ -2,7 +2,8 @@ from urllib.parse import unquote_plus
 import api
 from commons import NameSpaces as ns, Prefixies, VSKG, EndpointDEV, NamedGraph
 from uuid import uuid4
-from model.datasource_model import DataSourceModel
+from model.datasource_model import DataSourceModel, TableQualityModel
+import pandas as pd
 
 def create(data: DataSourceModel):
     uuid = uuid4()
@@ -37,16 +38,16 @@ def create(data: DataSourceModel):
     return response
 
 
-def read_resources():
-    sparql = Prefixies.DATASOURCE + f""" SELECT * FROM <{NamedGraph.KG_METADATA}> {{ 
-            ?uri {VSKG.P_IS_A} {VSKG.C_DATA_SOURCE};
-                {VSKG.P_DATASOURCE_TYPE} ?type;
-                {VSKG.P_LABEL} ?label;
-                {VSKG.P_DC_DESCRIPTION} ?description.
-        }}
-        """
+def read_data_sources():
+    print('*** CONTROLLER, read data sources')
+    sparql = Prefixies.DATASOURCE + f"""SELECT * FROM <{NamedGraph.KG_METADATA}> {{ 
+        ?uri {VSKG.P_IS_A} {VSKG.C_DATA_SOURCE};
+            {VSKG.P_DATASOURCE_TYPE} ?type;
+            {VSKG.P_LABEL} ?label;
+            {VSKG.P_DC_DESCRIPTION} ?description.
+    }}"""
     query = {"query": sparql}
-    # print('CONSULTA SPARQL PARA OBTER AS FONTES DE DADOS', query)
+    print('*** CONTROLLER, sparql data sources', query['query'])
     response = api.execute_query_on_kg_metadata(query)
     return response
 
@@ -120,6 +121,7 @@ def delete(uri:str):
         return response
 
 def read_properties(uri:str):
+    print('*** CONTROLLER, read data source properties')
     uri_decoded = unquote_plus(uri)
     existe = api.check_resource_in_kg_metadata(uri_decoded) 
     if(existe is None):
@@ -163,18 +165,22 @@ def add_schema_metadata(uri:str):
 
 
 def read_tables_schemas(uri:str):
-    uri_decoded = unquote_plus(uri)
-    existe = api.check_resource_in_kg_metadata(uri_decoded)
+    """
+    - PARAMS: uri = URI encoded
+    """
+    print('*** CONTROLLER, READ TABLES SCHEMAS')
+    uri_datasource_decoded = unquote_plus(uri)
+    existe = api.check_resource_in_kg_metadata(uri_datasource_decoded)
     if(existe is None):
         return "not found"
     else:
         sparql = Prefixies.DATASOURCE + f""" SELECT * FROM <{NamedGraph.KG_METADATA}> {{ 
-            ?uri {VSKG.P_IS_A} {VSKG.C_RDB_TABLE};
-                {VSKG.P_LABEL} ?label;
+            <{uri_datasource_decoded}> {VSKG.P_DB_HAS_TABLE} ?uri.
+            ?uri {VSKG.P_LABEL} ?label.
         }}
         """
         query = {"query": sparql}
-        # print('*** query', query)
+        print('*** query', sparql)
         response = api.execute_query_on_kg_metadata(query)
         return response
          
@@ -242,6 +248,27 @@ def get_columns_schemas(uri_table:str):
 
 
 
+def quality_datasource(uri_datasource:str):
+    uri_datasource_decoded = unquote_plus(uri_datasource)
+    print('*** CONTROLLER, QUALITA DATA SOURCE ***', uri_datasource_decoded)
+    existe = api.check_resource_in_kg_metadata(uri_datasource_decoded) # Primeiro, pegar o recurso que existe
+    print('*** CONTROLLER, EXISTE ***', existe)
+    if(existe is None or len(existe) > 0):
+        print('*** recurso existe:', existe)
+        db_name, db_username, db_password, db_jdbc_driver, db_conn_url = api.RDB().get_credentials(uri_datasource_decoded)
+
+
+        # OBTER AS TABELAS DA FONTE DE DADOS
+        tables = read_tables_schemas(uri_datasource)
+        print('*** CONTROLLER, TABLES ****', tables)
+
+        # OBTER OS DADOS DA 1ª TABELA - TESTANDO
+        table_2 = tables[1]
+        
+        return db_conn_url, db_name, db_username, db_password
+    else:
+        print('não existe')
+        
 
 
 

@@ -3,7 +3,7 @@ import uuid
 import requests
 # from unidecode import unidecode
 from commons import Prefixies, NameSpaces as ns, Endpoint, EndpointDEV, Headers, Functions, VSKG as o, NamedGraph
-from commons import VSKG
+from commons import VSKG, ENVIROMENT
 from models import DataSource, MetaMashupModel, HighLevelMapping, DataProperty, AddGCLMashupModel, AssociaMetaEKGAoMetaMashupModel
 import psycopg2
 from sqlalchemy import create_engine, text
@@ -55,6 +55,46 @@ def delete_resource_metakg(query):
     except Exception as err:
         return err
 
+class Global:
+    def __init__(self): pass
+    endpoint = EndpointDEV.PRODUCTION if ENVIROMENT == "DEV" else Endpoint.PRODUCTION
+
+    def execute_sparql_query(self, query):
+        """Função genérica. Entrada: sparql. Saída: json."""
+        try:
+            result = requests.get(self.endpoint, params=query, headers=Headers.GET)
+            return result.json()['results']['bindings']
+        except Exception as err:
+            return err
+        
+
+    def get_properties(self, uri:str):
+        try:
+            sparql = f"""PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            PREFIX owl: <http://www.w3.org/2002/07/owl#>
+            SELECT ?p ?label ?o WHERE {{
+                    <{uri}> ?p ?o. 
+                    OPTIONAL {{
+        ?p rdfs:label ?_label.
+        FILTER(lang(?_label)="pt")    
+    }}
+    BIND(COALESCE(?_label,?p) AS ?label)
+    FILTER(!CONTAINS(STR(?o),"_:node") && !(?p = owl:topDataProperty) && !(?p = owl:sameAs))}}"""
+            r = requests.get(self.endpoint, params={'query': sparql}, headers=Headers.GET)
+            return agroup_properties(r.json()['results']['bindings'])
+        except Exception as err:
+            return err
+
+
+    def agroup_resources(self, resources):
+        agrouped = dict()
+        for resource in resources:
+            if not resource['origin']['value'] in agrouped:
+                agrouped[resource['origin']['value']] = []
+            agrouped[resource['origin']['value']].append(resource['target']['value'])
+        return agrouped
+
+
 
 # métodos globais
 def get_one_resource_kg_metadata(classe:str, label:str):
@@ -69,18 +109,26 @@ def get_one_resource_kg_metadata(classe:str, label:str):
     
 def check_resource_in_kg_metadata(uri:str):
     """Verifica se o recurso existe no grafo nomeado de metadados"""
-    sparql = Prefixies.DATASOURCE + f""" SELECT * FROM <{NamedGraph.KG_METADATA}> {{ 
+    print('*** API, CHECK IF RESOURCE EXISTS')
+    sparql = Prefixies.DATASOURCE + f"""SELECT * FROM <{NamedGraph.KG_METADATA}> {{ 
         <{uri}> ?p ?o. 
-    }} limit 1"""
+    }} LIMIT 1"""
     query = {"query": sparql}
+    print('*** API, query', sparql)
     response = execute_query_on_kg_metadata(query)
+    print('*** API, REPONSE ***',response)
     return response
 
 def execute_query_on_kg_metadata(query):
     """Função genérica. Entrada: sparql. Saída: json."""
     try:
-        r = requests.get(url=EndpointDEV.PRODUCTION, params=query, headers=Headers.GET)
-        return r.json()['results']['bindings']
+        print('*** API, EXECUTE QUERY ON KG METADATA ***')
+        r = requests.get(EndpointDEV.PRODUCTION, params=query, headers=Headers.GET)
+        print('*** API, RESPONSE ***', r.json()['results']['bindings'])
+        if(r.status_code == 200 or r.status_code == 201 or r.status_code == 204):
+            return r.json()['results']['bindings']
+        else:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Não foi criado!")
     except Exception as err:
         return err
 
@@ -99,16 +147,16 @@ def execute_sparql_query_in_kg_metadata(query):
         return err
     
 
-def execute_query_resources(query, enviroment="DEV"):
-    """Função genérica. Entrada: sparql. Saída: json."""
-    try:
-        if enviroment == "DEV":
-            r = requests.get(EndpointDEV.RESOURCES, params=query, headers=Headers.GET)
-        else:
-            r = requests.get(Endpoint.METAKG, params=query, headers=Headers.GET)
-        return r.json()['results']['bindings']
-    except Exception as err:
-        return err
+def agroup_properties(properties):
+    agrouped = dict()
+    for prop in properties:
+        if not prop['p']['value'] in agrouped:
+            agrouped[prop['p']['value']] = []
+        agrouped[prop['p']['value']].append([prop['o']['value'],[]])
+    return agrouped
+
+
+
 
 
 
@@ -163,6 +211,7 @@ def execute_query_resources(query, enviroment="DEV"):
 
 def get_properties_kg_metadata(uri:str):
     try:
+        print('*** API, GET PROPERTIES IN KG METADATA')
         sparql = f"""{Prefixies.DATASOURCE} SELECT DISTINCT ?p ?o FROM <{NamedGraph.KG_METADATA}> {{
                 <{uri}> ?p ?o. 
                 FILTER(?p != {VSKG.P_DB_HAS_TABLE})
@@ -300,6 +349,34 @@ def get_properties_datakg(uri:str, expand_sameas:bool):
     except Exception as err:
         return err
 
+
+class RDB:
+    def __init__(self): pass
+    def get_data_from_table(db_conn_url, db_name, db_username, db_password, table_name):
+        engine = create_engine(f"postgresql://{db_username}:{db_password}@{db_conn_url}:5432/{db_name}")
+        with engine.connect() as connection:
+            result = connection.execute(text(f"SELECT * FROM '{table_name}';"))
+            return result
+    
+    def get_credentials(self, uri_datasource):
+        props = get_properties_kg_metadata(uri_datasource) # para saber qual o tipo da fonte de dados
+        _datasourceType, db_name, db_username, db_password, db_jdbc_driver, db_conn_url = "","","","","",""
+        for p in props:
+            if p['o']['value'] == VSKG.C_RDB: 
+                _datasourceType = VSKG.C_RDB
+            elif p['o']['value'] == VSKG.C_CSV_FILE: 
+                _datasourceType = VSKG.C_CSV_FILE
+            elif p['p']['value'] == 'http://xmlns.com/foaf/0.1/name': 
+                db_name = p['o']['value']
+            elif p['p']['value'] == 'http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#username':
+                db_username = p['o']['value']
+            elif p['p']['value'] == 'http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#password':
+                db_password = p['o']['value']
+            elif p['p']['value'] == 'http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#jdbcDriver':
+                db_jdbc_driver = p['o']['value']
+            elif p['p']['value'] == 'http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#jdbcDSN':
+                db_conn_url = p['o']['value']
+        return db_conn_url, db_name, db_username, db_password, db_jdbc_driver
 
 class ExportedView:
     def __init__(self): pass
@@ -606,3 +683,20 @@ class KG_Metadata:
 
 # pymssql
 # engine = create_engine("mssql+pymssql://scott:tiger@hostname:port/dbname")
+        
+class Tbox:
+    def __init__(self): 
+        self.endpoint = EndpointDEV.PRODUCTION if ENVIROMENT == "DEV" else Endpoint.PRODUCTION
+
+    def execute_query(self, query):
+        """Função genérica. Entrada: sparql. Saída: json."""
+        try:
+            r = requests.get(self.endpoint, params=query, headers=Headers.GET)
+            # print('*** API, RESPONSE ***', r)
+            if(r.status_code == 200 or r.status_code == 201 or r.status_code == 204):
+                return r.json()['results']['bindings']
+            else:
+                # print(r.text)
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Não foi criado!")
+        except Exception as err:
+            return err       
