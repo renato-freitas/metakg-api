@@ -1,4 +1,5 @@
 from urllib.parse import quote_plus, unquote_plus
+from typing import Union
 import api
 from commons import NameSpaces as ns, Functions, Prefixies
 from uuid import uuid4
@@ -15,10 +16,10 @@ def check_resource(uri:str):
 
 
 
-def retrieve_resources(classRDF, page):
+def retrieve_resources(classRDF:str, page:int, rowPerPage:int, label:str):
     """Recupera recursos do repositório usando paginação. [falta testar paginação]"""
     print(f'*** RECUPERANDO RECURSOS DA CLASSE >>> {classRDF}')
-    offset = int(page) * 20
+    offset = page * rowPerPage
     uri_decoded = unquote_plus(classRDF)
 
     sparql = f"""
@@ -29,16 +30,17 @@ def retrieve_resources(classRDF, page):
             OPTIONAL{{
                 ?uri rdfs:label ?l.
             }}
+            FILTER(CONTAINS(LCASE(?l), "{label}"))
             BIND(COALESCE(?l,?uri) AS ?label)
             # FILTER(!CONTAINS(STR(?uri),"http://www.sefaz.ma.gov.br/resource/AppEndereco/"))
             # FILTER(!CONTAINS(STR(?uri),"http://www.sefaz.ma.gov.br/resource/AppRazaoSocial/"))
             # FILTER(!CONTAINS(STR(?uri),"http://www.sefaz.ma.gov.br/resource/AppNomeFantasia/"))
         }}
         ORDER BY ?label
-        LIMIT 20
+        LIMIT {rowPerPage}
         OFFSET {offset}
     """
-    # print(f'sparql: {sparql}')
+    print(f'sparql: {sparql}')
     result = api.Global().execute_sparql_query({"query": sparql})
     return result
 
@@ -94,6 +96,20 @@ SELECT ?origin ?target  where {{
         result = api.Global().agroup_resources(res)
         print('*** SAMEAS AGRUPADO >>> ', result)
         return result
+    
+
+
+
+
+def get_quantity_of_all_resources(classRDF:str):
+    uri_decoded = unquote_plus(classRDF)
+    sparql = f"""SELECT (COUNT(?r) AS ?total)
+WHERE {{
+  ?r a <{uri_decoded}> .
+}} """
+    print(f'sparql: {sparql}')
+    result = api.Global().execute_sparql_query({"query": sparql})
+    return int(result[0]['total']['value'])
 
 # def retrieve_properties(uri:str):
 #     uri_decoded = unquote_plus(uri)
