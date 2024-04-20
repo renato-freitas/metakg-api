@@ -16,7 +16,7 @@ PREFIX owl: <http://www.w3.org/2002/07/owl#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX sfz: <http://www.sefaz.ma.gov.br/ontology/>
 PREFIX : <http://www.sefaz.ma.gov.br/ontology/>
-SELECT ?class ?label (MAX(?__comment) as ?comment) FROM <""" +NamedGraph.KG_TBOX+"""> { 
+SELECT ?class ?label (MAX(?__comment) as ?comment) FROM <""" +NamedGraph.KG_TBOX_BIGDATAFORTALEZA+"""> { 
     {
         ?subclass rdfs:subClassOf ?class.
         ?class a owl:Class.
@@ -60,7 +60,7 @@ def retrieve_semantic_view_exported_classes():
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
-SELECT ?class ?label ?superclass (MAX(?__comment) as ?comment) FROM <""" +NamedGraph.KG_TBOX+"""> { 
+SELECT ?class ?label ?superclass (MAX(?__comment) as ?comment) FROM <""" +NamedGraph.KG_TBOX_BIGDATAFORTALEZA+"""> { 
     {
         ?class rdfs:subClassOf ?superclass.
     } 

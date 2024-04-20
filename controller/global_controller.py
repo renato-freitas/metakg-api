@@ -23,20 +23,22 @@ def retrieve_resources(classRDF:str, page:int, rowPerPage:int, label:str):
     uri_decoded = unquote_plus(classRDF)
 
     sparql = f"""
-        prefix owl: <http://www.w3.org/2002/07/owl#>
         prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        prefix owl: <http://www.w3.org/2002/07/owl#>
+        PREFIX dc: <http://purl.org/dc/elements/1.1/>
         select ?uri ?label where {{ 
-            ?uri a <{uri_decoded}>.
+            ?uri a <{uri_decoded}>; 
+                 dc:identifier ?id.
             OPTIONAL{{
                 ?uri rdfs:label ?l.
             }}
-            FILTER(CONTAINS(LCASE(?l), "{label}"))
+            FILTER(CONTAINS(LCASE(?l), "{label.lower()}"))
             BIND(COALESCE(?l,?uri) AS ?label)
             # FILTER(!CONTAINS(STR(?uri),"http://www.sefaz.ma.gov.br/resource/AppEndereco/"))
             # FILTER(!CONTAINS(STR(?uri),"http://www.sefaz.ma.gov.br/resource/AppRazaoSocial/"))
             # FILTER(!CONTAINS(STR(?uri),"http://www.sefaz.ma.gov.br/resource/AppNomeFantasia/"))
         }}
-        ORDER BY ?label
+        ORDER BY ?id
         LIMIT {rowPerPage}
         OFFSET {offset}
     """
@@ -79,11 +81,12 @@ def retrieve_sameAs(uri:str):
     else:
         sparql = f"""PREFIX owl: <http://www.w3.org/2002/07/owl#>
 SELECT ?origin ?target  where {{
+    BIND(<{uri_decoded}> AS ?origin)
     {{
 		<{uri_decoded}> owl:sameAs ?same_r .
 #        FILTER(!CONTAINS(STR(?same_r),"/resource/App")).
         BIND(?same_r AS ?target)
-        BIND(<{uri_decoded}> AS ?origin)
+        
     }}
     UNION 
     {{
@@ -101,11 +104,16 @@ SELECT ?origin ?target  where {{
 
 
 
-def get_quantity_of_all_resources(classRDF:str):
+def get_quantity_of_all_resources(classRDF:str, label:str):
+    # FILTER(lang(?_label)="") :: falta definir esse filtro. os dados estão sem @pt ou @en
     uri_decoded = unquote_plus(classRDF)
-    sparql = f"""SELECT (COUNT(?r) AS ?total)
-WHERE {{
-  ?r a <{uri_decoded}> .
+    filter = f"""FILTER(CONTAINS(LCASE(STR(?label)),"{label.lower()}"))""" if label is not None else ""  
+    sparql = f"""PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> 
+    SELECT (COUNT(?r) AS ?total) WHERE {{
+    ?r a <{uri_decoded}> .
+    OPTIONAL {{ ?r rdfs:label ?_label.  }}
+    BIND(COALESCE(?_label,?r) AS ?label)
+    {filter}
 }} """
     print(f'sparql: {sparql}')
     result = api.Global().execute_sparql_query({"query": sparql})
