@@ -4,6 +4,7 @@ import api
 from commons import NameSpaces as ns, Functions, Prefixies
 from uuid import uuid4
 from model.datasource_model import DataSourceModel
+from model.global_model import ResoucesSameAsModel
 
 def check_resource(uri:str):
     """Verifica se um recurso existe no repositório"""
@@ -71,7 +72,7 @@ def retrieve_properties_from_exported_view(uri:str):
         return result
 
 
-def retrieve_sameAs(uri:str):
+def retrieve_sameAs_resources(uri:str):
     """Recupera os recurso que tem link com a {uri}"""
     print('*** RECUPERANDO OS LINKS SAMEAS DO RECURSO')
     uri_decoded = unquote_plus(uri)
@@ -118,6 +119,33 @@ def get_quantity_of_all_resources(classRDF:str, label:str):
     print(f'sparql: {sparql}')
     result = api.Global().execute_sparql_query({"query": sparql})
     return int(result[0]['total']['value'])
+
+
+
+
+
+
+
+def retrieve_properties_from_unification_view(data:ResoucesSameAsModel):
+    if(data.resources is None):
+        return "not found"
+    else:
+        sparql = "PREFIX owl: <http://www.w3.org/2002/07/owl#>"
+        for key in data.resources:
+            sparql += f"""SELECT * WHERE {{ 
+        {{ <{key}> ?p ?o. }}
+        """
+            for value in data.resources[key]:
+                sparql += f""" UNION
+        {{ <{value}> ?p ?o. }}
+        FILTER(!CONTAINS(STR(?o),"_:node") && !(?p = owl:topDataProperty) && !(?p = owl:sameAs))
+    }}"""
+        result = api.Global().get_properties_from_sameAs_resources(sparql)
+    return result
+
+
+
+
 
 # def retrieve_properties(uri:str):
 #     uri_decoded = unquote_plus(uri)

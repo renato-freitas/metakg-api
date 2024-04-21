@@ -55,6 +55,10 @@ def delete_resource_metakg(query):
     except Exception as err:
         return err
 
+
+
+
+
 class Global:
     def __init__(self): pass
     endpoint = EndpointDEV.PRODUCTION if ENVIROMENT == "DEV" else Endpoint.PRODUCTION
@@ -85,7 +89,14 @@ class Global:
         except Exception as err:
             return err
 
-
+    def get_properties_from_sameAs_resources(self, sparql:str):
+        try:
+            r = requests.get(self.endpoint, params={'query': sparql}, headers=Headers.GET)
+            print('***', r)
+            return agroup_properties(r.json()['results']['bindings'])
+        except Exception as err:
+            return err
+        
     def agroup_resources(self, resources):
         agrouped = dict()
         for resource in resources:
@@ -93,6 +104,9 @@ class Global:
                 agrouped[resource['origin']['value']] = []
             agrouped[resource['origin']['value']].append(resource['target']['value'])
         return agrouped
+
+
+
 
 
 
