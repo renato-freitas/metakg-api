@@ -132,14 +132,23 @@ def retrieve_properties_from_unification_view(data:ResoucesSameAsModel):
     else:
         sparql = "PREFIX owl: <http://www.w3.org/2002/07/owl#>"
         for key in data.resources:
-            sparql += f"""SELECT * WHERE {{ 
-        {{ <{key}> ?p ?o. }}
+            sparql += f"""SELECT ?s ?p ?o WHERE {{ 
+        {{ 
+            <{key}> ?p ?o. 
+            BIND(STRAFTER("{key}", "resource/") AS ?_s)
+            BIND(STRBEFORE(STR(?_s), "/") AS ?s)
+        }}
         """
             for value in data.resources[key]:
                 sparql += f""" UNION
-        {{ <{value}> ?p ?o. }}
+        {{ 
+            <{value}> ?p ?o. 
+            BIND(STRAFTER("{value}", "resource/") AS ?_s)
+            BIND(STRBEFORE(STR(?_s), "/") AS ?s)
+        }}
         FILTER(!CONTAINS(STR(?o),"_:node") && !(?p = owl:topDataProperty) && !(?p = owl:sameAs))
     }}"""
+        print('*** sparql uv', sparql)
         result = api.Global().get_properties_from_sameAs_resources(sparql)
     return result
 

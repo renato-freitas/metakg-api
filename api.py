@@ -92,8 +92,8 @@ class Global:
     def get_properties_from_sameAs_resources(self, sparql:str):
         try:
             r = requests.get(self.endpoint, params={'query': sparql}, headers=Headers.GET)
-            print('***', r)
-            return agroup_properties(r.json()['results']['bindings'])
+            print('***', r.json()['results']['bindings'])
+            return agroup_properties_in_sameas(r.json()['results']['bindings'])
         except Exception as err:
             return err
         
@@ -167,6 +167,15 @@ def agroup_properties(properties):
         if not prop['p']['value'] in agrouped:
             agrouped[prop['p']['value']] = []
         agrouped[prop['p']['value']].append([prop['o']['value'],[]])
+    return agrouped
+
+
+def agroup_properties_in_sameas(properties):
+    agrouped = dict()
+    for prop in properties:
+        if not prop['p']['value'] in agrouped:
+            agrouped[prop['p']['value']] = []
+        agrouped[prop['p']['value']].append([prop['o']['value'], prop['s']['value']])
     return agrouped
 
 
