@@ -16,38 +16,38 @@ PREFIX owl: <http://www.w3.org/2002/07/owl#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX sfz: <http://www.sefaz.ma.gov.br/ontology/>
 PREFIX : <http://www.sefaz.ma.gov.br/ontology/>
-SELECT ?class ?label (MAX(?__comment) as ?comment) FROM <""" +NamedGraph.KG_TBOX_BIGDATAFORTALEZA+"""> { 
+SELECT ?classURI ?label (MAX(?__comment) as ?comment) FROM <""" +NamedGraph.KG_TBOX_BIGDATAFORTALEZA+"""> { 
     {
-        ?subclass rdfs:subClassOf ?class.
-        ?class a owl:Class.
+        ?subclass rdfs:subClassOf ?classURI.
+        ?classURI a owl:Class.
     } 
     UNION
     {
-        ?subclass rdfs:subClassOf ?class.
-        ?class a rdfs:Class.
+        ?subclass rdfs:subClassOf ?classURI.
+        ?classURI a rdfs:Class.
     }
     OPTIONAL
     {
-        ?class rdfs:label ?_label.
+        ?classURI rdfs:label ?_label.
         FILTER(lang(?_label)="pt")    
     }
     OPTIONAL
     {
-        ?class rdfs:comment ?_comment.
+        ?classURI rdfs:comment ?_comment.
         FILTER(lang(?_comment)="pt")
     }
     OPTIONAL
     {
-        ?class dcterms:description ?_description.
+        ?classURI dcterms:description ?_description.
         FILTER(lang(?_description)="pt")
     }
-    BIND(COALESCE(?_label,?class) AS ?label)
+    BIND(COALESCE(?_label,?classURI) AS ?label)
     BIND(COALESCE(?_comment,?_description) AS ?__comment)
-    FILTER(!CONTAINS(STR(?class),"http://www.w3.org/1999/02/22-rdf-syntax-ns#"))
-    FILTER(!CONTAINS(STR(?class),"http://www.w3.org/2000/01/rdf-schema#"))
-    FILTER(!CONTAINS(STR(?class),"http://www.w3.org/2001/XMLSchema#"))
-    FILTER(!CONTAINS(STR(?class),"http://www.w3.org/2002/07/owl#"))           
-} GROUP BY ?class ?label
+    FILTER(!CONTAINS(STR(?classURI),"http://www.w3.org/1999/02/22-rdf-syntax-ns#"))
+    FILTER(!CONTAINS(STR(?classURI),"http://www.w3.org/2000/01/rdf-schema#"))
+    FILTER(!CONTAINS(STR(?classURI),"http://www.w3.org/2001/XMLSchema#"))
+    FILTER(!CONTAINS(STR(?classURI),"http://www.w3.org/2002/07/owl#"))           
+} GROUP BY ?classURI ?label
 ORDER BY ?label"""
     result = api.Tbox().execute_query({"query": sparql})
     # print('***', result)

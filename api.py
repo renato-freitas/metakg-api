@@ -89,14 +89,16 @@ class Global:
         except Exception as err:
             return err
 
+
     def get_properties_from_sameAs_resources(self, sparql:str):
         try:
             r = requests.get(self.endpoint, params={'query': sparql}, headers=Headers.GET)
-            print('***', r.json()['results']['bindings'])
+            # print('***', r.json()['results']['bindings'])
             return agroup_properties_in_sameas(r.json()['results']['bindings'])
         except Exception as err:
             return err
         
+
     def agroup_resources(self, resources):
         agrouped = dict()
         for resource in resources:
@@ -161,6 +163,7 @@ def execute_sparql_query_in_kg_metadata(query):
         return err
     
 
+
 def agroup_properties(properties):
     agrouped = dict()
     for prop in properties:
@@ -170,18 +173,39 @@ def agroup_properties(properties):
     return agrouped
 
 
+
 def agroup_properties_in_sameas(properties):
-    agrouped = dict()
+    _agrouped = dict()
     for prop in properties:
-        if not prop['p']['value'] in agrouped:
-            agrouped[prop['p']['value']] = []
-        agrouped[prop['p']['value']].append([prop['o']['value'], prop['s']['value']])
+        if not prop['p']['value'] in _agrouped:
+            _agrouped[prop['p']['value']] = []
+        _agrouped[prop['p']['value']].append([prop['o']['value'], prop['s']['value']])
+    agrouped = verify_values_divergency(_agrouped)
     return agrouped
 
 
 
-
-
+def verify_values_divergency(agrouped_props):
+    _agrouped_props = dict()
+    for p in agrouped_props:
+        # print('- - - ',p)
+        _agrouped_props[p] = []
+        if (p != "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" and
+            p != "http://www.w3.org/2000/01/rdf-schema#label" and
+            p != "http://www.bigdatafortaleza.com/ontology#uri" and
+            p != "http://purl.org/dc/elements/1.1/identifier"):
+            current_value = agrouped_props[p][0][0]
+            for v in agrouped_props[p]:
+                print('*** ', current_value, v[0])
+                if (v[0] != current_value): 
+                    _agrouped_props[p].append([v[0], v[1], True])
+                else:
+                    _agrouped_props[p].append([v[0], v[1], False])
+            # _agrouped_props[p].append([p, p, False])
+        else:
+            _agrouped_props[p] = agrouped_props[p]
+    print('**** novo group: ',_agrouped_props)
+    return _agrouped_props
 
 # SELECT DISTINCT ?same ?p ?o 
 # FROM <http://localhost:7200/repositories/metagraph/rdf-graphs/KG-METADATA> {

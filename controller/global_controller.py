@@ -148,7 +148,7 @@ def retrieve_properties_from_unification_view(data:ResoucesSameAsModel):
         }}
         FILTER(!CONTAINS(STR(?o),"_:node") && !(?p = owl:topDataProperty) && !(?p = owl:sameAs))
     }}"""
-        print('*** sparql uv', sparql)
+        # print('*** sparql uv', sparql)
         result = api.Global().get_properties_from_sameAs_resources(sparql)
     return result
 

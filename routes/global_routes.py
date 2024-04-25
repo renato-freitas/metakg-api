@@ -9,10 +9,10 @@ router = APIRouter()
 TAG = "Global" 
 
 @router.get("/resources/", tags=[TAG])
-async def retrieve_resources(classURI:str, page:int, rowPerPage:int, label:str):
+async def retrieve_resources(classRDF:str, page:int, rowPerPage:int, label:str):
     try:
-        print('**** classe para encontrar recursos: ', classURI)
-        response = global_controller.retrieve_resources(classURI, page, rowPerPage, label)
+        print('**** classe para encontrar recursos: ', classRDF)
+        response = global_controller.retrieve_resources(classRDF, page, rowPerPage, label)
         return response
     except Exception as err:
         return err
