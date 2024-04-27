@@ -55,42 +55,73 @@ ORDER BY ?label"""
 
 
 
+
 def retrieve_semantic_view_exported_classes():
     sparql = """
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
-SELECT ?class ?label ?superclass (MAX(?__comment) as ?comment) FROM <""" +NamedGraph.KG_TBOX_BIGDATAFORTALEZA+"""> { 
-    {
-        ?class rdfs:subClassOf ?superclass.
-    } 
-    OPTIONAL
-    {
-        ?class rdfs:label ?_label.
-        FILTER(lang(?_label)="pt")    
+SELECT ?classURI ?label ?superclass (MAX(?__comment) as ?comment) FROM <""" +NamedGraph.KG_TBOX_BIGDATAFORTALEZA+"""> { 
+    ?classURI rdf:type owl:Class.
+    MINUS { ?sub rdfs:subClassOf ?classURI. }
+    OPTIONAL { 
+        ?classURI rdfs:label ?_label. 
+        FILTER(lang(?_label)="pt")
     }
-    OPTIONAL
-    {
-        ?class rdfs:comment ?_comment.
+    OPTIONAL { 
+        ?classURI rdfs:comment ?_comment. 
         FILTER(lang(?_comment)="pt")
     }
     OPTIONAL
     {
-        ?class dcterms:description ?_description.
+        ?classURI dcterms:description ?_description.
         FILTER(lang(?_description)="pt")
     }
-    BIND(COALESCE(?_label,?class) AS ?label)
+    BIND(COALESCE(?_label,?classURI) AS ?label)
     BIND(COALESCE(?_comment,?_description) AS ?__comment)
-    FILTER(!CONTAINS(STR(?superclass),"_:node"))
-    FILTER(!CONTAINS(STR(?class),"http://www.w3.org/1999/02/22-rdf-syntax-ns#"))
-    FILTER(!CONTAINS(STR(?class),"http://www.w3.org/2000/01/rdf-schema#"))
-    FILTER(!CONTAINS(STR(?class),"http://www.w3.org/2001/XMLSchema#"))
-    FILTER(!CONTAINS(STR(?class),"http://www.w3.org/2002/07/owl#"))           
-} GROUP BY ?class ?label ?superclass
+    FILTER(!CONTAINS(STR(?classURI),"_:node"))
+} 
+GROUP BY ?classURI ?label ?superclass ?sub
 ORDER BY ?label"""
-    result = api.Tbox().execute_query({"query": sparql})
-    # print('***', result)
-    return result
+    return api.Tbox().execute_query({"query": sparql})
+
+# VERSÃO ANTIGA
+# def retrieve_semantic_view_exported_classes():
+#     sparql = """
+# PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+# PREFIX owl: <http://www.w3.org/2002/07/owl#>
+# PREFIX dcterms: <http://purl.org/dc/terms/>
+# SELECT ?class ?label ?superclass (MAX(?__comment) as ?comment) FROM <""" +NamedGraph.KG_TBOX_BIGDATAFORTALEZA+"""> { 
+#     {
+#         ?class rdfs:subClassOf ?superclass.
+#     } 
+#     OPTIONAL
+#     {
+#         ?class rdfs:label ?_label.
+#         FILTER(lang(?_label)="pt")    
+#     }
+#     OPTIONAL
+#     {
+#         ?class rdfs:comment ?_comment.
+#         FILTER(lang(?_comment)="pt")
+#     }
+#     OPTIONAL
+#     {
+#         ?class dcterms:description ?_description.
+#         FILTER(lang(?_description)="pt")
+#     }
+#     BIND(COALESCE(?_label,?class) AS ?label)
+#     BIND(COALESCE(?_comment,?_description) AS ?__comment)
+#     FILTER(!CONTAINS(STR(?superclass),"_:node"))
+#     FILTER(!CONTAINS(STR(?class),"http://www.w3.org/1999/02/22-rdf-syntax-ns#"))
+#     FILTER(!CONTAINS(STR(?class),"http://www.w3.org/2000/01/rdf-schema#"))
+#     FILTER(!CONTAINS(STR(?class),"http://www.w3.org/2001/XMLSchema#"))
+#     FILTER(!CONTAINS(STR(?class),"http://www.w3.org/2002/07/owl#"))           
+# } GROUP BY ?class ?label ?superclass
+# ORDER BY ?label"""
+#     result = api.Tbox().execute_query({"query": sparql})
+#     # print('***', result)
+#     return result
 
 # def find_resources(classRDF, page):
 #     offset = int(page) * 50

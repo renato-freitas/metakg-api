@@ -19,7 +19,7 @@ def check_resource(uri:str):
 
 def retrieve_resources(classRDF:str, page:int, rowPerPage:int, label:str):
     """Recupera recursos do repositório usando paginação. [falta testar paginação]"""
-    print(f'*** RECUPERANDO RECURSOS DA CLASSE >>> {classRDF}')
+    # print(f'*** RECUPERANDO RECURSOS DA CLASSE >>> {classRDF}')
     offset = page * rowPerPage
     uri_decoded = unquote_plus(classRDF)
 
@@ -124,7 +124,7 @@ def get_quantity_of_all_resources(classRDF:str, label:str):
 
 
 
-
+# OPTIONAL { ?r rdfs:label ?_label.  }
 
 def retrieve_properties_from_unification_view(data:ResoucesSameAsModel):
     if(data.resources is None):
@@ -132,11 +132,16 @@ def retrieve_properties_from_unification_view(data:ResoucesSameAsModel):
     else:
         sparql = "PREFIX owl: <http://www.w3.org/2002/07/owl#>"
         for key in data.resources:
-            sparql += f"""SELECT ?s ?p ?o WHERE {{ 
+            sparql += f"""SELECT ?s ?p ?o ?label WHERE {{ 
         {{ 
             <{key}> ?p ?o. 
             BIND(STRAFTER("{key}", "resource/") AS ?_s)
             BIND(STRBEFORE(STR(?_s), "/") AS ?s)
+            OPTIONAL {{
+                ?p rdfs:label ?_label. 
+                FILTER(lang(?_label)="pt") 
+            }}
+            BIND(COALESCE(?_label,?p) AS ?label)
         }}
         """
             for value in data.resources[key]:
@@ -145,10 +150,15 @@ def retrieve_properties_from_unification_view(data:ResoucesSameAsModel):
             <{value}> ?p ?o. 
             BIND(STRAFTER("{value}", "resource/") AS ?_s)
             BIND(STRBEFORE(STR(?_s), "/") AS ?s)
+            OPTIONAL {{
+                ?p rdfs:label ?_label. 
+                FILTER(lang(?_label)="pt") 
+            }}
+            BIND(COALESCE(?_label,?p) AS ?label)
         }}
         FILTER(!CONTAINS(STR(?o),"_:node") && !(?p = owl:topDataProperty) && !(?p = owl:sameAs))
     }}"""
-        # print('*** sparql uv', sparql)
+        print('*** sparql uv', sparql)
         result = api.Global().get_properties_from_sameAs_resources(sparql)
     return result
 

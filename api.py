@@ -83,7 +83,9 @@ class Global:
         FILTER(lang(?_label)="pt")    
     }}
     BIND(COALESCE(?_label,?p) AS ?label)
-    FILTER(!CONTAINS(STR(?o),"_:node") && !(?p = owl:topDataProperty) && !(?p = owl:sameAs))}}"""
+    FILTER(!(?p = owl:topDataProperty) && !(?p = owl:sameAs))}}
+    ORDER BY ?p"""
+    # FILTER(!CONTAINS(STR(?o),"_:node") && !(?p = owl:topDataProperty) && !(?p = owl:sameAs))}}"""
             r = requests.get(self.endpoint, params={'query': sparql}, headers=Headers.GET)
             return agroup_properties(r.json()['results']['bindings'])
         except Exception as err:
@@ -167,9 +169,9 @@ def execute_sparql_query_in_kg_metadata(query):
 def agroup_properties(properties):
     agrouped = dict()
     for prop in properties:
-        if not prop['p']['value'] in agrouped:
-            agrouped[prop['p']['value']] = []
-        agrouped[prop['p']['value']].append([prop['o']['value'],[]])
+        if not prop['label']['value'] in agrouped:
+            agrouped[prop['label']['value']] = []
+        agrouped[prop['label']['value']].append([prop['o']['value'],[]])
     return agrouped
 
 
@@ -177,9 +179,9 @@ def agroup_properties(properties):
 def agroup_properties_in_sameas(properties):
     _agrouped = dict()
     for prop in properties:
-        if not prop['p']['value'] in _agrouped:
-            _agrouped[prop['p']['value']] = []
-        _agrouped[prop['p']['value']].append([prop['o']['value'], prop['s']['value']])
+        if not prop['label']['value'] in _agrouped:
+            _agrouped[prop['label']['value']] = []
+        _agrouped[prop['label']['value']].append([prop['o']['value'], prop['s']['value']])
     agrouped = verify_values_divergency(_agrouped)
     return agrouped
 
@@ -196,7 +198,7 @@ def verify_values_divergency(agrouped_props):
             p != "http://purl.org/dc/elements/1.1/identifier"):
             current_value = agrouped_props[p][0][0]
             for v in agrouped_props[p]:
-                print('*** ', current_value, v[0])
+                # print('*** ', current_value, v[0])
                 if (v[0] != current_value): 
                     _agrouped_props[p].append([v[0], v[1], True])
                 else:
