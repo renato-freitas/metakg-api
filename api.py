@@ -84,7 +84,7 @@ class Global:
     }}
     BIND(COALESCE(?_label,?p) AS ?label)
     FILTER(!(?p = owl:topDataProperty) && !(?p = owl:sameAs))}}
-    ORDER BY ?p"""
+    ORDER BY ?label"""
     # FILTER(!CONTAINS(STR(?o),"_:node") && !(?p = owl:topDataProperty) && !(?p = owl:sameAs))}}"""
             r = requests.get(self.endpoint, params={'query': sparql}, headers=Headers.GET)
             return agroup_properties(r.json()['results']['bindings'])
@@ -189,23 +189,23 @@ def agroup_properties_in_sameas(properties):
 
 def verify_values_divergency(agrouped_props):
     _agrouped_props = dict()
-    for p in agrouped_props:
+    for prop in agrouped_props:
         # print('- - - ',p)
-        _agrouped_props[p] = []
-        if (p != "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" and
-            p != "http://www.w3.org/2000/01/rdf-schema#label" and
-            p != "http://www.bigdatafortaleza.com/ontology#uri" and
-            p != "http://purl.org/dc/elements/1.1/identifier"):
-            current_value = agrouped_props[p][0][0]
-            for v in agrouped_props[p]:
+        _agrouped_props[prop] = []
+        if (prop != "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" and
+            prop != "http://www.w3.org/2000/01/rdf-schema#label" and
+            prop != "http://www.bigdatafortaleza.com/ontology#uri" and
+            prop != "http://purl.org/dc/elements/1.1/identifier"):
+            current_value = agrouped_props[prop][0][0]
+            for dado in agrouped_props[prop]:
                 # print('*** ', current_value, v[0])
-                if (v[0] != current_value): 
-                    _agrouped_props[p].append([v[0], v[1], True])
+                if (dado[0] != current_value and "http://" not in dado[0]): 
+                    _agrouped_props[prop].append([dado[0], dado[1], True])
                 else:
-                    _agrouped_props[p].append([v[0], v[1], False])
+                    _agrouped_props[prop].append([dado[0], dado[1], False])
             # _agrouped_props[p].append([p, p, False])
         else:
-            _agrouped_props[p] = agrouped_props[p]
+            _agrouped_props[prop] = agrouped_props[prop]
     print('**** novo group: ',_agrouped_props)
     return _agrouped_props
 
