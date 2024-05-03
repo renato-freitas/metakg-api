@@ -9,14 +9,16 @@ from model.datasource_model import DataSourceModel
 from model.meta_mashup_model import MetaMashupModel, AddExporteViewsModel, AddSparqlQueryParamsModel
 
 
-def retrieve_generalization_classes():
+def retrieve_generalization_classes(repo:str):
     sparql = """
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+PREFIX schema: <http://schema.org/>
 PREFIX sfz: <http://www.sefaz.ma.gov.br/ontology/>
 PREFIX : <http://www.sefaz.ma.gov.br/ontology/>
-SELECT ?classURI ?label (MAX(?__comment) as ?comment) FROM <""" +NamedGraph.KG_TBOX_BIGDATAFORTALEZA+"""> { 
+SELECT ?classURI ?label (MAX(?__comment) as ?comment) ?image FROM <""" +NamedGraph(repo).TBOX+"""> { 
     {
         ?subclass rdfs:subClassOf ?classURI.
         ?classURI a owl:Class.
@@ -41,27 +43,82 @@ SELECT ?classURI ?label (MAX(?__comment) as ?comment) FROM <""" +NamedGraph.KG_T
         ?classURI dcterms:description ?_description.
         FILTER(lang(?_description)="pt")
     }
+    OPTIONAL
+    {
+        ?subclass rdfs:subClassOf ?classURI.
+        ?classURI foaf:img ?image.
+    }
+    OPTIONAL
+    {
+        ?subclass rdfs:subClassOf ?classURI.
+        ?classURI schema:thumbnail ?image.
+    }
     BIND(COALESCE(?_label,?classURI) AS ?label)
     BIND(COALESCE(?_comment,?_description) AS ?__comment)
     FILTER(!CONTAINS(STR(?classURI),"http://www.w3.org/1999/02/22-rdf-syntax-ns#"))
     FILTER(!CONTAINS(STR(?classURI),"http://www.w3.org/2000/01/rdf-schema#"))
     FILTER(!CONTAINS(STR(?classURI),"http://www.w3.org/2001/XMLSchema#"))
     FILTER(!CONTAINS(STR(?classURI),"http://www.w3.org/2002/07/owl#"))           
-} GROUP BY ?classURI ?label
+} GROUP BY ?classURI ?label ?image
 ORDER BY ?label"""
-    result = api.Tbox().execute_query({"query": sparql})
+    print(sparql)
+    print(repo)
+    result = api.Tbox(repo).execute_query({"query": sparql})
+    # result = api.Tbox().execute_query({"query": sparql}, repo)
     # print('***', result)
     return result
 
 
 
 
-def retrieve_semantic_view_exported_classes():
+def retrieve_semantic_view_exported_classes(repo:str):
     sparql = """
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
-SELECT ?classURI ?label ?superclass (MAX(?__comment) as ?comment) FROM <""" +NamedGraph.KG_TBOX_BIGDATAFORTALEZA+"""> { 
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+PREFIX schema: <http://schema.org/>
+SELECT ?classURI ?label ?superclass (MAX(?__comment) as ?comment) ?image FROM <""" +NamedGraph(repo).TBOX+"""> { 
+    ?classURI rdf:type owl:Class.
+    MINUS { ?sub rdfs:subClassOf ?classURI. }
+    OPTIONAL { 
+        ?classURI rdfs:label ?_label. 
+        FILTER(lang(?_label)="pt")
+    }
+    OPTIONAL { 
+        ?classURI rdfs:comment ?_comment. 
+        FILTER(lang(?_comment)="pt")
+    }
+    OPTIONAL
+    {
+        ?classURI dcterms:description ?_description.
+        FILTER(lang(?_description)="pt")
+    }
+    OPTIONAL
+    {
+        ?classURI foaf:img ?image.
+    }
+    OPTIONAL
+    {
+        ?classURI schema:thumbnail ?image.
+    }
+    BIND(COALESCE(?_label,?classURI) AS ?label)
+    BIND(COALESCE(?_comment,?_description) AS ?__comment)
+    FILTER(!CONTAINS(STR(?classURI),"_:node"))
+} 
+GROUP BY ?classURI ?label ?superclass ?sub ?image
+ORDER BY ?label"""
+    return api.Tbox(repo).execute_query({"query": sparql})
+
+
+def retrieve_metadata_classes(repo:str):
+    sparql = """
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+PREFIX schema: <http://schema.org/>
+SELECT ?classURI ?label ?superclass (MAX(?__comment) as ?comment) FROM <""" +NamedGraph(repo).TBOX_METADATA+"""> { 
     ?classURI rdf:type owl:Class.
     MINUS { ?sub rdfs:subClassOf ?classURI. }
     OPTIONAL { 
@@ -83,7 +140,7 @@ SELECT ?classURI ?label ?superclass (MAX(?__comment) as ?comment) FROM <""" +Nam
 } 
 GROUP BY ?classURI ?label ?superclass ?sub
 ORDER BY ?label"""
-    return api.Tbox().execute_query({"query": sparql})
+    return api.Tbox(repo).execute_query({"query": sparql})
 
 # VERSÃO ANTIGA
 # def retrieve_semantic_view_exported_classes():

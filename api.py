@@ -11,25 +11,6 @@ import pandas as pd
 
 ENVIROMENT = "DEV"
 
-def create_resource_kg_metadata(sparql, classe, label):
-    try:
-        # verificar se o recurso já existe, pela URI (genérico)
-        existe = get_one_resource_kg_metadata(classe, label)
-
-        if (len(existe) > 0):
-            # print('O RECURSO JÁ EXISTE', existe)
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Um recurso dessa classe com essa label já existe!")
-        
-        r = requests.post(Endpoint.METAKG + "/statements", params=sparql, headers=Headers.POST)
-        # print('response', r)
-        if(r.status_code == 200 or r.status_code == 201 or r.status_code == 204):
-            return {"code": 204, "message": "Criado com Sucesso!"}
-        else:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Não foi criado!")
-    except Exception as err:
-        # print('EXCEÇÃO', err)
-        return err
-
 def read_resources_metakg(query):
     try:
         r = requests.get(Endpoint.METAKG, params=query, headers=Headers.GET)
@@ -60,8 +41,8 @@ def delete_resource_metakg(query):
 
 
 class Global:
-    def __init__(self): pass
-    endpoint = EndpointDEV.PRODUCTION if ENVIROMENT == "DEV" else Endpoint.PRODUCTION
+    def __init__(self, repo:str): 
+        self.endpoint = EndpointDEV(repo).PRODUCTION if ENVIROMENT == "DEV" else Endpoint.PRODUCTION
 
     def execute_sparql_query(self, query):
         """Função genérica. Entrada: sparql. Saída: json."""
@@ -110,8 +91,52 @@ class Global:
         return agrouped
 
 
+class KG_Metadata:
+    def __init__(self, repo): 
+        self.endpoint = EndpointDEV(repo).PRODUCTION if ENVIROMENT == "DEV" else Endpoint.PRODUCTION
 
+    def add_rdf(self, rdf:str):
+        try:
+            r = requests.post(url=f"http://localhost:7200/repositories/metagraph/rdf-graphs/KG-METADATA", data=rdf, headers=Headers.POST_KG_METADATA)
+            print('*** r',r)
+            if(r.status_code == 200 or r.status_code == 201 or r.status_code == 204):
+                return {"code": 204, "message": "Criado com Sucesso!"}
+            else:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Não foi criado!")
+        except Exception as err:
+            return err
 
+    def create_resource(self, sparql, classe, label):
+        try:
+            # verificar se o recurso já existe, pela URI (genérico)
+            existe = get_one_resource_kg_metadata(classe, label)
+
+            if (len(existe) > 0):
+                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Um recurso dessa classe com essa label já existe!")
+            
+            r = requests.post(self.endpoint + "/statements", params=sparql, headers=Headers.POST)
+            # print('response', r)
+            if(r.status_code == 200 or r.status_code == 201 or r.status_code == 204):
+                return {"code": 204, "message": "Criado com Sucesso!"}
+            else:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Não foi criado!")
+        except Exception as err:
+            # print('EXCEÇÃO', err)
+            return err
+
+    def check_resource(self, resourceURI:str):
+        """Verifica se o recurso existe no grafo nomeado de metadados"""
+        print('*** API, CHECK IF RESOURCE EXISTS')
+        sparql = Prefixies.DATASOURCE + f"""SELECT * FROM <{NamedGraph.KG_METADATA}> {{ 
+            <{resourceURI}> ?p ?o. 
+        }} LIMIT 1"""
+        query = {"query": sparql}
+        print('*** API, query', sparql)
+        try:
+            result = requests.get(self.endpoint, params=query, headers=Headers.GET)
+            return result.json()['results']['bindings']
+        except Exception as err:
+            return err
 
 
 # métodos globais
@@ -120,11 +145,12 @@ def get_one_resource_kg_metadata(classe:str, label:str):
         sparql = Prefixies.ALL + \
             f"""SELECT DISTINCT ?l FROM <{NamedGraph.KG_METADATA}> {{ ?s a {classe}; rdfs:label "{label}". }}"""
         query = {'query': sparql}
-        response = requests.get(Endpoint.METAKG, params=query, headers=Headers.GET)
+        response = requests.get(EndpointDEV.PRODUCTION, params=query, headers=Headers.GET)
         return response.json()['results']['bindings']
     except Exception as err:
         return err
     
+
 def check_resource_in_kg_metadata(uri:str):
     """Verifica se o recurso existe no grafo nomeado de metadados"""
     print('*** API, CHECK IF RESOURCE EXISTS')
@@ -133,9 +159,16 @@ def check_resource_in_kg_metadata(uri:str):
     }} LIMIT 1"""
     query = {"query": sparql}
     print('*** API, query', sparql)
-    response = execute_query_on_kg_metadata(query)
-    print('*** API, REPONSE ***',response)
-    return response
+    # response = execute_query_on_kg_metadata(query)
+    # response =   execute_sparql_query(query)
+    try:
+        result = requests.get(self.endpoint, params=query, headers=Headers.GET)
+        return result.json()['results']['bindings']
+        print('*** API, REPONSE ***',response)
+        return response
+    except Exception as err:
+        return err
+
 
 def execute_query_on_kg_metadata(query):
     """Função genérica. Entrada: sparql. Saída: json."""
@@ -149,6 +182,7 @@ def execute_query_on_kg_metadata(query):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Não foi criado!")
     except Exception as err:
         return err
+
 
 def execute_sparql_query_in_kg_metadata(query):
     """Função genérica. Entrada: sparql. Saída: json."""
@@ -260,13 +294,13 @@ def verify_values_divergency(agrouped_props):
 
 def get_properties_kg_metadata(uri:str):
     try:
-        print('*** API, GET PROPERTIES IN KG METADATA')
-        sparql = f"""{Prefixies.DATASOURCE} SELECT DISTINCT ?p ?o FROM <{NamedGraph.KG_METADATA}> {{
-                <{uri}> ?p ?o. 
-                FILTER(?p != {VSKG.P_DB_HAS_TABLE})
-            }}
-            ORDER BY ?same ?p"""
-        query = {'query': sparql}
+        # print('*** API, GET PROPERTIES IN KG METADATA')
+        # sparql = f"""{Prefixies.DATASOURCE} SELECT DISTINCT ?p ?o FROM <{NamedGraph.KG_METADATA}> {{
+        #         <{uri}> ?p ?o. 
+        #         FILTER(?p != {VSKG.P_DB_HAS_TABLE})
+        #     }}
+        #     ORDER BY ?same ?p"""
+        # query = {'query': sparql}
         # print('*** query', query)
         r = requests.get(EndpointDEV.PRODUCTION, params=query, headers=Headers.GET)
         # print('*** resulta get properties:',r.json())
@@ -400,7 +434,8 @@ def get_properties_datakg(uri:str, expand_sameas:bool):
 
 
 class RDB:
-    def __init__(self): pass
+    def __init__(self, repo): 
+        self.endpoint = EndpointDEV(repo).PRODUCTION if ENVIROMENT == "DEV" else Endpoint.PRODUCTION
     def get_data_from_table(db_conn_url, db_name, db_username, db_password, table_name):
         engine = create_engine(f"postgresql://{db_username}:{db_password}@{db_conn_url}:5432/{db_name}")
         with engine.connect() as connection:
@@ -428,7 +463,8 @@ class RDB:
         return db_conn_url, db_name, db_username, db_password, db_jdbc_driver
 
 class ExportedView:
-    def __init__(self): pass
+    def __init__(self, repo): 
+        self.endpoint = EndpointDEV(repo).PRODUCTION if ENVIROMENT == "DEV" else Endpoint.PRODUCTION
 
     def get_datasource_properties(self, exported_view_uri:str):
         try:
@@ -450,7 +486,8 @@ class ExportedView:
             return err
 
 class MetaMashup:
-    def __init__(self): pass
+    def __init__(self, repo): 
+        self.endpoint = EndpointDEV(repo).PRODUCTION if ENVIROMENT == "DEV" else Endpoint.PRODUCTION
 
 
     def cria_um_recurso_meta_mashup(self, obj: MetaMashupModel):
@@ -622,7 +659,8 @@ class MetaMashup:
 
 
 class MetaEKG:
-    def __init__(self): pass
+    def __init__(self, repo): 
+        self.endpoint = EndpointDEV(repo).PRODUCTION if ENVIROMENT == "DEV" else Endpoint.PRODUCTION
 
     # Genérica
     def lista_recursos_meta_ekg(self):
@@ -700,19 +738,7 @@ class MetaEKG:
         
 
 
-class KG_Metadata:
-    def __init__(self): pass
 
-    def add_rdf(self, rdf:str):
-        try:
-            r = requests.post(url=f"http://localhost:7200/repositories/metagraph/rdf-graphs/KG-METADATA", data=rdf, headers=Headers.POST_KG_METADATA)
-            print('*** r',r)
-            if(r.status_code == 200 or r.status_code == 201 or r.status_code == 204):
-                return {"code": 204, "message": "Criado com Sucesso!"}
-            else:
-                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Não foi criado!")
-        except Exception as err:
-            return err
 
 # default
 # engine = create_engine("mysql://scott:tiger@localhost/foo")
@@ -734,14 +760,14 @@ class KG_Metadata:
 # engine = create_engine("mssql+pymssql://scott:tiger@hostname:port/dbname")
         
 class Tbox:
-    def __init__(self): 
-        self.endpoint = EndpointDEV.PRODUCTION if ENVIROMENT == "DEV" else Endpoint.PRODUCTION
+    def __init__(self, repo): 
+        self.endpoint = EndpointDEV(repo).PRODUCTION if ENVIROMENT == "DEV" else Endpoint.PRODUCTION
 
     def execute_query(self, query):
         """Função genérica. Entrada: sparql. Saída: json."""
         try:
+            print('*** API.TBOX, REPO ***', self.endpoint)
             r = requests.get(self.endpoint, params=query, headers=Headers.GET)
-            # print('*** API, RESPONSE ***', r)
             if(r.status_code == 200 or r.status_code == 201 or r.status_code == 204):
                 return r.json()['results']['bindings']
             else:
@@ -749,3 +775,20 @@ class Tbox:
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Não foi criado!")
         except Exception as err:
             return err       
+        
+
+
+class Repository:
+    def __init__(self): 
+        self.endpoint = EndpointDEV().REPOSITORIES if ENVIROMENT == "DEV" else Endpoint.PRODUCTION
+
+    def retrieve_all(self):
+        """"""
+        try:
+            r = requests.get(self.endpoint, headers=Headers.GET)
+            if(r.status_code == 200 or r.status_code == 201 or r.status_code == 204):
+                return r.json()['results']['bindings']
+            else:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Não foi criado!")
+        except Exception as err:
+            return err  

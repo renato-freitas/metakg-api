@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Header
 from model.datasource_model import DataSourceModel, TableQualityModel
 from commons import NameSpaces as ns
 from controller import datasource_controller
@@ -22,6 +22,7 @@ async def create_datasource(data: DataSourceModel):
     No MetaEKG teremos as FD.
     """
     try:
+        print('**** fonte de dados',data)
         response = datasource_controller.create(data)
         return response
     except Exception as err:
@@ -29,18 +30,19 @@ async def create_datasource(data: DataSourceModel):
 
 
 @router.get("/datasources/", tags=[TAG])
-async def read_data_sources():
-    print('*** ROUTE, read data sources')
-    response = datasource_controller.read_data_sources()
+async def read_datasources(repo:str=Header(default=None)):
+    # print('*** ROUTE, read data sources')
+    print('**** DATASOURCE/REPO', repo)
+    response = datasource_controller.read_datasources(repo)
     return response
 
 
-@router.get("/datasources/{uri}/properties/", tags=[TAG])
-async def read_properties(uri:str):
+@router.get("/datasources/properties/", tags=[TAG])
+async def read_properties(resourceURI:str):
     """Obtém as propriedades de uma FD."""
     try:
         print('*** ROUTE, read data sources properties')
-        response = datasource_controller.read_properties(uri)
+        response = datasource_controller.read_properties(resourceURI)
         # print('response ',response)
         return response
     except Exception as err:

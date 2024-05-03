@@ -8,18 +8,16 @@ import pandas as pd
 def create(data: DataSourceModel):
     uuid = uuid4()
     uri = f'{ns.META_EKG}DataSource/{uuid}'
-
-    query = Prefixies.DATASOURCE + f"""INSERT DATA {{
+    sparql = Prefixies.DATASOURCE + f"""INSERT DATA {{
         <{NamedGraph.KG_METADATA}> {{
         <{uri}> {VSKG.P_IS_A} {VSKG.C_DATA_SOURCE}; 
             {VSKG.P_LABEL} "{data.label}"; 
             {VSKG.P_NAME} "{data.name}"; 
-            {VSKG.P_DC_DESCRIPTION} "{data.description}";
-            {VSKG.P_DATASOURCE_TYPE} "{data.type}";
-        """
+            {VSKG.P_DCTERMS_DESCRIPTION} "{data.description}";
+            {VSKG.P_DATASOURCE_TYPE} "{data.type}";"""
     
     if data.type == VSKG.C_RDB :
-        query += f"""
+        sparql += f"""
             {VSKG.P_DB_CONNECTION_URL} "{data.connection_url}";    
             {VSKG.P_DB_USERNAME} "{data.username}";
             {VSKG.P_DB_PASSWORD} "{data.password}";
@@ -27,28 +25,42 @@ def create(data: DataSourceModel):
         }}
         }}"""
     elif data.type == VSKG.C_CSV_FILE:
-        query += f"""
+        sparql += f"""
             {VSKG.P_CSV_FILE_PATH} "{data.csv_file}". 
         }}
-        }}"""
+    }}"""
 
-    sparql = {"update": query}
+    query = {"update": sparql}
     print('*** RDF QUE SERÁ INSERIDO', sparql)
-    response = api.create_resource_kg_metadata(sparql, VSKG.C_DATA_SOURCE, data.label)
+    # response = api.create_resource_kg_metadata(query, VSKG.C_DATA_SOURCE, data.label)
+    response = api.KG_Metadata().create_resource(query, VSKG.C_DATA_SOURCE, data.label)
     return response
 
-
-def read_data_sources():
+ # ?uri {VSKG.P_IS_A} {VSKG.C_DATA_SOURCE};
+    #     # {VSKG.P_DATASOURCE_TYPE} ?type;
+    #     {VSKG.P_LABEL} ?label;
+    #     {VSKG.P_DCTERMS_DESCRIPTION} ?description.
+def read_datasources(repo:str):
     print('*** CONTROLLER, read data sources')
-    sparql = Prefixies.DATASOURCE + f"""SELECT * FROM <{NamedGraph.KG_METADATA}> {{ 
-        ?uri {VSKG.P_IS_A} {VSKG.C_DATA_SOURCE};
-            {VSKG.P_DATASOURCE_TYPE} ?type;
-            {VSKG.P_LABEL} ?label;
-            {VSKG.P_DC_DESCRIPTION} ?description.
+    sparql = Prefixies.DATASOURCE + f"""SELECT * FROM <{NamedGraph(repo).KG_METADATA}> {{ 
+        {{
+            ?uri {VSKG.P_IS_A} {VSKG.C_DATA_SOURCE};
+            OPTIONAL {{ ?uri {VSKG.P_LABEL} ?label. }}
+            OPTIONAL {{ ?uri {VSKG.P_DCTERMS_DESCRIPTION} ?description. }}
+            OPTIONAL {{ ?uri {VSKG.P_COMMENT} ?description. }}
+        }}
+        UNION
+        {{
+            ?uri {VSKG.P_IS_A} {VSKG.C_DATA_ASSET};
+            OPTIONAL {{ ?uri {VSKG.P_LABEL} ?label. }}
+            OPTIONAL {{ ?uri {VSKG.P_DCTERMS_DESCRIPTION} ?description. }}
+            OPTIONAL {{ ?uri {VSKG.P_COMMENT} ?description. }}
+        }}
     }}"""
     query = {"query": sparql}
     print('*** CONTROLLER, sparql data sources', query['query'])
-    response = api.execute_query_on_kg_metadata(query)
+    # response = api.execute_query_on_kg_metadata(query)
+    response = api.Global(repo).execute_sparql_query(query)
     return response
 
 
@@ -120,14 +132,24 @@ def delete(uri:str):
         response = api.update_resource_kg_metadata(sparql)
         return response
 
+
 def read_properties(uri:str):
     print('*** CONTROLLER, read data source properties')
     uri_decoded = unquote_plus(uri)
-    existe = api.check_resource_in_kg_metadata(uri_decoded) 
+    # existe = api.check_resource_in_kg_metadata(uri_decoded) 
+    existe = api.KG_Metadata().check_resource(uri)
     if(existe is None):
         return "not found"
     else:
-        response = api.get_properties_kg_metadata(uri_decoded)
+        print('*** API, GET PROPERTIES IN KG METADATA')
+        sparql = f"""{Prefixies.DATASOURCE} SELECT DISTINCT ?p ?o FROM <{NamedGraph.KG_METADATA}> {{
+                <{uri}> ?p ?o. 
+                FILTER(?p != {VSKG.P_DB_HAS_TABLE})
+            }}
+            ORDER BY ?same ?p"""
+        query = {'query': sparql}
+        # response = api.get_properties_kg_metadata(uri_decoded)
+        response = api.Global().execute_sparql_query(query)
         return response
 
 

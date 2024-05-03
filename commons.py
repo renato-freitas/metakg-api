@@ -9,6 +9,7 @@ class TEXTS:
   def __init__(self): pass
   GENERALIZATION = "0"
   EXPORTED = "1"
+  METADATA = "2"
 
   
 def transforma_basemodel_em_json(p):
@@ -137,7 +138,9 @@ class OperationalSystem:
 
 class Endpoint:
   def __init__(self): pass
-  PRODUCTION = "http://localhost:7200/repositories/metagraph"
+  NAME = "GRAFO_PRODUCAO_BIGSEMFORTALEZA"
+  REPOSITORIES = "http://localhost:7200/repositories/metagraph"
+  PRODUCTION = f"http://localhost:7200/repositories/{NAME}"
   METAKG = "http://localhost:7200/repositories/metagraph"
   TIMELINE_TBOX = "http://localhost:7200/repositories/TIMELINE_TBOX"
   SEFAZMA_VEKG_ABOX = "http://10.33.96.18:7200/repositories/VEKG"
@@ -146,12 +149,16 @@ class Endpoint:
 
 
 class EndpointDEV:
-  def __init__(self, name:str): pass
+  def __init__(self, repo:str=None):
+    # self.name = name
+    self.PRODUCTION = f"http://localhost:7200/repositories/{repo}"
+    self.REPOSITORIES = "http://localhost:7200/repositories"
   NAME = "GRAFO_PRODUCAO_BIGSEMFORTALEZA"
+  # NAME = "EKG_CONTEXT"
   # ONTOLOGIA_DOMINIO = "http://localhost:7200/repositories/metagraph"
   METAKG = "http://localhost:7200/repositories/metagraph"
-  # PRODUCTION = "http://localhost:7200/repositories/EKG_CONTEXT"
-  PRODUCTION = f"http://localhost:7200/repositories/{NAME}"
+  # REPOSITORIES = f"http://localhost:7200/repositories"
+  # PRODUCTION = f"http://localhost:7200/repositories/{NAME}"
   TIMELINE_TBOX = "http://localhost:7200/repositories/TIMELINE_TBOX"
   SEFAZMA_VEKG_ABOX = "http://10.33.96.18:7200/repositories/VEKG"
   VSKG_ABOX = "http://localhost:7200/repositories/VSKG_ABOX" # só pra testar pegando os metaEKG
@@ -169,10 +176,19 @@ class EndpointDEV:
 
 
 class NamedGraph:
-  def __init__(self): pass
-  KG_METADATA = "http://localhost:7200/repositories/metagraph/rdf-graphs/KG-METADATA"
-  KG_TBOX = "http://www.sefaz.ma.gov.br/named-graph/TBOX"
-  KG_TBOX_BIGDATAFORTALEZA = "http://localhost:7200/repositories/GRAFO_PRODUCAO_BIGDATAFORTALEZA/graph-rdf/TBOX"
+  def __init__(self, repo:str):
+    self.repo = repo
+    self.IP = "localhost"
+    self.PORT = "7200"
+    self.TBOX = f"http://{self.IP}:{self.PORT}/repositories/{repo}/rdf-graphs/TBOX"
+    self.REPOSITORY_ID = "GRAFO_PRODUCAO_BIGDATAFORTALEZA"
+    # REPOSITORY_ID = "EKG_CONTEXT"
+    self.TBOX = f"http://{self.IP}:{self.PORT}/repositories/{repo}/rdf-graphs/TBOX"
+    self.TBOX_METADATA = f"http://{self.IP}:{self.PORT}/repositories/{repo}/rdf-graphs/TBOX_METADATA"
+    self.KG_METADATA = f"http://{self.IP}:{self.PORT}/repositories/{repo}/rdf-graphs/KG_METADATA"
+  # KG_TBOX = "http://www.sefaz.ma.gov.br/named-graph/TBOX"
+  # KG_METADATA_BIGDATAFORTALEZA = f"http://{IP}:{PORT}/repositories/{REPOSITORY_ID}/rdf-graphs/KG_METADATA"
+  # KG_TBOX_BIGDATAFORTALEZA = f"http://{IP}:{PORT}/repositories/{REPOSITORY_ID}/rdf-graphS/KG_TBOX"
 
 
 class NameSpaces:
@@ -208,7 +224,7 @@ class Prefixies:
   RFB = "PREFIX rfb: <http://www.sefaz.ma.gov.br/RFB/ontology/>\n"
   META_EKG = "PREFIX metaekg: <http://www.arida.ufc.br/meta-ekg/resource/>\n"
   ALL = RDF + RDFS + OWL + FOAF + VCARD + D2RQ + XSD + DC + DC_TERMS + RR + VOID + DCAT + DRM + TL + VSKG + SFZ + SEFAZMA + SFZR + MOKG 
-  DATASOURCE = RDF + RDFS + VSKG + DCAT + DRM +  D2RQ + DC + FOAF
+  DATASOURCE = RDF + RDFS + VSKG + DCAT + DRM +  D2RQ + DC + FOAF + DC_TERMS
   EXPORTED_VIEW = RDF + RDFS + VSKG + DRM + DC
   MAPPING = RDF + RDFS + DC + VSKG + META_EKG
   META_MASHUP = RDF + RDFS + DC + META_EKG + VSKG
@@ -218,6 +234,7 @@ class Prefixies:
 class Headers:
   def __init__(self): pass
   GET = { "Accept": "application/sparql-results+json" }
+  GET_JSON = { "Accept": "application/json" }
   POST = { "Content-type": "application/rdf+xml", "Accept": "application/json" }
   POST_KG_METADATA = { "Content-type": "text/turtle", "Accept": "application/json" }
 
@@ -236,7 +253,9 @@ class VSKG:
   P_DOMAIN = "rdfs:domain"
   P_RANGE = "rdfs:range"
   P_DC_IDENTIFIER = "dc:identifier"
+  P_COMMENT = "rdfs:comment"
   P_DC_DESCRIPTION = "dc:description"
+  P_DCTERMS_DESCRIPTION = "dcterms:description"
   P_HAS_APPLICATION = "vskg:hasApplication"
   # FONTE DE DADOS
   P_DATASOURCE_TYPE = "vskg:datasourceType"
@@ -260,6 +279,7 @@ class VSKG:
   #====================
   C_META_EKG = "vskg:MetadataGraphEKG"
   C_DATA_SOURCE = "dcat:Dataset"
+  C_DATA_ASSET = "drm:DataAsset"
   C_RDB = "http://rdbs-o#Relational_Database"
   C_RDB_TABLE = "vskg:Table"
   C_RDB_COLUMN = "vskg:Column"
