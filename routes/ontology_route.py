@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from controller import ontology_controller
 from commons import TEXTS
 router = APIRouter()
@@ -6,9 +6,10 @@ router = APIRouter()
 TAG = "Classes" 
 
 @router.get("/classes/", tags=[TAG])
-async def retrieve_classes(type:str, repo:str):
+async def retrieve_classes(type:str, req: Request):
     """"""
-    print('*** CLASSES/REPO:', repo)
+    repo = req.headers.get('repo')
+    print('*** ROUTE_CLASSES, REPO:', repo, ', TIPO:', type)
     if(type == TEXTS.GENERALIZATION):
         result = ontology_controller.retrieve_generalization_classes(repo)
     elif (type == TEXTS.EXPORTED): 

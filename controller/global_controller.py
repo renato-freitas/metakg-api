@@ -1,23 +1,18 @@
-from urllib.parse import quote_plus, unquote_plus
-from typing import Union
+from urllib.parse import unquote_plus
 import api
-from commons import NameSpaces as ns, Functions, Prefixies
-from uuid import uuid4
-from model.datasource_model import DataSourceModel
 from model.global_model import ResoucesSameAsModel
 
-def check_resource(uri:str):
+def check_resource(uri:str, repo:str):
     """Verifica se um recurso existe no repositório"""
     sparql = f"""SELECT * WHERE {{ 
             <{uri}> ?p ?o.
         }} LIMIT 1"""
-    # print('***\n',sparql)
-    result = api.Global().execute_sparql_query({"query": sparql})
+    result = api.Global(repo).execute_sparql_query({"query": sparql})
     return result
 
 
 
-def retrieve_resources(classRDF:str, page:int, rowPerPage:int, label:str):
+def retrieve_resources(classRDF:str, page:int, rowPerPage:int, label:str, repo:str):
     """Recupera recursos do repositório usando paginação. [falta testar paginação]"""
     # print(f'*** RECUPERANDO RECURSOS DA CLASSE >>> {classRDF}')
     offset = page * rowPerPage
@@ -44,12 +39,12 @@ def retrieve_resources(classRDF:str, page:int, rowPerPage:int, label:str):
         OFFSET {offset}
     """
     print(f'sparql: {sparql}')
-    result = api.Global().execute_sparql_query({"query": sparql})
+    result = api.Global(repo).execute_sparql_query({"query": sparql})
     return result
 
 
 
-def retrieve_one_resource(uri):
+def retrieve_one_resource(uri, repo:str):
     """Recupera todos os dados de um recurso"""
     print(f'PROCURANDO R DA CLASSE {uri}')
     uri_decoded = unquote_plus(uri)
@@ -57,26 +52,26 @@ def retrieve_one_resource(uri):
         <{uri_decoded}> ?p ?o. 
     }}"""
     print(f'sparql: {sparql}')
-    result = api.Global().execute_sparql_query({"query": sparql})
+    result = api.Global(repo).execute_sparql_query({"query": sparql})
     return result
 
 
-def retrieve_properties_from_exported_view(uri:str):
+def retrieve_properties_from_exported_view(uri:str, repo:str):
     """Recupera propriedades do repositório"""
     uri_decoded = unquote_plus(uri)
-    existe = check_resource(uri_decoded) 
+    existe = check_resource(uri_decoded, repo) 
     if(existe is None):
         return "not found"
     else:
-        result = api.Global().get_properties(uri_decoded)
+        result = api.Global(repo).get_properties(uri_decoded)
         return result
 
 
-def retrieve_sameAs_resources(uri:str):
+def retrieve_sameAs_resources(uri:str, repo:str):
     """Recupera os recurso que tem link com a {uri}"""
     print('*** RECUPERANDO OS LINKS SAMEAS DO RECURSO')
     uri_decoded = unquote_plus(uri)
-    existe = check_resource(uri_decoded) 
+    existe = check_resource(uri_decoded, repo) 
     if(existe is None):
         return "not found"
     else:
@@ -95,9 +90,9 @@ SELECT ?origin ?target  where {{
         BIND(?same_l as ?target)
     }}
 }}"""
-        res = api.Global().execute_sparql_query({'query': sparql})
+        res = api.Global(repo).execute_sparql_query({'query': sparql})
         print('*** RESULTADO DA CONSULTA SPARQL >>>', res)
-        result = api.Global().agroup_resources(res)
+        result = api.Global(repo).agroup_resources(res)
         print('*** SAMEAS AGRUPADO >>> ', result)
         return result
     
@@ -105,7 +100,7 @@ SELECT ?origin ?target  where {{
 
 
 
-def get_quantity_of_all_resources(classRDF:str, label:str):
+def get_quantity_of_all_resources(classRDF:str, label:str, repo:str):
     # FILTER(lang(?_label)="") :: falta definir esse filtro. os dados estão sem @pt ou @en
     uri_decoded = unquote_plus(classRDF)
     filter = f"""FILTER(CONTAINS(LCASE(STR(?label)),"{label.lower()}"))""" if label is not None else ""  
@@ -117,7 +112,7 @@ def get_quantity_of_all_resources(classRDF:str, label:str):
     {filter}
 }} """
     print(f'sparql: {sparql}')
-    result = api.Global().execute_sparql_query({"query": sparql})
+    result = api.Global(repo).execute_sparql_query({"query": sparql})
     return int(result[0]['total']['value'])
 
 
@@ -126,7 +121,7 @@ def get_quantity_of_all_resources(classRDF:str, label:str):
 
 # OPTIONAL { ?r rdfs:label ?_label.  }
 
-def retrieve_properties_from_unification_view(data:ResoucesSameAsModel):
+def retrieve_properties_from_unification_view(data:ResoucesSameAsModel, repo:str):
     if(data.resources is None):
         return "not found"
     else:
@@ -159,7 +154,7 @@ def retrieve_properties_from_unification_view(data:ResoucesSameAsModel):
         FILTER(!CONTAINS(STR(?o),"_:node") && !(?p = owl:topDataProperty) && !(?p = owl:sameAs))
     }}"""
         print('*** sparql uv', sparql)
-        result = api.Global().get_properties_from_sameAs_resources(sparql)
+        result = api.Global(repo).get_properties_from_sameAs_resources(sparql)
     return result
 
 

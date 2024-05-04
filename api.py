@@ -64,7 +64,7 @@ class Global:
         FILTER(lang(?_label)="pt")    
     }}
     BIND(COALESCE(?_label,?p) AS ?label)
-    FILTER(!(?p = owl:topDataProperty) && !(?p = owl:sameAs))}}
+    FILTER(!CONTAINS(STR(?o),"_:node") && !(?p = owl:topDataProperty) && !(?p = owl:sameAs))}}
     ORDER BY ?label"""
     # FILTER(!CONTAINS(STR(?o),"_:node") && !(?p = owl:topDataProperty) && !(?p = owl:sameAs))}}"""
             r = requests.get(self.endpoint, params={'query': sparql}, headers=Headers.GET)
@@ -93,6 +93,7 @@ class Global:
 
 class KG_Metadata:
     def __init__(self, repo): 
+        self.repo = repo
         self.endpoint = EndpointDEV(repo).PRODUCTION if ENVIROMENT == "DEV" else Endpoint.PRODUCTION
 
     def add_rdf(self, rdf:str):
@@ -127,7 +128,7 @@ class KG_Metadata:
     def check_resource(self, resourceURI:str):
         """Verifica se o recurso existe no grafo nomeado de metadados"""
         print('*** API, CHECK IF RESOURCE EXISTS')
-        sparql = Prefixies.DATASOURCE + f"""SELECT * FROM <{NamedGraph.KG_METADATA}> {{ 
+        sparql = Prefixies.DATASOURCE + f"""SELECT * FROM <{NamedGraph(self.repo).KG_METADATA}> {{ 
             <{resourceURI}> ?p ?o. 
         }} LIMIT 1"""
         query = {"query": sparql}
@@ -760,7 +761,7 @@ class MetaEKG:
 # engine = create_engine("mssql+pymssql://scott:tiger@hostname:port/dbname")
         
 class Tbox:
-    def __init__(self, repo): 
+    def __init__(self, repo:str): 
         self.endpoint = EndpointDEV(repo).PRODUCTION if ENVIROMENT == "DEV" else Endpoint.PRODUCTION
 
     def execute_query(self, query):
@@ -768,10 +769,11 @@ class Tbox:
         try:
             print('*** API.TBOX, REPO ***', self.endpoint)
             r = requests.get(self.endpoint, params=query, headers=Headers.GET)
+            print(r.json()['results']['bindings'])
             if(r.status_code == 200 or r.status_code == 201 or r.status_code == 204):
                 return r.json()['results']['bindings']
             else:
-                # print(r.text)
+                print(r.text)
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Não foi criado!")
         except Exception as err:
             return err       

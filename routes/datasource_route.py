@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Header
+from fastapi import APIRouter, Header, Request
 from model.datasource_model import DataSourceModel, TableQualityModel
 from commons import NameSpaces as ns
 from controller import datasource_controller
@@ -30,19 +30,21 @@ async def create_datasource(data: DataSourceModel):
 
 
 @router.get("/datasources/", tags=[TAG])
-async def read_datasources(repo:str=Header(default=None)):
+async def read_datasources(req:Request):
     # print('*** ROUTE, read data sources')
+    repo = req.headers.get('repo')
     print('**** DATASOURCE/REPO', repo)
     response = datasource_controller.read_datasources(repo)
     return response
 
 
 @router.get("/datasources/properties/", tags=[TAG])
-async def read_properties(resourceURI:str):
+async def read_properties(resourceURI:str, req:Request):
     """Obtém as propriedades de uma FD."""
     try:
         print('*** ROUTE, read data sources properties')
-        response = datasource_controller.read_properties(resourceURI)
+        repo = req.headers.get('repo')
+        response = datasource_controller.read_properties(resourceURI, repo)
         # print('response ',response)
         return response
     except Exception as err:

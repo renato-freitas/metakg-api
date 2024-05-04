@@ -61,8 +61,9 @@ SELECT ?classURI ?label (MAX(?__comment) as ?comment) ?image FROM <""" +NamedGra
     FILTER(!CONTAINS(STR(?classURI),"http://www.w3.org/2002/07/owl#"))           
 } GROUP BY ?classURI ?label ?image
 ORDER BY ?label"""
-    print(sparql)
-    print(repo)
+    # print('*** CONTROLLER, GEN-CLASS')
+    # print(sparql)
+    # print(repo)
     result = api.Tbox(repo).execute_query({"query": sparql})
     # result = api.Tbox().execute_query({"query": sparql}, repo)
     # print('***', result)
@@ -72,6 +73,7 @@ ORDER BY ?label"""
 
 
 def retrieve_semantic_view_exported_classes(repo:str):
+    print('**** CONTROLLER', repo)
     sparql = """
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
@@ -108,7 +110,9 @@ SELECT ?classURI ?label ?superclass (MAX(?__comment) as ?comment) ?image FROM <"
 } 
 GROUP BY ?classURI ?label ?superclass ?sub ?image
 ORDER BY ?label"""
-    return api.Tbox(repo).execute_query({"query": sparql})
+    print('**** SPARQL:', sparql)
+    result = api.Tbox(repo).execute_query({"query": sparql})
+    return result
 
 
 def retrieve_metadata_classes(repo:str):

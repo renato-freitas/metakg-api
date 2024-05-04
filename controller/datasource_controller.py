@@ -133,23 +133,23 @@ def delete(uri:str):
         return response
 
 
-def read_properties(uri:str):
+def read_properties(uri:str, repo:str):
     print('*** CONTROLLER, read data source properties')
     uri_decoded = unquote_plus(uri)
     # existe = api.check_resource_in_kg_metadata(uri_decoded) 
-    existe = api.KG_Metadata().check_resource(uri)
+    existe = api.KG_Metadata(repo).check_resource(uri)
     if(existe is None):
         return "not found"
     else:
         print('*** API, GET PROPERTIES IN KG METADATA')
-        sparql = f"""{Prefixies.DATASOURCE} SELECT DISTINCT ?p ?o FROM <{NamedGraph.KG_METADATA}> {{
+        sparql = f"""{Prefixies.DATASOURCE} SELECT DISTINCT ?p ?o FROM <{NamedGraph(repo).KG_METADATA}> {{
                 <{uri}> ?p ?o. 
                 FILTER(?p != {VSKG.P_DB_HAS_TABLE})
             }}
             ORDER BY ?same ?p"""
         query = {'query': sparql}
         # response = api.get_properties_kg_metadata(uri_decoded)
-        response = api.Global().execute_sparql_query(query)
+        response = api.Global(repo).execute_sparql_query(query)
         return response
 
 
