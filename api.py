@@ -89,6 +89,14 @@ class Global:
                 agrouped[resource['origin']['value']] = []
             agrouped[resource['origin']['value']].append(resource['target']['value'])
         return agrouped
+    
+    def agroup_instants_in_timeline(self, resources):
+        agrouped = dict()
+        for resource in resources:
+            if not resource['inst']['value'] in agrouped:
+                agrouped[resource['inst']['value']] = []
+            agrouped[resource['inst']['value']].append(resource)
+        return agrouped
 
 
 class KG_Metadata:

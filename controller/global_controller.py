@@ -125,41 +125,63 @@ def retrieve_properties_from_unification_view(data:ResoucesSameAsModel, repo:str
     if(data.resources is None):
         return "not found"
     else:
-        sparql = "PREFIX owl: <http://www.w3.org/2002/07/owl#>"
+        sparql = """PREFIX owl: <http://www.w3.org/2002/07/owl#>
+        SELECT ?s ?p ?o ?label WHERE {"""
         for key in data.resources:
-            sparql += f"""SELECT ?s ?p ?o ?label WHERE {{ 
-        {{ 
-            <{key}> ?p ?o. 
-            BIND(STRAFTER("{key}", "resource/") AS ?_s)
-            BIND(STRBEFORE(STR(?_s), "/") AS ?s)
-            OPTIONAL {{
-                ?p rdfs:label ?_label. 
-                FILTER(lang(?_label)="pt") 
-            }}
-            BIND(COALESCE(?_label,?p) AS ?label)
-        }}
-        """
-            for value in data.resources[key]:
-                sparql += f""" UNION
-        {{ 
-            <{value}> ?p ?o. 
-            BIND(STRAFTER("{value}", "resource/") AS ?_s)
-            BIND(STRBEFORE(STR(?_s), "/") AS ?s)
-            OPTIONAL {{
-                ?p rdfs:label ?_label. 
-                FILTER(lang(?_label)="pt") 
-            }}
-            BIND(COALESCE(?_label,?p) AS ?label)
-        }}
-        FILTER(!CONTAINS(STR(?o),"_:node") && !(?p = owl:topDataProperty) && !(?p = owl:sameAs))
-    }}"""
-        print('*** sparql uv', sparql)
+            sparql += f"""
+            {{ 
+                <{key}> ?p ?o. 
+                BIND(STRAFTER("{key}", "resource/") AS ?_s)
+                BIND(STRBEFORE(STR(?_s), "/") AS ?s)
+                OPTIONAL {{
+                    ?p rdfs:label ?_label. 
+                    FILTER(lang(?_label)="pt") 
+                }}
+                BIND(COALESCE(?_label,?p) AS ?label)
+            }}"""
+        for value in data.resources[key]:
+            sparql += f"""
+            UNION
+                {{ 
+                    <{value}> ?p ?o. 
+                    BIND(STRAFTER("{value}", "resource/") AS ?_s)
+                    BIND(STRBEFORE(STR(?_s), "/") AS ?s)
+                    OPTIONAL {{
+                        ?p rdfs:label ?_label. 
+                        FILTER(lang(?_label)="pt") 
+                    }}
+                    BIND(COALESCE(?_label,?p) AS ?label)
+                }}"""
+        sparql += """\nFILTER(!CONTAINS(STR(?o),"_:node") && !(?p = owl:topDataProperty) && !(?p = owl:sameAs))\n}"""
+        print('*** SPARQL VISAO UNIFICAÇÃO\n', sparql)
         result = api.Global(repo).get_properties_from_sameAs_resources(sparql)
     return result
 
 
 
 
+def retrieve_timeline_of_one_resource(resourceURI, repo):
+    uri_decoded = unquote_plus(resourceURI)
+    existe = check_resource(uri_decoded, repo) 
+    if(existe is None):
+        return "not found"
+    else:
+        sparql = f"""PREFIX tl: <http://purl.org/NET/c4dm/timeline.owl#>
+PREFIX tlo: <http://www.arida.ufc.br/ontologies/timeline#>
+SELECT * WHERE {{        
+    ?inst tl:timeLine <{uri_decoded}>;
+        tlo:has_update ?update;
+        tl:atDate ?date.      
+    ?update a tlo:Update;
+        tlo:property ?property;
+        tlo:old_value ?va;
+        tlo:new_value ?vn.
+}}"""
+        res = api.Global(repo).execute_sparql_query({'query': sparql})
+        print('*** TIMELINE >>>', res)
+        result = api.Global(repo).agroup_instants_in_timeline(res)
+        print('*** SAMEAS AGRUPADO >>> ', result)
+        return result
 
 # def retrieve_properties(uri:str):
 #     uri_decoded = unquote_plus(uri)

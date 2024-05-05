@@ -74,18 +74,16 @@ async def retrieve_properties_from_unification_of_resource(data: ResoucesSameAsM
         return err
 
 
-# @router.get("/properties/{uri}/{expand_sameas}", tags=[TAG])
-# async def get_properties(uri:str, expand_sameas:bool):
-#     """
-#     Obtém as propriedades de um recurso.
-#     """
-#     try:
-#         print('OBTEM PROPRIEDADES DE UM RECURSO SELECIONADO', expand_sameas, type(expand_sameas))
-#         response = global_controller.find_properties(uri, expand_sameas)
-#         return response
-#     except Exception as err:
-#         print(err)
-#         return err
+
+@router.get("/timeline/", tags=[TAG])
+async def retrieve_timeline_of_one_resource(resourceURI:str, req:Request):
+    """Obtém a linha do tempo de um recurso."""
+    try:
+        repo = req.headers.get('repo')
+        response = global_controller.retrieve_timeline_of_one_resource(resourceURI, repo)
+        return response
+    except Exception as err:
+        return err
     
 
 
