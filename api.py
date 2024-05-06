@@ -60,14 +60,15 @@ class Global:
             SELECT ?p ?label ?o WHERE {{
                     <{uri}> ?p ?o. 
                     OPTIONAL {{
-        ?p rdfs:label ?_label.
-        FILTER(lang(?_label)="pt")    
+        ?p rdfs:label ?label.
+        FILTER(lang(?label)="pt")    
     }}
-    BIND(COALESCE(?_label,?p) AS ?label)
+    # BIND(COALESCE(?_label,?p) AS ?label)
     FILTER(!CONTAINS(STR(?o),"_:node") && !(?p = owl:topDataProperty) && !(?p = owl:sameAs))}}
     ORDER BY ?label"""
     # FILTER(!CONTAINS(STR(?o),"_:node") && !(?p = owl:topDataProperty) && !(?p = owl:sameAs))}}"""
             r = requests.get(self.endpoint, params={'query': sparql}, headers=Headers.GET)
+            print('------ RESUTL -------\n', r.json()['results']['bindings'])
             return agroup_properties(r.json()['results']['bindings'])
         except Exception as err:
             return err
@@ -212,9 +213,12 @@ def execute_sparql_query_in_kg_metadata(query):
 def agroup_properties(properties):
     agrouped = dict()
     for prop in properties:
-        if not prop['label']['value'] in agrouped:
-            agrouped[prop['label']['value']] = []
-        agrouped[prop['label']['value']].append([prop['o']['value'],[]])
+        if not prop['p']['value'] in agrouped:
+            agrouped[prop['p']['value']] = []
+        if "label" in prop:
+            agrouped[prop['p']['value']].append([prop['o']['value'], prop['label']['value'], []])
+        else: 
+            agrouped[prop['p']['value']].append([prop['o']['value'], "", []])
     return agrouped
 
 
@@ -222,9 +226,13 @@ def agroup_properties(properties):
 def agroup_properties_in_sameas(properties):
     _agrouped = dict()
     for prop in properties:
-        if not prop['label']['value'] in _agrouped:
-            _agrouped[prop['label']['value']] = []
-        _agrouped[prop['label']['value']].append([prop['o']['value'], prop['s']['value']])
+        if not prop['p']['value'] in _agrouped:
+            _agrouped[prop['p']['value']] = []
+        if "label" in prop:
+            _agrouped[prop['p']['value']].append([prop['o']['value'], prop['label']['value'], prop['prov']['value']])
+        else: 
+            _agrouped[prop['p']['value']].append([prop['o']['value'], "", prop['prov']['value']])
+        # _agrouped[prop['p']['value']].append([prop['o']['value'], prop['s']['value']])
     agrouped = verify_values_divergency(_agrouped)
     return agrouped
 
@@ -233,20 +241,21 @@ def agroup_properties_in_sameas(properties):
 def verify_values_divergency(agrouped_props):
     _agrouped_props = dict()
     for prop in agrouped_props:
-        # print('- - - ',p)
         _agrouped_props[prop] = []
         if (prop != "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" and
             prop != "http://www.w3.org/2000/01/rdf-schema#label" and
             prop != "http://www.bigdatafortaleza.com/ontology#uri" and
-            prop != "http://purl.org/dc/elements/1.1/identifier"):
+            prop != "http://purl.org/dc/elements/1.1/identifier" and
+            prop != "http://purl.org/dc/terms/identifier"):
+            print('*** DIVERGENCY ***\n', agrouped_props[prop] )
+            # exemplo: [['valor','propriedade','proveniência'], ...]
             current_value = agrouped_props[prop][0][0]
             for dado in agrouped_props[prop]:
-                # print('*** ', current_value, v[0])
+                # "http://" not in dado[0] => para não verificar os object-propeties
                 if (dado[0] != current_value and "http://" not in dado[0]): 
-                    _agrouped_props[prop].append([dado[0], dado[1], True])
+                    _agrouped_props[prop].append([dado[0], dado[1], dado[2], True])
                 else:
-                    _agrouped_props[prop].append([dado[0], dado[1], False])
-            # _agrouped_props[p].append([p, p, False])
+                    _agrouped_props[prop].append([dado[0], dado[1], dado[2], False])
         else:
             _agrouped_props[prop] = agrouped_props[prop]
     print('**** novo group: ',_agrouped_props)

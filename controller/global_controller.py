@@ -126,18 +126,18 @@ def retrieve_properties_from_unification_view(data:ResoucesSameAsModel, repo:str
         return "not found"
     else:
         sparql = """PREFIX owl: <http://www.w3.org/2002/07/owl#>
-        SELECT ?s ?p ?o ?label WHERE {"""
+        SELECT ?prov ?p ?o ?label WHERE {"""
         for key in data.resources:
             sparql += f"""
             {{ 
                 <{key}> ?p ?o. 
                 BIND(STRAFTER("{key}", "resource/") AS ?_s)
-                BIND(STRBEFORE(STR(?_s), "/") AS ?s)
+                BIND(STRBEFORE(STR(?_s), "/") AS ?prov)
                 OPTIONAL {{
-                    ?p rdfs:label ?_label. 
-                    FILTER(lang(?_label)="pt") 
+                    ?p rdfs:label ?label. 
+                    FILTER(lang(?label)="pt") 
                 }}
-                BIND(COALESCE(?_label,?p) AS ?label)
+                # BIND(COALESCE(?_label,?p) AS ?label)
             }}"""
         for value in data.resources[key]:
             sparql += f"""
@@ -145,12 +145,12 @@ def retrieve_properties_from_unification_view(data:ResoucesSameAsModel, repo:str
                 {{ 
                     <{value}> ?p ?o. 
                     BIND(STRAFTER("{value}", "resource/") AS ?_s)
-                    BIND(STRBEFORE(STR(?_s), "/") AS ?s)
+                    BIND(STRBEFORE(STR(?_s), "/") AS ?prov)
                     OPTIONAL {{
-                        ?p rdfs:label ?_label. 
-                        FILTER(lang(?_label)="pt") 
+                        ?p rdfs:label ?label. 
+                        FILTER(lang(?label)="pt") 
                     }}
-                    BIND(COALESCE(?_label,?p) AS ?label)
+                    # BIND(COALESCE(?_label,?p) AS ?label)
                 }}"""
         sparql += """\nFILTER(!CONTAINS(STR(?o),"_:node") && !(?p = owl:topDataProperty) && !(?p = owl:sameAs))\n}"""
         print('*** SPARQL VISAO UNIFICAÇÃO\n', sparql)
