@@ -168,30 +168,94 @@ def retrieve_timeline_of_one_resource(resourceURI, repo):
     else:
         sparql = f"""PREFIX tl: <http://purl.org/NET/c4dm/timeline.owl#>
 PREFIX tlo: <http://www.arida.ufc.br/ontologies/timeline#>
-SELECT * WHERE {{        
-    ?inst tl:timeLine <{uri_decoded}>;
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT ?tl ?label ?inst ?update ?date ?property ?va ?vn WHERE {{        
+    <{uri_decoded}> tlo:has_timeline ?tl.
+    OPTIONAL {{
+    	<{uri_decoded}> rdfs:label ?_label_pt. 
+    	FILTER(lang(?_label_pt)="pt") 
+	}}
+    OPTIONAL {{
+    	<{uri_decoded}> rdfs:label ?_label. 
+	}}
+    BIND(COALESCE(?_label_pt,?_label) AS ?__label)
+    BIND(COALESCE(?__label,<{uri_decoded}>) AS ?label)
+    ?inst tl:timeLine ?tl;
         tlo:has_update ?update;
         tl:atDate ?date.      
     ?update a tlo:Update;
         tlo:property ?property;
         tlo:old_value ?va;
         tlo:new_value ?vn.
-}}"""
+}}ORDER BY ?date"""
+        print('sparql',sparql)
         res = api.Global(repo).execute_sparql_query({'query': sparql})
         print('*** TIMELINE >>>', res)
         result = api.Global(repo).agroup_instants_in_timeline(res)
         print('*** SAMEAS AGRUPADO >>> ', result)
         return result
 
-# def retrieve_properties(uri:str):
-#     uri_decoded = unquote_plus(uri)
-#     existe = api.check_resource_in_kg_metadata(uri_decoded) 
-#     if(existe is None):
-#         return "not found"
-#     else:
-#         response = api.get_properties_kg_metadata(uri_decoded)
-#         return response
 
+
+def retrieve_timeline_of_unification_resources(data: ResoucesSameAsModel, repo):
+    print('***** TIMELINE UNIFICATION CONTROLLER ***\n', data.resources)
+    if(data.resources is None):
+        return "not found"
+    else:
+        sparql = f"""PREFIX tl: <http://purl.org/NET/c4dm/timeline.owl#>
+PREFIX tlo: <http://www.arida.ufc.br/ontologies/timeline#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT ?tl ?label ?inst ?update ?date ?property ?va ?vn WHERE {{"""   
+    for key in data.resources:
+        sparql += f"""
+        {{
+            <{key}> tlo:has_timeline ?tl.
+            OPTIONAL {{
+                <{key}> rdfs:label ?_label_pt. 
+                FILTER(lang(?_label_pt)="pt") 
+            }}
+            OPTIONAL {{
+                <{key}> rdfs:label ?_label. 
+            }}
+            BIND(COALESCE(?_label_pt,?_label) AS ?__label)
+            BIND(COALESCE(?__label,<{key}>) AS ?label)
+            ?inst tl:timeLine ?tl;
+                tlo:has_update ?update;
+                tl:atDate ?date.      
+            ?update a tlo:Update;
+                tlo:property ?property;
+                tlo:old_value ?va;
+                tlo:new_value ?vn.
+        }}"""
+    for value in data.resources[key]:
+        sparql += f"""
+        UNION
+            {{
+            <{value}> tlo:has_timeline ?tl.
+        OPTIONAL {{
+            <{value}> rdfs:label ?_label_pt. 
+            FILTER(lang(?_label_pt)="pt") 
+        }}
+        OPTIONAL {{
+            <{value}> rdfs:label ?_label. 
+        }}
+        BIND(COALESCE(?_label_pt,?_label) AS ?__label)
+        BIND(COALESCE(?__label,<{value}>) AS ?label)
+        ?inst tl:timeLine ?tl;
+            tlo:has_update ?update;
+            tl:atDate ?date.      
+        ?update a tlo:Update;
+            tlo:property ?property;
+            tlo:old_value ?va;
+            tlo:new_value ?vn. 
+            }}"""
+    sparql += "}ORDER BY ?date"
+    print('sparql',sparql)
+    res = api.Global(repo).execute_sparql_query({'query': sparql})
+    print('*** TIMELINE >>>', res)
+    result = api.Global(repo).agroup_instants_in_timeline(res)
+    print('*** SAMEAS AGRUPADO >>> ', result)
+    return result
 
 
 

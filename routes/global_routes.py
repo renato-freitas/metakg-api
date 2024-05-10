@@ -87,3 +87,13 @@ async def retrieve_timeline_of_one_resource(resourceURI:str, req:Request):
     
 
 
+@router.post("/timeline/unification/", tags=[TAG])
+async def retrieve_timeline_of_unification_resources(data: ResoucesSameAsModel, req:Request):
+    """Obtém a linha do tempo de um recurso."""
+    try:
+        repo = req.headers.get('repo')
+        response = global_controller.retrieve_timeline_of_unification_resources(data, repo)
+        return response
+    except Exception as err:
+        return err
+
