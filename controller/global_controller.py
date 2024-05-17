@@ -12,6 +12,29 @@ def check_resource(uri:str, repo:str):
 
 
 
+def retrieve_generalization_resources(classRDF:str, page:int, rowPerPage:int, label:str, repo:str):
+    uri_decoded = unquote_plus(classRDF)
+    sparql = f"""PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX dc: <http://purl.org/dc/elements/1.1/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT DISTINCT ?uri ?label where {{
+    ?uri owl:sameAs ?o.
+    ?uri a <{uri_decoded}>.
+    OPTIONAL{{
+            ?uri rdfs:label ?l.
+        }}
+    FILTER(CONTAINS(LCASE(?l), "{label.lower()}"))
+    BIND(COALESCE(?l,?uri) AS ?label)
+}}
+    """
+    print('-----------SPARQL--------\n', sparql)
+    result = api.Global(repo).execute_sparql_query({"query": sparql})
+    print('-----------', result)
+    return result
+
+
+
 def retrieve_resources(classRDF:str, page:int, rowPerPage:int, label:str, repo:str):
     """Recupera recursos do repositório usando paginação. [falta testar paginação]"""
     # print(f'*** RECUPERANDO RECURSOS DA CLASSE >>> {classRDF}')
@@ -152,7 +175,7 @@ def retrieve_properties_from_unification_view(data:ResoucesSameAsModel, repo:str
                     }}
                     # BIND(COALESCE(?_label,?p) AS ?label)
                 }}"""
-        sparql += """\nFILTER(!CONTAINS(STR(?o),"_:node") && !(?p = owl:topDataProperty) && !(?p = owl:sameAs))\n}"""
+        sparql += """\nFILTER(!CONTAINS(STR(?o),"_:node") && !(?p = owl:topDataProperty) && !(?p = owl:sameAs) && !CONTAINS(STR(LCASE(?prov)), "canonical") && !CONTAINS(STR(LCASE(?prov)), "fusion"))\n}"""
         print('*** SPARQL VISAO UNIFICAÇÃO\n', sparql)
         result = api.Global(repo).get_properties_from_sameAs_resources(sparql)
     return result

@@ -14,6 +14,14 @@ async def retrieve_resources(classRDF:str, page:int, rowPerPage:int, label:str, 
     except Exception as err:
         return err
     
+@router.get("/resources/generalization", tags=[TAG])
+async def retrieve_resources(classRDF:str, page:int, rowPerPage:int, label:str, req:Request):
+    try:
+        repo = req.headers.get('repo')
+        response = global_controller.retrieve_generalization_resources(classRDF, page, rowPerPage, label, repo)
+        return response
+    except Exception as err:
+        return err
 
 @router.get("/resources/count/", tags=[TAG])
 async def retrieve_quantity_resources(classURI:str, label:str, req:Request):

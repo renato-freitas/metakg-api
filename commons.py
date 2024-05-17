@@ -137,7 +137,11 @@ class OperationalSystem:
   LINUX = "Linux"
 
 class Endpoint:
-  def __init__(self): pass
+  def __init__(self, repo:str=None):
+    # self.name = name
+    self.PRODUCTION = f"http://localhost:7200/repositories/{repo}"
+    self.REPOSITORIES = "http://localhost:7200/repositories"
+    self.QUERY = "http://localhost:7200/rest/sparql/saved-queries"
   NAME = "GRAFO_PRODUCAO_BIGSEMFORTALEZA"
   REPOSITORIES = "http://localhost:7200/repositories/metagraph"
   PRODUCTION = f"http://localhost:7200/repositories/{NAME}"
@@ -153,6 +157,7 @@ class EndpointDEV:
     # self.name = name
     self.PRODUCTION = f"http://localhost:7200/repositories/{repo}"
     self.REPOSITORIES = "http://localhost:7200/repositories"
+    self.QUERY = "http://localhost:7200/rest/sparql/saved-queries"
   NAME = "GRAFO_PRODUCAO_BIGSEMFORTALEZA"
   # NAME = "EKG_CONTEXT"
   # ONTOLOGIA_DOMINIO = "http://localhost:7200/repositories/metagraph"
@@ -236,6 +241,7 @@ class Headers:
   GET = { "Accept": "application/sparql-results+json" }
   GET_JSON = { "Accept": "application/json" }
   POST = { "Content-type": "application/rdf+xml", "Accept": "application/json" }
+  POST_QUERY = { "Content-type": "application/json", "Accept": "*/*" }
   POST_KG_METADATA = { "Content-type": "text/turtle", "Accept": "application/json" }
 
 class RoutesPath:

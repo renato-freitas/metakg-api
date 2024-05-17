@@ -61,27 +61,46 @@ SELECT ?classURI ?label (MAX(?__comment) as ?comment) ?image FROM <""" +NamedGra
     FILTER(!CONTAINS(STR(?classURI),"http://www.w3.org/2002/07/owl#"))           
 } GROUP BY ?classURI ?label ?image
 ORDER BY ?label"""
-    # print('*** CONTROLLER, GEN-CLASS')
-    # print(sparql)
-    # print(repo)
     result = api.Tbox(repo).execute_query({"query": sparql})
-    # result = api.Tbox().execute_query({"query": sparql}, repo)
-    # print('***', result)
     return result
 
 
-
-
-def retrieve_semantic_view_exported_classes(repo:str):
-    print('**** CONTROLLER', repo)
-    sparql = """
+def retrieve_semantic_view_exported_datasources(repo:str):
+    sparql = """PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX dc: <http://purl.org/dc/elements/1.1/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX : <http://www.arida.ufc.br/ontologies/music.owl#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+SELECT DISTINCT ?datasource where {
+#    PEGAR TODAS AS SUBCLASSES
+    ?classURI rdf:type owl:Class.
+    MINUS { ?sub rdfs:subClassOf ?classURI. }
+    ?i a ?classURI.
+#    GARANTIR QUE SÓ TENHA URI QUE É UM RECURSO
+    FILTER(!CONTAINS(STR(?i),"/resource/App")).
+#    RECORTAR A URI PARA OBTER A FONTE DE DADOS DISTINTAS
+    BIND(STRAFTER(STR(?i), "resource/") AS ?_s)
+    BIND(STRBEFORE(STR(?_s), "/") AS ?datasource)
+} ORDER BY ?datasource"""
+    print('**** SPARQL:', sparql)
+    result = api.Tbox(repo).execute_query({"query": sparql})
+    return result
+
+
+def retrieve_semantic_view_exported_classes(repo:str, exported_view:str, language:str):
+    print('===ONTOLOGY CONTROLLER===\n', repo)
+    _lang = f"@{language}" if language != "" else "" 
+    _exp_view = f"'{exported_view}'" + _lang
+    sparql = """PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 PREFIX schema: <http://schema.org/>
+PREFIX moa: <http://www.arida.ufc.br/ontologies/music#>
 SELECT ?classURI ?label ?superclass (MAX(?__comment) as ?comment) ?image FROM <""" +NamedGraph(repo).TBOX+"""> { 
-    ?classURI rdf:type owl:Class.
+    ?classURI rdf:type owl:Class;
+              moa:isFromExportedView """ + _exp_view + """.
     MINUS { ?sub rdfs:subClassOf ?classURI. }
     OPTIONAL { 
         ?classURI rdfs:label ?_label. 
@@ -110,7 +129,7 @@ SELECT ?classURI ?label ?superclass (MAX(?__comment) as ?comment) ?image FROM <"
 } 
 GROUP BY ?classURI ?label ?superclass ?sub ?image
 ORDER BY ?label"""
-    print('**** SPARQL:', sparql)
+    print('===SPAR GET EXPORTED VIEW===\n', sparql)
     result = api.Tbox(repo).execute_query({"query": sparql})
     return result
 

@@ -100,6 +100,7 @@ class Global:
         return agrouped
 
 
+
 class KG_Metadata:
     def __init__(self, repo): 
         self.repo = repo
@@ -145,6 +146,73 @@ class KG_Metadata:
         try:
             result = requests.get(self.endpoint, params=query, headers=Headers.GET)
             return result.json()['results']['bindings']
+        except Exception as err:
+            return err
+
+
+
+class ConsultaSalva:
+    def __init__(self, repo:str): 
+        self.endpoint = EndpointDEV(repo).QUERY if ENVIROMENT == "DEV" else Endpoint(repo).QUERY
+
+    def execute_query_data(self, name, query):
+        try:
+            exists = self.get_one_saved_query(name)
+            if (len(exists) > 0):
+                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Uma consulta com esse nome já existe!")
+            
+            r = requests.post(self.endpoint, data=query, headers=Headers.POST_QUERY)
+            print('=========', r.status_code)
+            if(r.status_code == 200 or r.status_code == 201 or r.status_code == 204):
+                return {"code": 204, "message": "Criado com Sucesso!"}
+            else:
+                return {"code": 400, "message": "Não foi criado!"}
+        except Exception as err:
+            print('***\n', err)
+            return err
+
+    def execute_query(self):
+        try:
+            result = requests.get(self.endpoint)
+            print('****\n',result.json())
+            return result.json()
+        except Exception as err:
+            print('***\n', err)
+            return err
+
+    def update_saved_query(self, name, query):
+        try:
+            exists = self.get_one_saved_query(name)
+            if (len(exists) <= 0):
+                raise HTTPException(status_code=status.HTTP_204_NO_CONTENT, detail="Consulta não existe!")
+            
+            r = requests.put(self.endpoint, data=query, headers={ "Content-type": "application/json", "Accept": "application/json" })
+            print('=========', r.status_code)
+            if(r.status_code == 200 or r.status_code == 201 or r.status_code == 204):
+                return {"code": 204, "message": "Atualizado com Sucesso!"}
+            else:
+                return {"code": 400, "message": "Não foi atualizado!"}
+        except Exception as err:
+            print('***\n', err)
+            return err
+
+    def get_one_saved_query(self, name:str):
+        try:
+            q = self.endpoint + f'?name={name}'
+            result = requests.get(q, headers={ "Accept": "application/json" })
+            return result.json()
+        except Exception as err:
+            return err
+        
+
+    def delete_one_saved_query(self, name:str):
+        try:
+            q = self.endpoint + f'?name={name}'
+            r = requests.delete(q, headers={ "Accept": "*/*" })
+            if(r.status_code == 200 or r.status_code == 201 or r.status_code == 204):
+                return {"code": 204, "message": "Deletado com Sucesso!"}
+            else:
+                return {"code": 400, "message": "Consulta não existe!"}
         except Exception as err:
             return err
 

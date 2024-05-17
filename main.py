@@ -12,7 +12,7 @@ from models import DataSource, MetaMashupModel, HighLevelMapping, DataProperty, 
 from api import MetaEKG, MetaMashup
 # from routes import datasource
 from routes import datasource_route, user, exported_view_route, mapping_route, global_routes, meta_mashup_route, meta_ekg_route
-from routes import ontology_route, repository_route
+from routes import ontology_route, repository_route, query_route
 
 app = FastAPI()
 # app.include_router(user.router)
@@ -24,6 +24,7 @@ app.include_router(global_routes.router)
 app.include_router(meta_mashup_route.router)
 app.include_router(meta_ekg_route.router)
 app.include_router(repository_route.router)
+app.include_router(query_route.router)
 
 origins = [
     "http://localhost:3002",
