@@ -6,28 +6,34 @@ router = APIRouter()
 TAG = "Global" 
 
 @router.get("/resources/", tags=[TAG])
-async def retrieve_resources(classRDF:str, page:int, rowPerPage:int, label:str, req:Request):
+async def retrieve_resources(classRDF:str, page:int, rowPerPage:int, label:str, language:str, req:Request):
     try:
         repo = req.headers.get('repo')
-        response = global_controller.retrieve_resources(classRDF, page, rowPerPage, label, repo)
+        response = global_controller.retrieve_resources(classRDF, page, rowPerPage, label, language, repo)
         return response
     except Exception as err:
         return err
     
+
+
 @router.get("/resources/generalization", tags=[TAG])
-async def retrieve_resources(classRDF:str, page:int, rowPerPage:int, label:str, req:Request):
+async def retrieve_resources(classRDF:str, page:int, rowPerPage:int, label:str, language:str, req:Request):
     try:
         repo = req.headers.get('repo')
-        response = global_controller.retrieve_generalization_resources(classRDF, page, rowPerPage, label, repo)
+        response = global_controller.retrieve_unification_resources(classRDF, page, rowPerPage, label, language, repo)
         return response
     except Exception as err:
         return err
 
+
+
 @router.get("/resources/count/", tags=[TAG])
-async def retrieve_quantity_resources(classURI:str, label:str, req:Request):
+async def retrieve_quantity_resources(classURI:str, label:str, sameas: bool, req:Request):
     try:
         repo = req.headers.get('repo')
-        response = global_controller.get_quantity_of_all_resources(classURI, label, repo)
+        # print('-----sameas--------\n', sameas)
+        response = global_controller.get_quantity_of_all_resources(classURI, label, sameas, repo)
+        # print('-----total de recursos---\n', response)
         return response
     except Exception as err:
         return err
@@ -60,11 +66,22 @@ async def retrieve_sameas_resources(sameas:str, req:Request):
 
 
 @router.get("/properties/", tags=[TAG])
-async def retrieve_properties_of_one_resource(resourceURI:str, req:Request):
+async def retrieve_properties_of_one_resource(resourceURI:str, typeOfView:str, language:str, req:Request):
     """Obtém as propriedades de um recurso."""
+    eh_visao_unification = typeOfView == 0 or typeOfView == "0"
+    eh_visao_exportada = typeOfView == 1 or typeOfView == "1"
+    eh_visao_fusao = typeOfView == 2 or typeOfView == "2"
     try:
+        print('\n--------route:retrieve_properties_of_one_resource------')
         repo = req.headers.get('repo')
-        response = global_controller.retrieve_properties_from_exported_view(resourceURI, repo)
+        print('?tipo de visão:', typeOfView)
+        if (eh_visao_unification):
+            response = global_controller.retrieve_properties_at_unification_view(resourceURI, repo)
+        elif (eh_visao_exportada):
+            response = global_controller.retrieve_properties_at_exported_view(resourceURI, language, repo)
+        else:
+            response = global_controller.retrieve_properties_at_fusion_view(resourceURI, language, repo)
+            # return 'Só pode ser Visão de Fusão!!'
         return response
     except Exception as err:
         return err

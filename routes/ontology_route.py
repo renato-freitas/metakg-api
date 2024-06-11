@@ -9,7 +9,7 @@ TAG = "Classes"
 async def retrieve_classes(type:str, exported_view:str, language:str, req: Request):
     """"""
     repo = req.headers.get('repo')
-    print('*** ROUTE_CLASSES, REPO:', repo, ', TIPO:', type)
+    print(f'repositório: {repo}\n tipo de classe: {type}')
     if(type == TEXTS.GENERALIZATION):
         result = ontology_controller.retrieve_generalization_classes(repo)
     elif (type == TEXTS.EXPORTED): 

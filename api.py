@@ -3,7 +3,7 @@ import uuid
 import requests
 # from unidecode import unidecode
 from commons import Prefixies, NameSpaces as ns, Endpoint, EndpointDEV, Headers, Functions, VSKG as o, NamedGraph
-from commons import VSKG, ENVIROMENT
+from commons import VSKG, ENVIROMENT, TBOX_SAVED_QUERY
 from models import DataSource, MetaMashupModel, HighLevelMapping, DataProperty, AddGCLMashupModel, AssociaMetaEKGAoMetaMashupModel
 import psycopg2
 from sqlalchemy import create_engine, text
@@ -51,36 +51,84 @@ class Global:
             return result.json()['results']['bindings']
         except Exception as err:
             return err
-        
-
-    def get_properties(self, uri:str):
+    
+    # NEW
+    def get_properties_of_resource_in_exported_view(self, sparql:str):
         try:
-            sparql = f"""PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-            PREFIX owl: <http://www.w3.org/2002/07/owl#>
-            SELECT ?p ?label ?o WHERE {{
-                    <{uri}> ?p ?o. 
-                    OPTIONAL {{
-        ?p rdfs:label ?label.
-        FILTER(lang(?label)="pt")    
-    }}
-    # BIND(COALESCE(?_label,?p) AS ?label)
-    FILTER(!CONTAINS(STR(?o),"_:node") && !(?p = owl:topDataProperty) && !(?p = owl:sameAs))}}
-    ORDER BY ?label"""
-    # FILTER(!CONTAINS(STR(?o),"_:node") && !(?p = owl:topDataProperty) && !(?p = owl:sameAs))}}"""
+            print('-------------api:get_properties_of_resource_in_exported_view-----------\n', sparql)
             r = requests.get(self.endpoint, params={'query': sparql}, headers=Headers.GET)
             print('------ RESUTL -------\n', r.json()['results']['bindings'])
-            return agroup_properties(r.json()['results']['bindings'])
+            # return r.json()['results']['bindings']
+            return agroup_properties_in_exported_view(r.json()['results']['bindings'])
+        
         except Exception as err:
             return err
+    
+    # def get_properties_of_resource_in_exported_view(self, uri:str):
+    #     try:
+    #         sparql = f"""PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    #         PREFIX owl: <http://www.w3.org/2002/07/owl#>
+    #         SELECT ?origin ?p ?label ?o WHERE {{
+    # BIND(<{uri}> AS ?origin)
+    #                 <{uri}> ?p ?o. 
+    #                 OPTIONAL {{
+    #     ?p rdfs:label ?label.
+    #     FILTER(lang(?label)="pt")    
+    # }}
+    # # BIND(COALESCE(?_label,?p) AS ?label)
+    # FILTER(!CONTAINS(STR(?o),"_:node") && !(?p = owl:topDataProperty) && !(?p = owl:sameAs))}}
+    # ORDER BY ?label"""
+    #         print('===sparql: get_properities===\n', sparql)
+    # # FILTER(!CONTAINS(STR(?o),"_:node") && !(?p = owl:topDataProperty) && !(?p = owl:sameAs))}}"""
+    #         r = requests.get(self.endpoint, params={'query': sparql}, headers=Headers.GET)
+    #         print('------ RESUTL -------\n', r.json()['results']['bindings'])
+    #         # return r.json()['results']['bindings']
+    #         return agroup_properties(r.json()['results']['bindings'])
+        
+    #     except Exception as err:
+    #         return err
+        
+#old
+    # def get_properties(self, uri:str):
+    #     try:
+    #         sparql = f"""PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    #         PREFIX owl: <http://www.w3.org/2002/07/owl#>
+    #         SELECT ?p ?label ?o WHERE {{
+    #                 <{uri}> ?p ?o. 
+    #                 OPTIONAL {{
+    #     ?p rdfs:label ?label.
+    #     FILTER(lang(?label)="pt")    
+    # }}
+    # # BIND(COALESCE(?_label,?p) AS ?label)
+    # FILTER(!CONTAINS(STR(?o),"_:node") && !(?p = owl:topDataProperty) && !(?p = owl:sameAs))}}
+    # ORDER BY ?label"""
+    #         print('===sparql: get_properities===\n', sparql)
+    # # FILTER(!CONTAINS(STR(?o),"_:node") && !(?p = owl:topDataProperty) && !(?p = owl:sameAs))}}"""
+    #         r = requests.get(self.endpoint, params={'query': sparql}, headers=Headers.GET)
+    #         print('------ RESUTL -------\n', r.json()['results']['bindings'])
+    #         return agroup_properties(r.json()['results']['bindings'])
+    #     except Exception as err:
+    #         return err
 
-
-    def get_properties_from_sameAs_resources(self, sparql:str):
+    # new
+    def get_properties_from_resources_in_unification_view(self, sparql:str):
+        print('-------api:get_properties_from_resources_in_unification_view----------')
         try:
             r = requests.get(self.endpoint, params={'query': sparql}, headers=Headers.GET)
-            # print('***', r.json()['results']['bindings'])
-            return agroup_properties_in_sameas(r.json()['results']['bindings'])
+            print('***', r.json()['results']['bindings'])
+            return agroup_properties_in_unification_view(r.json()['results']['bindings'])
         except Exception as err:
             return err
+   
+    # old
+    # def get_properties_from_sameAs_resources(self, sparql:str):
+    #     print('-------api:get_properties_from_sameAs_resources----------')
+    #     try:
+    #         r = requests.get(self.endpoint, params={'query': sparql}, headers=Headers.GET)
+    #         print('***', r.json()['results']['bindings'])
+    #         return agroup_properties_in_sameas(r.json()['results']['bindings'])
+    #     except Exception as err:
+    #         return err
         
 
     def agroup_resources(self, resources):
@@ -153,16 +201,33 @@ class KG_Metadata:
 
 class ConsultaSalva:
     def __init__(self, repo:str): 
-        self.endpoint = EndpointDEV(repo).QUERY if ENVIROMENT == "DEV" else Endpoint(repo).QUERY
-
-    def execute_query_data(self, name, query):
+        self.endpoint = EndpointDEV(repo).PRODUCTION if ENVIROMENT == "DEV" else Endpoint.PRODUCTION
+    
+    def obtem_uma_consulta_salva(self, name:str, repository:str):
+        sparql = Prefixies.QUERIES + f"""SELECT * FROM <http://localhost:7200/repositories/{repository}/rdf-graphs/KG_QUERY> {{ 
+            ?s {TBOX_SAVED_QUERY.P_IS_A} {TBOX_SAVED_QUERY.C_SAVED_QUERY};
+             {TBOX_SAVED_QUERY.P_NAME} "{name}"@pt.
+        }} LIMIT 1"""
+        query = {"query": sparql}
+        print('*** API, query', sparql)
         try:
-            exists = self.get_one_saved_query(name)
+            result = requests.get(self.endpoint, params=query, headers=Headers.GET)
+            return result.json()['results']['bindings']
+            # print('*** API, REPONSE ***',response)
+            # return response
+        except Exception as err:
+            return err
+
+    def execute_query_data(self, query, name, repository):
+        try:
+            exists = self.obtem_uma_consulta_salva(name, repository)
+            print('---------existe----------\n', exists)
             if (len(exists) > 0):
                 raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Uma consulta com esse nome já existe!")
             
-            r = requests.post(self.endpoint, data=query, headers=Headers.POST_QUERY)
-            print('=========', r.status_code)
+            # r = requests.post(self.endpoint, data=query, headers=Headers.)
+            r = requests.post(self.endpoint + "/statements", params=query, headers=Headers.POST)
+            print('=========', r.text)
             if(r.status_code == 200 or r.status_code == 201 or r.status_code == 204):
                 return {"code": 204, "message": "Criado com Sucesso!"}
             else:
@@ -171,6 +236,9 @@ class ConsultaSalva:
             print('***\n', err)
             return err
 
+    # def retrive_queries(self):
+
+    
     def execute_query(self):
         try:
             result = requests.get(self.endpoint)
@@ -180,20 +248,15 @@ class ConsultaSalva:
             print('***\n', err)
             return err
 
-    def update_saved_query(self, name, query):
+    def update_saved_query(self, query):
         try:
-            exists = self.get_one_saved_query(name)
-            if (len(exists) <= 0):
-                raise HTTPException(status_code=status.HTTP_204_NO_CONTENT, detail="Consulta não existe!")
-            
-            r = requests.put(self.endpoint, data=query, headers={ "Content-type": "application/json", "Accept": "application/json" })
-            print('=========', r.status_code)
+            r = requests.post(self.endpoint + "/statements", params=query, headers=Headers.POST)
+            print('*** response', r)
             if(r.status_code == 200 or r.status_code == 201 or r.status_code == 204):
                 return {"code": 204, "message": "Atualizado com Sucesso!"}
             else:
                 return {"code": 400, "message": "Não foi atualizado!"}
         except Exception as err:
-            print('***\n', err)
             return err
 
     def get_one_saved_query(self, name:str):
@@ -203,19 +266,35 @@ class ConsultaSalva:
             return result.json()
         except Exception as err:
             return err
+    # def get_one_saved_query(self, name:str):
+    #     try:
+    #         q = self.endpoint + f'?name={name}'
+    #         result = requests.get(q, headers={ "Accept": "application/json" })
+    #         return result.json()
+    #     except Exception as err:
+    #         return err
         
 
-    def delete_one_saved_query(self, name:str):
+    # def delete_one_saved_query(self, name:str):
+    #     try:
+    #         q = self.endpoint + f'?name={name}'
+    #         r = requests.delete(q, headers={ "Accept": "*/*" })
+    #         if(r.status_code == 200 or r.status_code == 201 or r.status_code == 204):
+    #             return {"code": 204, "message": "Deletado com Sucesso!"}
+    #         else:
+    #             return {"code": 400, "message": "Consulta não existe!"}
+    #     except Exception as err:
+    #         return err
+    def delete_one_saved_query(self, query:str):
         try:
-            q = self.endpoint + f'?name={name}'
-            r = requests.delete(q, headers={ "Accept": "*/*" })
+            r = requests.post(self.endpoint + "/statements", params=query, headers=Headers.POST)
+            print('*** response', r)
             if(r.status_code == 200 or r.status_code == 201 or r.status_code == 204):
                 return {"code": 204, "message": "Deletado com Sucesso!"}
             else:
-                return {"code": 400, "message": "Consulta não existe!"}
+                return {"code": 400, "message": "Não foi deletado!"}
         except Exception as err:
             return err
-
 
 # métodos globais
 def get_one_resource_kg_metadata(classe:str, label:str):
@@ -275,37 +354,142 @@ def execute_sparql_query_in_kg_metadata(query):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Não foi criado!")
     except Exception as err:
         return err
-    
 
 
-def agroup_properties(properties):
-    agrouped = dict()
-    for prop in properties:
-        if not prop['p']['value'] in agrouped:
-            agrouped[prop['p']['value']] = []
-        if "label" in prop:
-            agrouped[prop['p']['value']].append([prop['o']['value'], prop['label']['value'], []])
-        else: 
-            agrouped[prop['p']['value']].append([prop['o']['value'], "", []])
-    return agrouped
-
-
-
-def agroup_properties_in_sameas(properties):
+# NEW 10/06/2024
+def agroup_properties_in_exported_view(properties):
+    print('--------api:agroup_properties_in_exported_view------')
     _agrouped = dict()
+    count = 1
+    _origin = properties[0]['origin']['value']
+    _agrouped[_origin] = {}
+    _provenance = Functions.getContextFromURI(_origin)
+    for row in properties:
+        print(count, ' - ', row, '\n')
+        count += 1
+        _label = ""
+        if "p" in row:
+            if not row['p']['value'] in _agrouped[_origin]:
+                _agrouped[_origin][row['p']['value']] = []
+            if "label" in row:
+                _label = row['label']['value']
+            # if "http://www.w3.org/2002/07/owl#sameAs" == prop['p']['value']:
+            _agrouped[_origin][row['p']['value']].append([row['o']['value'], _label, _provenance])
+        else:
+            print('sem p')
+            if not "http://www.w3.org/2002/07/owl#sameAs" in _agrouped[_origin]:
+                _agrouped[_origin]["http://www.w3.org/2002/07/owl#sameAs"] = []
+            if "target" in row:
+                _agrouped[_origin]["http://www.w3.org/2002/07/owl#sameAs"].append([row['target']['value'], _label, ""])
+    print('---------api:exported_view_agrouped----------\n', _agrouped)
+    return _agrouped
+
+
+# def agroup_properties(properties):
+#     print('--------api:agroup_properties------')
+#     _agrouped = dict()
+#     count = 1
+#     _origin = properties[0]['origin']['value']
+#     _agrouped[_origin] = {}
+#     _provenance = Functions.getContextFromURI(_origin)
+#     for prop in properties:
+#         print(count, ' - ', prop, '\n')
+#         count += 1
+#         _label = ""
+#         if not prop['p']['value'] in _agrouped[_origin]:
+#             _agrouped[_origin][prop['p']['value']] = []
+#         if "label" in prop:
+#             _label = prop['label']['value']
+#         # if "http://www.w3.org/2002/07/owl#sameAs" == prop['p']['value']:
+#         # if "target" == prop:
+#             # _agrouped[_origin][prop['p']['value']].append([prop['target']['value'], _label, prop['prov']['value']])
+#         # else:
+#         _agrouped[_origin][prop['p']['value']].append([prop['o']['value'], _label, _provenance])
+#         print(_agrouped)
+#     return _agrouped
+# old
+# def agroup_properties(properties):
+#     agrouped = dict()
+#     for prop in properties:
+#         if not prop['p']['value'] in agrouped:
+#             agrouped[prop['p']['value']] = []
+#         if "label" in prop:
+#             agrouped[prop['p']['value']].append([prop['o']['value'], prop['label']['value'], []])
+#         else: 
+#             agrouped[prop['p']['value']].append([prop['o']['value'], "", []])
+#     return agrouped
+
+
+# new
+def agroup_properties_in_unification_view(properties):
+    print('--------api:agroup_properties_in_unification_view------')
+    _agrouped = dict()
+    count = 1
+    _origin = properties[0]['origin']['value']
+    _agrouped[_origin] = {}
     for prop in properties:
-        if not prop['p']['value'] in _agrouped:
-            _agrouped[prop['p']['value']] = []
+        print(count, ' - ', prop, '\n')
+        count += 1
+        _label = ""
+        if not prop['p']['value'] in _agrouped[_origin]:
+            _agrouped[_origin][prop['p']['value']] = []
         if "label" in prop:
-            _agrouped[prop['p']['value']].append([prop['o']['value'], prop['label']['value'], prop['prov']['value']])
-        else: 
-            _agrouped[prop['p']['value']].append([prop['o']['value'], "", prop['prov']['value']])
-        # _agrouped[prop['p']['value']].append([prop['o']['value'], prop['s']['value']])
-    agrouped = verify_values_divergency(_agrouped)
+            _label = prop['label']['value']
+        # if "http://www.w3.org/2002/07/owl#sameAs" == prop['p']['value']:
+        if "target" == prop:
+            _agrouped[_origin][prop['p']['value']].append([prop['target']['value'], _label, prop['prov']['value']])
+        else:
+            _agrouped[_origin][prop['p']['value']].append([prop['o']['value'], _label, prop['prov']['value']])
+    agrouped = verifica_valores_divergentes(_agrouped, _origin)
+    # print('G - ', _agrouped)
     return agrouped
 
+# old
+# def agroup_properties_in_sameas(properties):
+#     _agrouped = dict()
+#     for prop in properties:
+#         if not prop['p']['value'] in _agrouped:
+#             _agrouped[prop['p']['value']] = []
+#         if "label" in prop:
+#             _agrouped[prop['p']['value']].append([prop['o']['value'], prop['label']['value'], prop['prov']['value']])
+#         else: 
+#             _agrouped[prop['p']['value']].append([prop['o']['value'], "", prop['prov']['value']])
+#     agrouped = verify_values_divergency(_agrouped)
+#     return agrouped
+
+# new
+def verifica_valores_divergentes(agrouped_props, resource_origin):
+    print('-------api:verifica_valores_divergentes----------')
+    print('valores agrupadaos:', agrouped_props)
+    _agrouped_props = dict()
+    if resource_origin not in _agrouped_props: 
+        _agrouped_props[resource_origin] = {}
+    for p in agrouped_props[resource_origin]:
+        # print('-----------novo group-----------\n',p)
+        # if _agrouped_props[resource_origin][p] = []
+        if (p not in ["http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+                      "http://www.w3.org/2000/01/rdf-schema#label", "http://www.w3.org/2000/01/rdf-schema#seeaAlso"
+                      "http://purl.org/dc/elements/1.1/identifier", "http://www.w3.org/2002/07/owl#sameAs",
+                      "http://purl.org/dc/terms/identifier", "http://schema.org/thumbnail"]):
+            print('------ avaliar apenas datatype properties ------', p)
+            # exemplo: [['valor','propriedade','proveniência'], ...]
+
+            if p not in _agrouped_props[resource_origin]:
+                _agrouped_props[resource_origin][p] = []
 
 
+            current_value = agrouped_props[resource_origin][p][0][0]
+            for dado in agrouped_props[resource_origin][p]:
+                # "http://" not in dado[0] => para não verificar os object-propeties
+                if (dado[0] != current_value and "http://" not in dado[0]): 
+                    _agrouped_props[resource_origin][p].append([dado[0], dado[1], dado[2], True])
+                else:
+                    _agrouped_props[resource_origin][p].append([dado[0], dado[1], dado[2], False])
+        else:
+            _agrouped_props[resource_origin][p] = agrouped_props[resource_origin][p]
+    print(_agrouped_props)
+    return _agrouped_props
+# old
 def verify_values_divergency(agrouped_props):
     _agrouped_props = dict()
     for prop in agrouped_props:

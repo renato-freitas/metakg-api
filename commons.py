@@ -4,7 +4,7 @@ from unidecode import unidecode
 from models import DataSource, HighLevelMapping, DataProperty
 
 ENVIROMENT:str = "DEV"
-EKG:str = "EKG_CONTEXT"
+# EKG:str = "EKG_CONTEXT"
 class TEXTS:  
   def __init__(self): pass
   GENERALIZATION = "0"
@@ -36,6 +36,15 @@ class Functions:
     
   def salvaFonteDeDados():
     """Salvar um arquivo .properties"""
+
+  def getContextFromURI(uri: str) -> str:  
+    lastToken2: str = ""
+    if (uri):
+      splitOne = uri.split("/resource/")
+      lastToken1 = splitOne[1]
+      split2 = lastToken1.split("/")
+      lastToken2 = split2[0]
+    return lastToken2
 
   def obtem_arquivos(path):
     """Lista todos os arquivo de uma pasta"""
@@ -191,6 +200,7 @@ class NamedGraph:
     # self.TBOX = f"http://{self.IP}:{self.PORT}/repositories/{repo}/rdf-graphs/TBOX"
     self.TBOX_METADATA = f"http://{self.IP}:{self.PORT}/repositories/{repo}/rdf-graphs/TBOX_METADATA"
     self.KG_METADATA = f"http://{self.IP}:{self.PORT}/repositories/{repo}/rdf-graphs/KG_METADATA"
+    self.KG_QUERY = f"http://{self.IP}:{self.PORT}/repositories/{repo}/rdf-graphs/KG_QUERY"
   # KG_TBOX = "http://www.sefaz.ma.gov.br/named-graph/TBOX"
   # KG_METADATA_BIGDATAFORTALEZA = f"http://{IP}:{PORT}/repositories/{REPOSITORY_ID}/rdf-graphs/KG_METADATA"
   # KG_TBOX_BIGDATAFORTALEZA = f"http://{IP}:{PORT}/repositories/{REPOSITORY_ID}/rdf-graphS/KG_TBOX"
@@ -204,6 +214,8 @@ class NameSpaces:
   VSKGR = "http://www.arida.ufc.br/VSKG/resource/"
   META_EKG = "http://www.arida.ufc.br/meta-ekg/resource/"
   D2RQ = "http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#"
+  SAVED_QUERY = "http://www.arida.ufc.br/ontologies/saved-query#"
+  ARIDA_R = "http://www.arida.ufc.br/resource/"
 
 class Prefixies:
   def __init__(self): pass
@@ -228,11 +240,13 @@ class Prefixies:
   SFZR = "PREFIX sfzr: <http://www.sefaz.ma.gov.br/resource/>\n"
   RFB = "PREFIX rfb: <http://www.sefaz.ma.gov.br/RFB/ontology/>\n"
   META_EKG = "PREFIX metaekg: <http://www.arida.ufc.br/meta-ekg/resource/>\n"
+  SAVED_QUERY = f"PREFIX sq: <{NameSpaces.SAVED_QUERY}>\n"
   ALL = RDF + RDFS + OWL + FOAF + VCARD + D2RQ + XSD + DC + DC_TERMS + RR + VOID + DCAT + DRM + TL + VSKG + SFZ + SEFAZMA + SFZR + MOKG 
   DATASOURCE = RDF + RDFS + VSKG + DCAT + DRM +  D2RQ + DC + FOAF + DC_TERMS
   EXPORTED_VIEW = RDF + RDFS + VSKG + DRM + DC
   MAPPING = RDF + RDFS + DC + VSKG + META_EKG
   META_MASHUP = RDF + RDFS + DC + META_EKG + VSKG
+  QUERIES = SAVED_QUERY + RDF + RDFS + FOAF + DC
 
   
 
@@ -296,4 +310,40 @@ class VSKG:
   C_MASHUP_VIEW_SPEC = "vskg:MashupViewSpecification"
   C_META_MASHUP_SPARQL_QUERY_PARAMS = "vskg:SparqlQueryParams"
   C_META_MASHUP_SPARQL_QUERY_PARAMS = "vskg:SparqlQueryParams"
+  
+
+
+class TBOX_SAVED_QUERY:
+  def __init__(self): pass
+  """Mantém as classes e propriedades da ontologia Saved Query"""
+  # GENÉRICOS
+  P_IS_A = "rdf:type"
+  P_LABEL = "rdfs:label"
+  P_NAME = "foaf:name"
+  P_DOMAIN = "rdfs:domain"
+  P_RANGE = "rdfs:range"
+  P_DC_IDENTIFIER = "dc:identifier"
+  P_COMMENT = "rdfs:comment"
+  P_DC_DESCRIPTION = "dc:description"
+  P_DCTERMS_DESCRIPTION = "dcterms:description"
+  P_HAS_APPLICATION = "vskg:hasApplication"
+  # FONTE DE DADOS
+  P_DATASOURCE_TYPE = "vskg:datasourceType"
+  P_DB_USERNAME = "d2rq:username"
+  P_DB_PASSWORD = "d2rq:password"
+  P_DB_JDBC_DRIVER = "d2rq:jdbcDriver"
+  P_DB_CONNECTION_URL = "d2rq:jdbcDSN"
+  P_CSV_FILE_PATH = "vskg:csvFilePath"
+  P_DB_HAS_TABLE = "vskg:hasTable"
+  P_DB_HAS_COLUMN = "vskg:hasColumn"
+  P_DB_COL_DATATYPE = "vskg:datatype"
+  P_DB_COL_NULLABLE = "vskg:nullable"
+  P_DB_COL_CARDINALITY = "vskg:cardinality"
+  
+  P_SPARQL = "sq:sparql"
+  P_REPOSITORY = "sq:repository"
+  P_GENERALIZATION_CLASS = "sq:generalizationClass"
+
+  #====================
+  C_SAVED_QUERY = "sq:SavedQuery"
   

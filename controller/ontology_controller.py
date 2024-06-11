@@ -10,6 +10,7 @@ from model.meta_mashup_model import MetaMashupModel, AddExporteViewsModel, AddSp
 
 
 def retrieve_generalization_classes(repo:str):
+    print('----------route:retrieve_generalization_classes----------')
     sparql = """
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
@@ -61,6 +62,7 @@ SELECT ?classURI ?label (MAX(?__comment) as ?comment) ?image FROM <""" +NamedGra
     FILTER(!CONTAINS(STR(?classURI),"http://www.w3.org/2002/07/owl#"))           
 } GROUP BY ?classURI ?label ?image
 ORDER BY ?label"""
+    print('----sparql-----\n', sparql)
     result = api.Tbox(repo).execute_query({"query": sparql})
     return result
 
@@ -79,11 +81,13 @@ SELECT DISTINCT ?datasource where {
     ?i a ?classURI.
 #    GARANTIR QUE SÓ TENHA URI QUE É UM RECURSO
     FILTER(!CONTAINS(STR(?i),"/resource/App")).
+    FILTER(!CONTAINS(LCASE(STR(?i)),"/resource/canonical")).
+    FILTER(!CONTAINS(LCASE(STR(?i)),"/resource/unification")).
 #    RECORTAR A URI PARA OBTER A FONTE DE DADOS DISTINTAS
     BIND(STRAFTER(STR(?i), "resource/") AS ?_s)
     BIND(STRBEFORE(STR(?_s), "/") AS ?datasource)
 } ORDER BY ?datasource"""
-    print('**** SPARQL:', sparql)
+    print('===SPARQL GET EXPORTED VIEW===\n', sparql)
     result = api.Tbox(repo).execute_query({"query": sparql})
     return result
 
@@ -99,8 +103,9 @@ PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 PREFIX schema: <http://schema.org/>
 PREFIX moa: <http://www.arida.ufc.br/ontologies/music#>
 SELECT ?classURI ?label ?superclass (MAX(?__comment) as ?comment) ?image FROM <""" +NamedGraph(repo).TBOX+"""> { 
-    ?classURI rdf:type owl:Class;
-              moa:isFromExportedView """ + _exp_view + """.
+    ?classURI rdf:type owl:Class.
+#              moa:isFromExportedView """ + _exp_view + """.
+    FILTER(CONTAINS(LCASE(STR(?classURI)),"""+ _exp_view.lower() +"""))          
     MINUS { ?sub rdfs:subClassOf ?classURI. }
     OPTIONAL { 
         ?classURI rdfs:label ?_label. 
