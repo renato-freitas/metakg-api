@@ -14,7 +14,7 @@ def check_resource(uri:str, repo:str):
 
 
 def retrieve_unification_resources(classRDF:str, page:int, rowPerPage:int, label:str, language:str, repo:str):
-    print('-----\nretrieve_unification_resources\n-----\n')
+    print('-----retrieve_unification_resources-----\n')
     _filter_language = f'FILTER(LANG(?l)="{language}")' if language != "" else "" 
     uri_decoded = unquote_plus(classRDF)
     offset = page * rowPerPage
@@ -28,6 +28,9 @@ SELECT DISTINCT ?uri ?label where {{
     OPTIONAL{{
             ?uri rdfs:label ?l.
             {_filter_language}
+        }}
+     OPTIONAL {{
+            ?uri rdfs:label ?l.
         }}
     FILTER(CONTAINS(LCASE(?l), "{label.lower()}"))
     FILTER(!CONTAINS(LCASE(STR(?uri)), "resource/canonical"))
@@ -55,12 +58,15 @@ def retrieve_resources(classRDF:str, page:int, rowPerPage:int, label:str, langua
         PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
         PREFIX owl: <http://www.w3.org/2002/07/owl#>
         PREFIX dc: <http://purl.org/dc/elements/1.1/>
-        SELECT ?uri ?label WHERE {{ 
+        SELECT distinct ?uri ?label WHERE {{ 
             ?uri a <{uri_decoded}>; 
                  dc:identifier ?id.
             OPTIONAL{{
                 ?uri rdfs:label ?l.
                 {_filter_language}
+            }}
+            OPTIONAL{{
+                ?uri rdfs:label ?l.
             }}
             {_filter_search}
             BIND(COALESCE(?l,?uri) AS ?label)
@@ -68,7 +74,7 @@ def retrieve_resources(classRDF:str, page:int, rowPerPage:int, label:str, langua
             FILTER(!CONTAINS(LCASE(STR(?uri)),"resource/unification"))
             FILTER(!CONTAINS(LCASE(STR(?uri)),"resource/canonical"))
         }}
-        ORDER BY ?id
+        ORDER BY ?l
         LIMIT {rowPerPage}
         OFFSET {offset}
     """
@@ -204,56 +210,45 @@ def retrieve_properties_at_unification_view(uri:str, repo:str):
     else:
         sparql = f"""PREFIX owl: <http://www.w3.org/2002/07/owl#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+PREFIX jsfn:<http://www.ontotext.com/js#>
 SELECT ?origin ?target ?label ?p ?o ?prov where {{
     BIND(<{uri}> AS ?origin)
     {{      
      <{uri}> ?p ?o.
-     BIND(STRAFTER(STR("{uri}"), "resource/") AS ?_s)
-     BIND(STRBEFORE(STR(?_s), "/") AS ?prov)
-     OPTIONAL {{
-        ?p rdfs:label ?label. 
-        FILTER(lang(?label)="pt") 
-     }}
-}}
+     BIND(jsfn:getContext("{uri}") AS ?prov)
+     OPTIONAL {{ ?p rdfs:label ?label. FILTER(lang(?label)="pt") }}
+    #  FILTER(!CONTAINS(LCASE(STR(?o)),"_:node") && !(?p = owl:topDataProperty) && !(?p = owl:sameAs))
+    FILTER(!CONTAINS(LCASE(STR(?o)),"_:node") && !(?p = owl:topDataProperty))
+    }}
 	UNION
     {{ 
-                <{uri}> owl:sameAs+ ?same_r .
-                ?same_r ?p ?o.
-                BIND(STRAFTER(STR(?same_r), "resource/") AS ?_s)
-        		BIND(STRBEFORE(STR(?_s), "/") AS ?prov)
-                OPTIONAL {{
-                    ?p rdfs:label ?label. 
-                    FILTER(lang(?label)="pt") 
-                 }}
-                bind(?same_r as ?target)
+        <{uri}> owl:sameAs+ ?same_r .
+        ?same_r ?p ?o.
+        BIND(jsfn:getContext(STR(?same_r)) AS ?prov)
+        OPTIONAL {{ ?p rdfs:label ?label. FILTER(lang(?label)="pt") }}
+        bind(?same_r as ?target)
     }}
     UNION 
     {{
         ?same_l owl:sameAs+ <{uri}> .
-                ?same_l ?p ?o.
-                BIND(STRAFTER(STR(?same_l), "resource/") AS ?_s).
-        		BIND(STRBEFORE(STR(?_s), "/") AS ?prov).
-                OPTIONAL {{
-                    ?p rdfs:label ?label. 
-                    FILTER(lang(?label)="pt") 
-                 }}
-                BIND(?same_l AS ?target)
+        ?same_l ?p ?o.
+        BIND(jsfn:getContext(STR(?same_l)) AS ?prov)
+        OPTIONAL {{ ?p rdfs:label ?label. FILTER(lang(?label)="pt") }}
+        BIND(?same_l AS ?target)
     }}
-        UNION 
+    UNION 
     {{
         ?same_l2 owl:sameAs+ <{uri}> .
 		?same_l2 owl:sameAs+ ?same_r2.	                        
         ?same_r2 ?p ?o.
-                BIND(STRAFTER(STR(?same_r2), "resource/") AS ?_s).
-        		BIND(STRBEFORE(STR(?_s), "/") AS ?prov).
-                OPTIONAL {{
-                    ?p rdfs:label ?label. 
-                    FILTER(lang(?label)="pt") 
-                 }}
+        BIND(jsfn:getContext(STR(?same_r2)) AS ?prov)
+        OPTIONAL {{ ?p rdfs:label ?label. FILTER(lang(?label)="pt") }}
         FILTER(?same_r2 != <{uri}>).
         BIND(?same_r2 AS ?target)
     }}
 #    FILTER(!CONTAINS(LCASE(STR(?target)),"/resource/unification")).
+     FILTER(!CONTAINS(LCASE(STR(?o)),"_:node") && !(?p = owl:topDataProperty))
 }}"""
         print('*** SPARQL VISAO UNIFICAÇÃO\n', sparql)
         result = api.Global(repo).get_properties_from_resources_in_unification_view(sparql)
@@ -262,6 +257,8 @@ SELECT ?origin ?target ?label ?p ?o ?prov where {{
 # OPTIONAL { ?r rdfs:label ?_label.  }
 
 # old
+#  BIND(STRAFTER(STR("{uri}"), "resource/") AS ?_s)
+#  BIND(STRBEFORE(STR(?_s), "/") AS ?prov)
 def retrieve_properties_from_unification_view(data:ResoucesSameAsModel, repo:str):
     print('\n----------retrieve_properties_from_unification_view--------\n')
     if(data.resources is None):
@@ -304,69 +301,80 @@ def retrieve_properties_from_unification_view(data:ResoucesSameAsModel, repo:str
 
 # new
 def retrieve_properties_at_fusion_view(uri:str, language:str, repo:str):
-    print('\n-------controller:retrieve_properties_from_unification_view--------\n')
+    print('\n-------controller:retrieve_properties_at_fusion_view--------\n')
     if(uri is None):
         return "not found"
     else:
         sparql = f"""PREFIX owl: <http://www.w3.org/2002/07/owl#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-SELECT ?origin ?target ?label ?p ?o ?prov where {{
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+PREFIX jsfn:<http://www.ontotext.com/js#>
+SELECT ?can ?origin ?target ?p ?label ?o ?prov ?name where {{
     BIND(<{uri}> AS ?origin)
-    {{      
+    {{
      <{uri}> ?p ?o.
-     BIND(STRAFTER(STR("{uri}"), "resource/") AS ?_s)
-     BIND(STRBEFORE(STR(?_s), "/") AS ?prov)
-     OPTIONAL {{
-        ?p rdfs:label ?label. 
-        FILTER(lang(?label)="pt") 
-     }}
-}}
-	UNION
-    {{ 
-                <{uri}> owl:sameAs+ ?same_r .
-                ?same_r ?p ?o.
-                BIND(STRAFTER(STR(?same_r), "resource/") AS ?_s)
-        		BIND(STRBEFORE(STR(?_s), "/") AS ?prov)
-                OPTIONAL {{
-                    ?p rdfs:label ?label. 
-                    FILTER(lang(?label)="pt") 
-                 }}
-                bind(?same_r as ?target)
+     OPTIONAL {{ ?p rdfs:label ?label. FILTER(lang(?label)="pt") }}
+     BIND(jsfn:getContext("{uri}") AS ?prov)
+     BIND(URI(jsfn:canonicalUri("{uri}")) as ?can)
+     FILTER(!CONTAINS(LCASE(STR(?o)),"_:node") && !(?p = owl:topDataProperty) && !(?p = owl:sameAs))
+	}}
+        UNION
+    {{
+        <{uri}> owl:sameAs+ ?same_r .
+        ?same_r ?p ?o.
+        BIND(jsfn:getContext(STR(?same_r)) AS ?prov)
+        BIND(URI(jsfn:canonicalUri(STR(?same_r))) as ?can)
+        OPTIONAL {{ ?p rdfs:label ?label. FILTER(lang(?label)="pt") }}
+        bind(?same_r as ?target)
     }}
-    UNION 
+    	UNION
     {{
         ?same_l owl:sameAs+ <{uri}> .
-                ?same_l ?p ?o.
-                BIND(STRAFTER(STR(?same_l), "resource/") AS ?_s).
-        		BIND(STRBEFORE(STR(?_s), "/") AS ?prov).
-                OPTIONAL {{
-                    ?p rdfs:label ?label. 
-                    FILTER(lang(?label)="pt") 
-                 }}
-                BIND(?same_l AS ?target)
+        ?same_l ?p ?o.
+        BIND(jsfn:getContext(STR(?same_l)) AS ?prov)
+        BIND(URI(jsfn:canonicalUri(STR(?same_l))) as ?can)
+        OPTIONAL {{ ?p rdfs:label ?label. FILTER(lang(?label)="pt") }}
+		BIND(?same_l AS ?target)
     }}
-        UNION 
+        UNION
     {{
         ?same_l2 owl:sameAs+ <{uri}> .
-		?same_l2 owl:sameAs+ ?same_r2.	                        
+        ?same_l2 owl:sameAs+ ?same_r2.
         ?same_r2 ?p ?o.
-                BIND(STRAFTER(STR(?same_r2), "resource/") AS ?_s).
-        		BIND(STRBEFORE(STR(?_s), "/") AS ?prov).
-                OPTIONAL {{
-                    ?p rdfs:label ?label. 
-                    FILTER(lang(?label)="pt") 
-                 }}
+        BIND(jsfn:getContext(STR(?same_r2)) AS ?prov)
+        BIND(URI(jsfn:canonicalUri(STR(?same_r2))) as ?can)
+		OPTIONAL {{ ?p rdfs:label ?label. FILTER(lang(?label)="pt") }}
         FILTER(?same_r2 != <{uri}>).
         BIND(?same_r2 AS ?target)
     }}
-#    FILTER(!CONTAINS(LCASE(STR(?target)),"/resource/unification")).
+    FILTER(!CONTAINS(LCASE(STR(?o)),"_:node") && !(?p = owl:topDataProperty))
+    #    FUSÃO DA PROPRIEDADE FOAF:NAME
+    BIND(jsfn:fusionOfName(?prov, STR(?p), ?o) as ?name)
 }}"""
-        print('*** SPARQL VISAO UNIFICAÇÃO\n', sparql)
-        result = api.Global(repo).get_properties_from_resources_in_unification_view(sparql)
+        print('--------sparql visão de fusão--------\n', sparql)
+        result = api.Global(repo).get_properties_from_resources_in_fusion_view(sparql)
     return result
 
 
 
+# {{
+#     <{uri}> foaf:name ?name1.
+#     <{uri}> owl:sameAs+ ?same_r .
+#     ?same_r foaf:name ?name2.
+#     OPTIONAL {{
+#         ?same_l owl:sameAs <{uri}> .
+#         ?same_l foaf:name ?name3. }}
+#     OPTIONAL {{
+#         ?same_l2 owl:sameAs+ <{uri}> .
+#         ?same_l2 owl:sameAs+ ?same_r2.
+#         ?same_r2 foaf:name ?name4.
+#     }}
+#     BIND(IF(BOUND(?name2), STR(?name2),"") as ?n2)
+#     BIND(IF(BOUND(?name3), STR(?name3),"") as ?n3)
+#     BIND(IF(BOUND(?name4), STR(?name4),"") as ?n4)
+#     BIND(CONCAT(STR(?name1), STR(?n2), STR(?n3), STR(?n4)) as ?nome)
+#     BIND(jsfn:fusionOfName(?name1, ?n2, ?n3, ?n4) as ?name)
+# }}
 
 
 
@@ -382,13 +390,8 @@ PREFIX tlo: <http://www.arida.ufc.br/ontologies/timeline#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 SELECT ?tl ?label ?inst ?update ?date ?property ?va ?vn WHERE {{        
     <{uri_decoded}> tlo:has_timeline ?tl.
-    OPTIONAL {{
-    	<{uri_decoded}> rdfs:label ?_label_pt. 
-    	FILTER(lang(?_label_pt)="pt") 
-	}}
-    OPTIONAL {{
-    	<{uri_decoded}> rdfs:label ?_label. 
-	}}
+    OPTIONAL {{ <{uri_decoded}> rdfs:label ?_label_pt. FILTER(lang(?_label_pt)="pt") }}
+    OPTIONAL {{ <{uri_decoded}> rdfs:label ?_label. }}
     BIND(COALESCE(?_label_pt,?_label) AS ?__label)
     BIND(COALESCE(?__label,<{uri_decoded}>) AS ?label)
     ?inst tl:timeLine ?tl;
@@ -413,6 +416,7 @@ def retrieve_timeline_of_unification_resources(data: ResoucesSameAsModel, repo):
     if(data.resources is None):
         return "not found"
     else:
+        cont = 1
         sparql = f"""PREFIX tl: <http://purl.org/NET/c4dm/timeline.owl#>
 PREFIX tlo: <http://www.arida.ufc.br/ontologies/timeline#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -437,31 +441,34 @@ SELECT ?tl ?label ?inst ?update ?date ?property ?va ?vn WHERE {{"""
                 tlo:property ?property;
                 tlo:old_value ?va;
                 tlo:new_value ?vn.
-        }}"""
-    for value in data.resources[key]:
-        sparql += f"""
-        UNION
-            {{
-            <{value}> tlo:has_timeline ?tl.
-        OPTIONAL {{
-            <{value}> rdfs:label ?_label_pt. 
-            FILTER(lang(?_label_pt)="pt") 
         }}
-        OPTIONAL {{
-            <{value}> rdfs:label ?_label. 
-        }}
-        BIND(COALESCE(?_label_pt,?_label) AS ?__label)
-        BIND(COALESCE(?__label,<{value}>) AS ?label)
-        ?inst tl:timeLine ?tl;
-            tlo:has_update ?update;
-            tl:atDate ?date.      
-        ?update a tlo:Update;
-            tlo:property ?property;
-            tlo:old_value ?va;
-            tlo:new_value ?vn. 
-            }}"""
+        {"UNION" if cont < len(data.resources) else ""}
+        """
+        cont += 1
+    # for value in data.resources[key]:
+    #     sparql += f"""
+    #     UNION
+    #         {{
+    #         <{value}> tlo:has_timeline ?tl.
+    #     OPTIONAL {{
+    #         <{value}> rdfs:label ?_label_pt. 
+    #         FILTER(lang(?_label_pt)="pt") 
+    #     }}
+    #     OPTIONAL {{
+    #         <{value}> rdfs:label ?_label. 
+    #     }}
+    #     BIND(COALESCE(?_label_pt,?_label) AS ?__label)
+    #     BIND(COALESCE(?__label,<{value}>) AS ?label)
+    #     ?inst tl:timeLine ?tl;
+    #         tlo:has_update ?update;
+    #         tl:atDate ?date.      
+    #     ?update a tlo:Update;
+    #         tlo:property ?property;
+    #         tlo:old_value ?va;
+    #         tlo:new_value ?vn. 
+    #         }}"""
     sparql += "}ORDER BY ?date"
-    print('sparql',sparql)
+    print('----sparql-----\n',sparql)
     res = api.Global(repo).execute_sparql_query({'query': sparql})
     print('*** TIMELINE >>>', res)
     result = api.Global(repo).agroup_instants_in_timeline(res)

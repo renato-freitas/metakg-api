@@ -11,7 +11,7 @@ async def retrieve_classes(type:str, exported_view:str, language:str, req: Reque
     repo = req.headers.get('repo')
     print(f'repositório: {repo}\n tipo de classe: {type}')
     if(type == TEXTS.GENERALIZATION):
-        result = ontology_controller.retrieve_generalization_classes(repo)
+        result = ontology_controller.retrieve_generalization_classes(repo, language)
     elif (type == TEXTS.EXPORTED): 
         result = ontology_controller.retrieve_semantic_view_exported_classes(repo, exported_view, language)
     else:
@@ -19,9 +19,10 @@ async def retrieve_classes(type:str, exported_view:str, language:str, req: Reque
     return result
 
 
+
 @router.get("/classes/exported-views", tags=[TAG])
 async def retrieve_exported_view(req: Request):
-    """"""
+    """Rota utilizada para recuperar as visões semânticas exportadas"""
     repo = req.headers.get('repo')
     print('*** ROUTE_CLASSES, REPO:', repo)
     result = ontology_controller.retrieve_semantic_view_exported_datasources(repo)

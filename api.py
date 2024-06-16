@@ -119,6 +119,19 @@ class Global:
             return agroup_properties_in_unification_view(r.json()['results']['bindings'])
         except Exception as err:
             return err
+        
+
+    def get_properties_from_resources_in_fusion_view(self, sparql:str):
+        print('-------api:get_properties_from_resources_in_fusion_view----------')
+        try:
+            r = requests.get(self.endpoint, params={'query': sparql}, headers=Headers.GET)
+            print('***', r.text)
+            # return r.json()['results']['bindings']
+            # return agroup_properties_in_fu(r.json()['results']['bindings'])
+            return self.agroup_properties_in_fusion_view(r.json()['results']['bindings'])
+        except Exception as err:
+            print('-----err--\n', err)
+            return err
    
     # old
     # def get_properties_from_sameAs_resources(self, sparql:str):
@@ -146,6 +159,39 @@ class Global:
                 agrouped[resource['inst']['value']] = []
             agrouped[resource['inst']['value']].append(resource)
         return agrouped
+    
+
+# ACHO QUE DEVE PASSA UMA LISTA DO ASSERTION FUSION PROPERTIES
+    def agroup_properties_in_fusion_view(self, properties):
+        print('--------api:agroup_properties_in_fusion_view------')
+        _agrouped = dict()
+        count = 1
+        _origin = properties[0]['origin']['value']
+        _agrouped[_origin] = {}
+        for prop in properties:
+            print(count, ' - ', prop, '\n')
+            count += 1
+            _label = ""
+            if not prop['p']['value'] in _agrouped[_origin]:
+                _agrouped[_origin][prop['p']['value']] = []
+            if "label" in prop:
+                _label = prop['label']['value']
+            # if "http://www.w3.org/2002/07/owl#sameAs" == prop['p']['value']:
+            
+            if "target" == prop:
+                _agrouped[_origin][prop['p']['value']].append([prop['target']['value'], _label, prop['prov']['value']])
+            else:
+                if "http://xmlns.com/foaf/0.1/name" in prop['p']['value'] and "name" in prop:
+                    _agrouped[_origin][prop['p']['value']] = [[prop['name']['value'], _label, prop['prov']['value']]]
+                elif "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" in prop['p']['value']:
+                    _agrouped[_origin][prop['p']['value']].append([prop['o']['value'], _label, prop['prov']['value']])
+                elif "http://schema.org/thumbnail" in prop['p']['value']:
+                    _agrouped[_origin][prop['p']['value']].append([prop['o']['value'], _label, prop['prov']['value']])
+                else:
+                    _agrouped[_origin][prop['p']['value']] = [[prop['o']['value'], _label, prop['prov']['value']]]
+        # agrouped = verifica_valores_divergentes(_agrouped, _origin)
+        # print('G - ', _agrouped)
+        return _agrouped
 
 
 
@@ -196,6 +242,45 @@ class KG_Metadata:
             return result.json()['results']['bindings']
         except Exception as err:
             return err
+
+
+
+class CompetenceQuestion:
+    def __init__(self, repo:str): 
+        self.endpoint = EndpointDEV(repo).PRODUCTION if ENVIROMENT == "DEV" else Endpoint.PRODUCTION
+    
+    def obtem_uma_questao_competencia(self, name:str, repository:str):
+        # sparql = Prefixies.QUERIES + f"""SELECT * FROM <http://localhost:7200/repositories/{repository}/rdf-graphs/KG_QUERY> {{ 
+        sparql = Prefixies.COMPETENCE_QUESTION + f"""SELECT * FROM <{NamedGraph(repository).KG_COMPETENCE_QUESTION}> {{ 
+            ?s {VSKG.P_IS_A} {VSKG.C_COMPETENCE_QUESTION};
+             {VSKG.P_NAME} "{name}".
+        }} LIMIT 1"""
+
+        query = {"query": sparql}
+        print('*** API, query', sparql)
+        try:
+            result = requests.get(self.endpoint, params=query, headers=Headers.GET)
+            return result.json()['results']['bindings']
+        except Exception as err:
+            return err
+
+    def execute_query_insert_data(self, query, name, repository):
+        try:
+            exists = self.obtem_uma_questao_competencia(name, repository)
+            print('---------existe----------\n', exists)
+            if (len(exists) > 0):
+                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Uma questão de competência com esse nome já existe!")
+            
+            r = requests.post(self.endpoint + "/statements", params=query, headers=Headers.POST)
+            print('=========', r.text)
+            if(r.status_code == 200 or r.status_code == 201 or r.status_code == 204):
+                return {"code": 204, "message": "Criado com Sucesso!"}
+            else:
+                return {"code": 400, "message": "Não foi criado!"}
+        except Exception as err:
+            print('***\n', err)
+            return err
+        
 
 
 
@@ -457,6 +542,8 @@ def agroup_properties_in_unification_view(properties):
 #     agrouped = verify_values_divergency(_agrouped)
 #     return agrouped
 
+
+
 # new
 def verifica_valores_divergentes(agrouped_props, resource_origin):
     print('-------api:verifica_valores_divergentes----------')
@@ -490,28 +577,33 @@ def verifica_valores_divergentes(agrouped_props, resource_origin):
     print(_agrouped_props)
     return _agrouped_props
 # old
-def verify_values_divergency(agrouped_props):
-    _agrouped_props = dict()
-    for prop in agrouped_props:
-        _agrouped_props[prop] = []
-        if (prop != "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" and
-            prop != "http://www.w3.org/2000/01/rdf-schema#label" and
-            prop != "http://www.bigdatafortaleza.com/ontology#uri" and
-            prop != "http://purl.org/dc/elements/1.1/identifier" and
-            prop != "http://purl.org/dc/terms/identifier"):
-            print('*** DIVERGENCY ***\n', agrouped_props[prop] )
-            # exemplo: [['valor','propriedade','proveniência'], ...]
-            current_value = agrouped_props[prop][0][0]
-            for dado in agrouped_props[prop]:
-                # "http://" not in dado[0] => para não verificar os object-propeties
-                if (dado[0] != current_value and "http://" not in dado[0]): 
-                    _agrouped_props[prop].append([dado[0], dado[1], dado[2], True])
-                else:
-                    _agrouped_props[prop].append([dado[0], dado[1], dado[2], False])
-        else:
-            _agrouped_props[prop] = agrouped_props[prop]
-    print('**** novo group: ',_agrouped_props)
-    return _agrouped_props
+# def verify_values_divergency(agrouped_props):
+#     _agrouped_props = dict()
+#     for prop in agrouped_props:
+#         _agrouped_props[prop] = []
+#         if (prop != "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" and
+#             prop != "http://www.w3.org/2000/01/rdf-schema#label" and
+#             prop != "http://www.bigdatafortaleza.com/ontology#uri" and
+#             prop != "http://purl.org/dc/elements/1.1/identifier" and
+#             prop != "http://purl.org/dc/terms/identifier"):
+#             print('*** DIVERGENCY ***\n', agrouped_props[prop] )
+#             # exemplo: [['valor','propriedade','proveniência'], ...]
+#             current_value = agrouped_props[prop][0][0]
+#             for dado in agrouped_props[prop]:
+#                 # "http://" not in dado[0] => para não verificar os object-propeties
+#                 if (dado[0] != current_value and "http://" not in dado[0]): 
+#                     _agrouped_props[prop].append([dado[0], dado[1], dado[2], True])
+#                 else:
+#                     _agrouped_props[prop].append([dado[0], dado[1], dado[2], False])
+#         else:
+#             _agrouped_props[prop] = agrouped_props[prop]
+#     print('**** novo group: ',_agrouped_props)
+#     return _agrouped_props
+
+
+
+
+
 
 # SELECT DISTINCT ?same ?p ?o 
 # FROM <http://localhost:7200/repositories/metagraph/rdf-graphs/KG-METADATA> {
@@ -562,21 +654,21 @@ def verify_values_divergency(agrouped_props):
 #         return err
 
 
-def get_properties_kg_metadata(uri:str):
-    try:
-        # print('*** API, GET PROPERTIES IN KG METADATA')
-        # sparql = f"""{Prefixies.DATASOURCE} SELECT DISTINCT ?p ?o FROM <{NamedGraph.KG_METADATA}> {{
-        #         <{uri}> ?p ?o. 
-        #         FILTER(?p != {VSKG.P_DB_HAS_TABLE})
-        #     }}
-        #     ORDER BY ?same ?p"""
-        # query = {'query': sparql}
-        # print('*** query', query)
-        r = requests.get(EndpointDEV.PRODUCTION, params=query, headers=Headers.GET)
-        # print('*** resulta get properties:',r.json())
-        return r.json()['results']['bindings']
-    except Exception as err:
-        return err
+# def get_properties_kg_metadata(uri:str):
+#     try:
+#         # print('*** API, GET PROPERTIES IN KG METADATA')
+#         # sparql = f"""{Prefixies.DATASOURCE} SELECT DISTINCT ?p ?o FROM <{NamedGraph.KG_METADATA}> {{
+#         #         <{uri}> ?p ?o. 
+#         #         FILTER(?p != {VSKG.P_DB_HAS_TABLE})
+#         #     }}
+#         #     ORDER BY ?same ?p"""
+#         # query = {'query': sparql}
+#         # print('*** query', query)
+#         r = requests.get(EndpointDEV.PRODUCTION, params=query, headers=Headers.GET)
+#         # print('*** resulta get properties:',r.json())
+#         return r.json()['results']['bindings']
+#     except Exception as err:
+#         return err
 
 
 def get_schema_from_datasource(db_conn_url, db_name, db_username, db_password):

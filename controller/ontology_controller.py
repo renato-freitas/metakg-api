@@ -9,8 +9,9 @@ from model.datasource_model import DataSourceModel
 from model.meta_mashup_model import MetaMashupModel, AddExporteViewsModel, AddSparqlQueryParamsModel
 
 
-def retrieve_generalization_classes(repo:str):
+def retrieve_generalization_classes(repo:str, language:str):
     print('----------route:retrieve_generalization_classes----------')
+    _lang = f"@{language}" if language != "" else "" 
     sparql = """
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
@@ -32,17 +33,17 @@ SELECT ?classURI ?label (MAX(?__comment) as ?comment) ?image FROM <""" +NamedGra
     OPTIONAL
     {
         ?classURI rdfs:label ?_label.
-        FILTER(lang(?_label)="pt")    
+        FILTER(lang(?_label)='"""+language+"""')    
     }
     OPTIONAL
     {
         ?classURI rdfs:comment ?_comment.
-        FILTER(lang(?_comment)="pt")
+        FILTER(lang(?_comment)='"""+language+"""')
     }
     OPTIONAL
     {
         ?classURI dcterms:description ?_description.
-        FILTER(lang(?_description)="pt")
+        FILTER(lang(?_description)='"""+language+"""')
     }
     OPTIONAL
     {

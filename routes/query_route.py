@@ -1,13 +1,13 @@
 from fastapi import APIRouter, Request
 from model.global_model import ResoucesSameAsModel
-from model.query_model import SavedQueryFusionModel, SavedQueryModel
+from model.query_model import SavedQueryModel, SavedQueryModel
 from controller import query_controller
 router = APIRouter()
 
 TAG = "Consultas Salvas" 
 
 @router.post("/queries/", tags=[TAG])
-async def create_saved_query(data:SavedQueryFusionModel , req:Request):
+async def create_saved_query(data:SavedQueryModel , req:Request):
     try:
         repo = req.headers.get('repo')
         response = query_controller.create_saved_query(data, repo)
@@ -36,7 +36,7 @@ async def execute_saved_queries(uri:str, req:Request):
         return err
 
 @router.put("/queries/", tags=[TAG])
-async def update_one_saved_query(uri:str, data: SavedQueryFusionModel, req:Request):
+async def update_one_saved_query(uri:str, data: SavedQueryModel, req:Request):
     """Atualiza um recurso do tipo sq:SavedQuery."""
     try:
         repo = req.headers.get('repo')

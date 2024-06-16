@@ -1,13 +1,14 @@
 from fastapi import FastAPI, HTTPException, status
 from urllib.parse import unquote_plus
 import api
-from model.query_model import SavedQueryFusionModel
+from model.query_model import SavedQueryModel
 from commons import NameSpaces as ns, Prefixies, VSKG, TBOX_SAVED_QUERY, NamedGraph
 from uuid import uuid4
 from controller import global_controller
 
 
-def create_saved_query(data:SavedQueryFusionModel, repo:str):
+def create_saved_query(data:SavedQueryModel, repo:str):
+    print('---------create_saved_query------------\n')
     uuid = uuid4()
     resource = f'{ns.ARIDA_R}SavedQuery/{uuid}'
     sparql = Prefixies.QUERIES + f"""INSERT DATA {{
@@ -23,7 +24,7 @@ def create_saved_query(data:SavedQueryFusionModel, repo:str):
     }}"""
     
     _query = {"update": sparql}
-    print('-----------controller:sparql saved-query-----\n', sparql)
+    print('-----------sparql-----\n', sparql)
     result = api.ConsultaSalva(repo).execute_query_data(query=_query, name=data.name, repository=data.repository)
     return result
 
@@ -59,7 +60,7 @@ def retrieve_one_saved_query(uri:str, repo:str):
     return result
 
 
-def update(uri:str, data:SavedQueryFusionModel, repo:str):
+def update(uri:str, data:SavedQueryModel, repo:str):
     uri_decoded = unquote_plus(uri)
     print('--------como tá chegando--------\n', uri_decoded)
     exist = global_controller.check_resource(uri_decoded, repo)

@@ -201,6 +201,7 @@ class NamedGraph:
     self.TBOX_METADATA = f"http://{self.IP}:{self.PORT}/repositories/{repo}/rdf-graphs/TBOX_METADATA"
     self.KG_METADATA = f"http://{self.IP}:{self.PORT}/repositories/{repo}/rdf-graphs/KG_METADATA"
     self.KG_QUERY = f"http://{self.IP}:{self.PORT}/repositories/{repo}/rdf-graphs/KG_QUERY"
+    self.KG_COMPETENCE_QUESTION = f"http://{self.IP}:{self.PORT}/repositories/{repo}/rdf-graphs/KG_COMPETENCE-QUESTION"
   # KG_TBOX = "http://www.sefaz.ma.gov.br/named-graph/TBOX"
   # KG_METADATA_BIGDATAFORTALEZA = f"http://{IP}:{PORT}/repositories/{REPOSITORY_ID}/rdf-graphs/KG_METADATA"
   # KG_TBOX_BIGDATAFORTALEZA = f"http://{IP}:{PORT}/repositories/{REPOSITORY_ID}/rdf-graphS/KG_TBOX"
@@ -233,7 +234,7 @@ class Prefixies:
   DRM = "PREFIX drm: <http://vocab.data.gov/def/drm#>\n"
   DCAT = "PREFIX dcat: <http://www.w3.org/ns/dcat#>\n"
   TL = "PREFIX tl: <http://purl.org/NET/c4dm/timeline.owl#>\n"
-  VSKG = "PREFIX vskg: <http://www.arida.ufc.br/VSKG#>\n"
+  VSKG = f"PREFIX vskg: <{NameSpaces.VSKG}>\n"
   MOKG = "PREFIX mokg: <http://www.arida.ufc.br/metadata-of-knowledge-graph#>\n"
   SEFAZMA = "PREFIX sefazma: <http://www.sefaz.ma.gov.br/ontology/>\n"
   SFZ = "PREFIX sfz: <http://www.sefaz.ma.gov.br/ontology/>\n"
@@ -247,6 +248,7 @@ class Prefixies:
   MAPPING = RDF + RDFS + DC + VSKG + META_EKG
   META_MASHUP = RDF + RDFS + DC + META_EKG + VSKG
   QUERIES = SAVED_QUERY + RDF + RDFS + FOAF + DC
+  COMPETENCE_QUESTION = VSKG + RDF + RDFS + FOAF + DC
 
   
 
@@ -264,9 +266,9 @@ class RoutesPath:
   META_EKG = "/meta-ekg"
 
 class VSKG:
-  def __init__(self): pass
-  """Mantém as classes e propriedades da ontologia VSKG"""
-
+  def __init__(self):
+    """Mantém as classes e propriedades da ontologia VSKG"""
+  PREFIX_VSKG = "vskg"
   P_IS_A = "rdf:type"
   P_LABEL = "rdfs:label"
   P_NAME = "foaf:name"
@@ -310,6 +312,11 @@ class VSKG:
   C_MASHUP_VIEW_SPEC = "vskg:MashupViewSpecification"
   C_META_MASHUP_SPARQL_QUERY_PARAMS = "vskg:SparqlQueryParams"
   C_META_MASHUP_SPARQL_QUERY_PARAMS = "vskg:SparqlQueryParams"
+  #====================
+  # QUESTÃO DE COMPETENCIA
+  C_COMPETENCE_QUESTION = f"{PREFIX_VSKG}:CompetenceQuestion"
+  P_SPARQL = f"{PREFIX_VSKG}:sparql"
+  
   
 
 

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Request
-from model.global_model import ResoucesSameAsModel
+from model.global_model import ResoucesSameAsModel, ResourcesSameAsModel
 from controller import global_controller
 router = APIRouter()
 
@@ -67,7 +67,7 @@ async def retrieve_sameas_resources(sameas:str, req:Request):
 
 @router.get("/properties/", tags=[TAG])
 async def retrieve_properties_of_one_resource(resourceURI:str, typeOfView:str, language:str, req:Request):
-    """Obtém as propriedades de um recurso."""
+    """Obtém as propriedades de um recurso nos três contextos de visão"""
     eh_visao_unification = typeOfView == 0 or typeOfView == "0"
     eh_visao_exportada = typeOfView == 1 or typeOfView == "1"
     eh_visao_fusao = typeOfView == 2 or typeOfView == "2"
@@ -100,6 +100,19 @@ async def retrieve_properties_from_unification_of_resource(data: ResoucesSameAsM
 
 
 
+
+@router.post("/properties/fusion/", tags=[TAG])
+async def retrieve_properties_from_unification_of_resource(data: ResoucesSameAsModel, req:Request):
+    """Obtém as propriedades unificadas dos recursos da lista."""
+    try:
+        repo = req.headers.get('repo')
+        response = global_controller.retrieve_properties_at_fusion_view(data, repo)
+        return response
+    except Exception as err:
+        return err
+    
+
+
 @router.get("/timeline/", tags=[TAG])
 async def retrieve_timeline_of_one_resource(resourceURI:str, req:Request):
     """Obtém a linha do tempo de um recurso."""
@@ -113,7 +126,7 @@ async def retrieve_timeline_of_one_resource(resourceURI:str, req:Request):
 
 
 @router.post("/timeline/unification/", tags=[TAG])
-async def retrieve_timeline_of_unification_resources(data: ResoucesSameAsModel, req:Request):
+async def retrieve_timeline_of_unification_resources(data: ResourcesSameAsModel, req:Request):
     """Obtém a linha do tempo de um recurso."""
     try:
         repo = req.headers.get('repo')
