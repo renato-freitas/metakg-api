@@ -52,12 +52,12 @@ async def retrieve_one_resource(uri:str, req:Request):
         return err
     
 
-@router.get("/links/", tags=[TAG])
-async def retrieve_sameas_resources(sameas:str, req:Request):
+@router.get("/sameas/", tags=[TAG])
+async def retrieve_sameas_resources(resourceURI:str, req:Request):
     """Recuperas apenas recursos que tem ligação com o recurso de origem"""
     try:
         repo = req.headers.get('repo')
-        response = global_controller.retrieve_sameAs_resources(sameas, repo)
+        response = global_controller.retrieve_sameAs_resources(resourceURI, repo)
         return response
     except Exception as err:
         return err
@@ -81,7 +81,6 @@ async def retrieve_properties_of_one_resource(resourceURI:str, typeOfView:str, l
             response = global_controller.retrieve_properties_at_exported_view(resourceURI, language, repo)
         else:
             response = global_controller.retrieve_properties_at_fusion_view(resourceURI, language, repo)
-            # return 'Só pode ser Visão de Fusão!!'
         return response
     except Exception as err:
         return err

@@ -10,7 +10,7 @@ TAG = "Questão de Competência"
 async def create_competence_question(data:CompetenceQuestionModel , req:Request):
     try:
         repo = req.headers.get('repo')
-        response = competence_question_controller.create_competence_question(data, repo)
+        response = competence_question_controller.create_pfa(data, repo)
         return response
     except Exception as err:
         return err

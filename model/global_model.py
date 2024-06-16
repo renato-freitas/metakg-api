@@ -15,3 +15,13 @@ class CompetenceQuestionModel(BaseModel):
   description: Union[str, None] = None   
   repository: str
   sparql: str 
+
+
+class PropertyFunctionAssertionModel(BaseModel):
+  identifier: Union[str, None] = None  
+  name: str
+  generalizationClass: str
+  rdfProperty: str
+  function: str 
+  description: Union[str, None] = None   
+  repository: str

@@ -202,6 +202,7 @@ class NamedGraph:
     self.KG_METADATA = f"http://{self.IP}:{self.PORT}/repositories/{repo}/rdf-graphs/KG_METADATA"
     self.KG_QUERY = f"http://{self.IP}:{self.PORT}/repositories/{repo}/rdf-graphs/KG_QUERY"
     self.KG_COMPETENCE_QUESTION = f"http://{self.IP}:{self.PORT}/repositories/{repo}/rdf-graphs/KG_COMPETENCE-QUESTION"
+    self.KG_PFA = f"http://{self.IP}:{self.PORT}/repositories/{repo}/rdf-graphs/KG_PFA"
   # KG_TBOX = "http://www.sefaz.ma.gov.br/named-graph/TBOX"
   # KG_METADATA_BIGDATAFORTALEZA = f"http://{IP}:{PORT}/repositories/{REPOSITORY_ID}/rdf-graphs/KG_METADATA"
   # KG_TBOX_BIGDATAFORTALEZA = f"http://{IP}:{PORT}/repositories/{REPOSITORY_ID}/rdf-graphS/KG_TBOX"
@@ -316,6 +317,12 @@ class VSKG:
   # QUESTÃO DE COMPETENCIA
   C_COMPETENCE_QUESTION = f"{PREFIX_VSKG}:CompetenceQuestion"
   P_SPARQL = f"{PREFIX_VSKG}:sparql"
+  #====================
+  # ASSERTIVA DE PROPRIEDADE DE FUSÃO
+  C_PFA = f"{PREFIX_VSKG}:PropertyFusionAssertion"
+  P_RDF_PROPERTY = f"{PREFIX_VSKG}:rdfProperty"
+  P_PFA_FUNCTION = f"{PREFIX_VSKG}:function"
+  P_GENERALIZATION_CLASS = f"{PREFIX_VSKG}:generalizationClass"
   
   
 

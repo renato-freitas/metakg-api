@@ -7,7 +7,7 @@ from uuid import uuid4
 from controller import global_controller
 
 
-def create_competence_question(data:SavedQueryModel, repo:str):
+def create_pfa(data:SavedQueryModel, repo:str):
     print('---------create_competence_question------------\n')
     uuid = uuid4()
     resource = f'{ns.ARIDA_R}CompetenceQuestion/{uuid}'

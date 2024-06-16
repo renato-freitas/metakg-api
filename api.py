@@ -125,10 +125,10 @@ class Global:
         print('-------api:get_properties_from_resources_in_fusion_view----------')
         try:
             r = requests.get(self.endpoint, params={'query': sparql}, headers=Headers.GET)
-            print('***', r.text)
+            # print('***', r.json()['results']['bindings'])
             # return r.json()['results']['bindings']
             # return agroup_properties_in_fu(r.json()['results']['bindings'])
-            return self.agroup_properties_in_fusion_view(r.json()['results']['bindings'])
+            return self.agroup_properties_in_fusion_view2(r.json()['results']['bindings'])
         except Exception as err:
             print('-----err--\n', err)
             return err
@@ -160,8 +160,28 @@ class Global:
             agrouped[resource['inst']['value']].append(resource)
         return agrouped
     
+   
+    def agroup_properties_in_fusion_view2(self, properties):
+        print('--------api:agroup_properties_in_fusion_view------')
+        _agrouped = dict()
+        _can = properties[0]['can']['value']
+        _agrouped[_can] = {}
+        count = 1
+        for prop in properties:
+            print(count, ' - ', prop, '\n')
+            count += 1
+            _label =  prop['label']['value'] if "label" in prop else ""
+            if not prop['p']['value'] in _agrouped[_can]:
+                _agrouped[_can][prop['p']['value']] = [[prop['o']['value'], _label, prop["prov"]["value"]]] 
+            else:
+                _agrouped[_can][prop['p']['value']].append([prop['o']['value'], _label, prop["prov"]["value"]])
+        print('---fusion view-------\n', _agrouped)
+        return _agrouped
 
-# ACHO QUE DEVE PASSA UMA LISTA DO ASSERTION FUSION PROPERTIES
+
+
+
+    # ACHO QUE DEVE PASSA UMA LISTA DO ASSERTION FUSION PROPERTIES
     def agroup_properties_in_fusion_view(self, properties):
         print('--------api:agroup_properties_in_fusion_view------')
         _agrouped = dict()
@@ -176,21 +196,19 @@ class Global:
                 _agrouped[_origin][prop['p']['value']] = []
             if "label" in prop:
                 _label = prop['label']['value']
-            # if "http://www.w3.org/2002/07/owl#sameAs" == prop['p']['value']:
             
-            if "target" == prop:
-                _agrouped[_origin][prop['p']['value']].append([prop['target']['value'], _label, prop['prov']['value']])
-            else:
-                if "http://xmlns.com/foaf/0.1/name" in prop['p']['value'] and "name" in prop:
-                    _agrouped[_origin][prop['p']['value']] = [[prop['name']['value'], _label, prop['prov']['value']]]
-                elif "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" in prop['p']['value']:
-                    _agrouped[_origin][prop['p']['value']].append([prop['o']['value'], _label, prop['prov']['value']])
-                elif "http://schema.org/thumbnail" in prop['p']['value']:
-                    _agrouped[_origin][prop['p']['value']].append([prop['o']['value'], _label, prop['prov']['value']])
-                else:
-                    _agrouped[_origin][prop['p']['value']] = [[prop['o']['value'], _label, prop['prov']['value']]]
-        # agrouped = verifica_valores_divergentes(_agrouped, _origin)
-        # print('G - ', _agrouped)
+            # if "target" == prop:
+            #     _agrouped[_origin][prop['p']['value']].append([prop['target']['value'], _label, prop['prov']['value']])
+            # if "http://xmlns.com/foaf/0.1/name" == prop['p']['value'] and "name" in prop:
+            #     _agrouped[_origin][prop['p']['value']] = [[prop['name']['value'], _label, prop['prov']['value']]]
+            #     print('-----TEM NAME---------\n', _agrouped)
+            # if "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" in prop['p']['value']:
+            #     _agrouped[_origin][prop['p']['value']].append([prop['o']['value'], _label, prop['prov']['value']])
+            # if "http://schema.org/thumbnail" in prop['p']['value']:
+            #     _agrouped[_origin][prop['p']['value']].append([prop['o']['value'], _label, prop['prov']['value']])
+            # else:
+            _agrouped[_origin][prop['p']['value']] = [[prop['o']['value'], _label, prop['prov']['value']]]
+        print('---fusion view-------\n', _agrouped)
         return _agrouped
 
 
@@ -282,7 +300,42 @@ class CompetenceQuestion:
             return err
         
 
+class PropertyFunctionAssertion:
+    def __init__(self, repo:str): 
+        self.endpoint = EndpointDEV(repo).PRODUCTION if ENVIROMENT == "DEV" else Endpoint.PRODUCTION
+    
+    def obtem_uma_pfa(self, name:str, repository:str):
+        # sparql = Prefixies.QUERIES + f"""SELECT * FROM <http://localhost:7200/repositories/{repository}/rdf-graphs/KG_QUERY> {{ 
+        sparql = Prefixies.COMPETENCE_QUESTION + f"""SELECT * FROM <{NamedGraph(repository).KG_PFA}> {{ 
+            ?s {VSKG.P_IS_A} {VSKG.C_PFA};
+             {VSKG.P_NAME} "{name}".
+        }} LIMIT 1"""
 
+        query = {"query": sparql}
+        print('*** API, query', sparql)
+        try:
+            result = requests.get(self.endpoint, params=query, headers=Headers.GET)
+            return result.json()['results']['bindings']
+        except Exception as err:
+            return err
+
+    def execute_query_insert_data(self, query, name, repository):
+        try:
+            exists = self.obtem_uma_pfa(name, repository)
+            print('---------existe----------\n', exists)
+            if (len(exists) > 0):
+                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Uma assertiva de fusão de propriedade com esse nome já existe!")
+            
+            r = requests.post(self.endpoint + "/statements", params=query, headers=Headers.POST)
+            print('=========', r.text)
+            if(r.status_code == 200 or r.status_code == 201 or r.status_code == 204):
+                return {"code": 204, "message": "Criado com Sucesso!"}
+            else:
+                return {"code": 400, "message": "Não foi criado!"}
+        except Exception as err:
+            print('***\n', err)
+            return err
+        
 
 class ConsultaSalva:
     def __init__(self, repo:str): 

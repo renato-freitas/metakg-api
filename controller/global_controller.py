@@ -2,6 +2,7 @@ from urllib.parse import unquote_plus
 import api
 from model.global_model import ResoucesSameAsModel
 from commons import NameSpaces as ns, Prefixies, VSKG, TBOX_SAVED_QUERY, NamedGraph
+from controller.pfa.ekg_musica_br import fusionFoafName, fusionFoafHomepage
 
 def check_resource(uri:str, repo:str):
     """Verifica se um recurso existe no repositório"""
@@ -157,28 +158,35 @@ def retrieve_sameAs_resources(uri:str, repo:str):
         return "not found"
     else:
         sparql = f"""PREFIX owl: <http://www.w3.org/2002/07/owl#>
-SELECT ?origin ?target  where {{
-    BIND(<{uri_decoded}> AS ?origin)
+SELECT ?sameas  where {{
     {{
-		<{uri_decoded}> owl:sameAs+ ?same_r .
-#        FILTER(!CONTAINS(STR(?same_r),"/resource/App")).
-        BIND(?same_r AS ?target)
-        
+    BIND(<{uri_decoded}> AS ?sameas)
+    }}
+    UNION
+    {{
+                <{uri_decoded}> owl:sameAs+ ?same_r .
+        BIND(?same_r AS ?sameas)
+    }}
+    UNION
+    {{
+        ?same_l owl:sameAs+ <{uri_decoded}> .
+        BIND(?same_l as ?sameas)
     }}
     UNION 
     {{
-        ?same_l owl:sameAs+ <{uri_decoded}> .
-        BIND(?same_l as ?target)
+        ?same_l2 owl:sameAs+ <{uri_decoded}> .
+		?same_l2 owl:sameAs+ ?same_r2.	                        
+        FILTER(?same_r2 != <{uri_decoded}>).
+        BIND(?same_r2 AS ?sameas)
     }}
-    FILTER(!CONTAINS(LCASE(STR(?target)),"/resource/App")).
-    # FILTER(!CONTAINS(LCASE(STR(?target)),"/resource/canonical")).
-    FILTER(!CONTAINS(LCASE(STR(?target)),"/resource/unification")).
+    FILTER(!CONTAINS(LCASE(STR(?sameas)),"/resource/App")).
+    FILTER(!CONTAINS(LCASE(STR(?sameas)),"/resource/unification")).
 }}"""
         print('===SPARQL: retrieve_sameAs_resources===\n', sparql)
         res = api.Global(repo).execute_sparql_query({'query': sparql})
-        result = api.Global(repo).agroup_resources(res)
-        print('*** SAMEAS AGRUPADO >>> ', result)
-        return result
+        # result = api.Global(repo).agroup_resources(res)
+        # print('*** SAMEAS AGRUPADO >>> ', result)
+        return res
     
 
 
@@ -305,36 +313,33 @@ def retrieve_properties_at_fusion_view(uri:str, language:str, repo:str):
     if(uri is None):
         return "not found"
     else:
-        sparql = f"""PREFIX owl: <http://www.w3.org/2002/07/owl#>
+        sparql = f""" PREFIX owl: <http://www.w3.org/2002/07/owl#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 PREFIX jsfn:<http://www.ontotext.com/js#>
-SELECT ?can ?origin ?target ?p ?label ?o ?prov ?name where {{
-    BIND(<{uri}> AS ?origin)
+SELECT ?can ?p ?label ?o ?prov where {{
     {{
      <{uri}> ?p ?o.
-     OPTIONAL {{ ?p rdfs:label ?label. FILTER(lang(?label)="pt") }}
+     OPTIONAL {{ ?p rdfs:label ?label. FILTER(lang(?label)="{language}") }}
      BIND(jsfn:getContext("{uri}") AS ?prov)
      BIND(URI(jsfn:canonicalUri("{uri}")) as ?can)
-     FILTER(!CONTAINS(LCASE(STR(?o)),"_:node") && !(?p = owl:topDataProperty) && !(?p = owl:sameAs))
-	}}
+    }}
         UNION
     {{
         <{uri}> owl:sameAs+ ?same_r .
         ?same_r ?p ?o.
         BIND(jsfn:getContext(STR(?same_r)) AS ?prov)
         BIND(URI(jsfn:canonicalUri(STR(?same_r))) as ?can)
-        OPTIONAL {{ ?p rdfs:label ?label. FILTER(lang(?label)="pt") }}
-        bind(?same_r as ?target)
+        OPTIONAL {{ ?p rdfs:label ?label. FILTER(lang(?label)="{language}") }}
+        FILTER(!CONTAINS(LCASE(STR(?o)),"_:node") && !(?p = owl:topDataProperty) && !(?p = owl:sameAs))
     }}
-    	UNION
+        UNION
     {{
         ?same_l owl:sameAs+ <{uri}> .
         ?same_l ?p ?o.
         BIND(jsfn:getContext(STR(?same_l)) AS ?prov)
         BIND(URI(jsfn:canonicalUri(STR(?same_l))) as ?can)
-        OPTIONAL {{ ?p rdfs:label ?label. FILTER(lang(?label)="pt") }}
-		BIND(?same_l AS ?target)
+        OPTIONAL {{ ?p rdfs:label ?label. FILTER(lang(?label)="{language}") }}
     }}
         UNION
     {{
@@ -343,17 +348,22 @@ SELECT ?can ?origin ?target ?p ?label ?o ?prov ?name where {{
         ?same_r2 ?p ?o.
         BIND(jsfn:getContext(STR(?same_r2)) AS ?prov)
         BIND(URI(jsfn:canonicalUri(STR(?same_r2))) as ?can)
-		OPTIONAL {{ ?p rdfs:label ?label. FILTER(lang(?label)="pt") }}
+		OPTIONAL {{ ?p rdfs:label ?label. FILTER(lang(?label)="{language}") }}
         FILTER(?same_r2 != <{uri}>).
-        BIND(?same_r2 AS ?target)
     }}
-    FILTER(!CONTAINS(LCASE(STR(?o)),"_:node") && !(?p = owl:topDataProperty))
+    FILTER(!CONTAINS(LCASE(STR(?o)),"_:node") && !(?p = owl:topDataProperty) && !(?p = owl:sameAs))
     #    FUSÃO DA PROPRIEDADE FOAF:NAME
-    BIND(jsfn:fusionOfName(?prov, STR(?p), ?o) as ?name)
+    # BIND(jsfn:fusionOfName("MusicBrainz",?prov, STR(?p), ?o) as ?name)
 }}"""
         print('--------sparql visão de fusão--------\n', sparql)
         result = api.Global(repo).get_properties_from_resources_in_fusion_view(sparql)
-    return result
+
+        #APLICAR A FUNÇÃO DE FUSÃO DE PROPRIEDADE
+        for can_uri in result: #uma única chave é definida na visão de unificação
+            _out = fusionFoafName(can_uri, result)
+            _out = fusionFoafHomepage(can_uri, _out)
+    return _out
+
 
 
 
