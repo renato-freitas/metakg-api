@@ -88,7 +88,7 @@ SELECT DISTINCT ?datasource where {
     BIND(STRAFTER(STR(?i), "resource/") AS ?_s)
     BIND(STRBEFORE(STR(?_s), "/") AS ?datasource)
 } ORDER BY ?datasource"""
-    print('===SPARQL GET EXPORTED VIEW===\n', sparql)
+    print('-------SPARQL GET EXPORTED VIEW---------\n', sparql)
     result = api.Tbox(repo).execute_query({"query": sparql})
     return result
 
@@ -103,11 +103,12 @@ PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 PREFIX schema: <http://schema.org/>
 PREFIX moa: <http://www.arida.ufc.br/ontologies/music#>
-SELECT ?classURI ?label ?superclass (MAX(?__comment) as ?comment) ?image FROM <""" +NamedGraph(repo).TBOX+"""> { 
-    ?classURI rdf:type owl:Class.
-#              moa:isFromExportedView """ + _exp_view + """.
-    FILTER(CONTAINS(LCASE(STR(?classURI)),"""+ _exp_view.lower() +"""))          
-    MINUS { ?sub rdfs:subClassOf ?classURI. }
+PREFIX vskg: <http://www.arida.ufc.br/VSKG/>
+SELECT ?classURI ?label ?superclass ?comment ?image FROM <""" +NamedGraph(repo).TBOX+"""> { 
+    ?classURI rdf:type owl:Class;
+              vskg:belongsToESV '"""+exported_view+"""'.
+    # FILTER(CONTAINS(LCASE(STR(?classURI)),"""+ _exp_view.lower() +"""))          
+    # MINUS { ?sub rdfs:subClassOf ?classURI. }
     OPTIONAL { 
         ?classURI rdfs:label ?_label. 
         FILTER(lang(?_label)="pt")
@@ -123,18 +124,19 @@ SELECT ?classURI ?label ?superclass (MAX(?__comment) as ?comment) ?image FROM <"
     }
     OPTIONAL
     {
-        ?classURI foaf:img ?image.
+        ?classURI foaf:img ?foaf_image.
     }
     OPTIONAL
     {
-        ?classURI schema:thumbnail ?image.
+        ?classURI schema:thumbnail ?thumb_image.
     }
     BIND(COALESCE(?_label,?classURI) AS ?label)
-    BIND(COALESCE(?_comment,?_description) AS ?__comment)
+    BIND(COALESCE(?_comment,?_description) AS ?comment)
+    BIND(COALESCE(?foaf_image,?thumb_image) AS ?image)
     FILTER(!CONTAINS(STR(?classURI),"_:node"))
-} 
-GROUP BY ?classURI ?label ?superclass ?sub ?image
-ORDER BY ?label"""
+}""" 
+# GROUP BY ?classURI ?label ?superclass ?sub ?image
+# ORDER BY ?label"""
     print('===SPAR GET EXPORTED VIEW===\n', sparql)
     result = api.Tbox(repo).execute_query({"query": sparql})
     return result

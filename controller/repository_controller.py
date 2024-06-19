@@ -11,5 +11,4 @@ from model.meta_mashup_model import MetaMashupModel, AddExporteViewsModel, AddSp
 
 def retrieve_repostories():
     result = api.Repository().retrieve_all()
-    print('***', result)
     return result

@@ -55,7 +55,6 @@ class Global:
     # NEW
     def get_properties_of_resource_in_exported_view(self, sparql:str):
         try:
-            print('-------------api:get_properties_of_resource_in_exported_view-----------\n', sparql)
             r = requests.get(self.endpoint, params={'query': sparql}, headers=Headers.GET)
             print('------ RESUTL -------\n', r.json()['results']['bindings'])
             # return r.json()['results']['bindings']
@@ -115,7 +114,7 @@ class Global:
         print('-------api:get_properties_from_resources_in_unification_view----------')
         try:
             r = requests.get(self.endpoint, params={'query': sparql}, headers=Headers.GET)
-            print('***', r.json()['results']['bindings'])
+            # print('***', r.json()['results']['bindings'])
             return agroup_properties_in_unification_view(r.json()['results']['bindings'])
         except Exception as err:
             return err
@@ -171,11 +170,12 @@ class Global:
             print(count, ' - ', prop, '\n')
             count += 1
             _label =  prop['label']['value'] if "label" in prop else ""
+            _label_o = prop['label_o']['value'] if "label_o" in prop else ""
             if not prop['p']['value'] in _agrouped[_can]:
-                _agrouped[_can][prop['p']['value']] = [[prop['o']['value'], _label, prop["prov"]["value"]]] 
+                _agrouped[_can][prop['p']['value']] = [[prop['o']['value'], _label, prop["prov"]["value"], _label_o]] 
             else:
-                _agrouped[_can][prop['p']['value']].append([prop['o']['value'], _label, prop["prov"]["value"]])
-        print('---fusion view-------\n', _agrouped)
+                _agrouped[_can][prop['p']['value']].append([prop['o']['value'], _label, prop["prov"]["value"], _label_o])
+        # print('---fusion view-------\n', _agrouped)
         return _agrouped
 
 
@@ -494,33 +494,62 @@ def execute_sparql_query_in_kg_metadata(query):
         return err
 
 
-# NEW 10/06/2024
 def agroup_properties_in_exported_view(properties):
     print('--------api:agroup_properties_in_exported_view------')
     _agrouped = dict()
     count = 1
     _origin = properties[0]['origin']['value']
     _agrouped[_origin] = {}
-    _provenance = Functions.getContextFromURI(_origin)
     for row in properties:
         print(count, ' - ', row, '\n')
         count += 1
         _label = ""
+        _label_o = ""
         if "p" in row:
             if not row['p']['value'] in _agrouped[_origin]:
                 _agrouped[_origin][row['p']['value']] = []
             if "label" in row:
                 _label = row['label']['value']
+            if "label_o" in row:
+                _label_o = row['label_o']['value']
             # if "http://www.w3.org/2002/07/owl#sameAs" == prop['p']['value']:
-            _agrouped[_origin][row['p']['value']].append([row['o']['value'], _label, _provenance])
+            _agrouped[_origin][row['p']['value']].append([row['o']['value'], _label, "", _label_o])
         else:
             print('sem p')
             if not "http://www.w3.org/2002/07/owl#sameAs" in _agrouped[_origin]:
                 _agrouped[_origin]["http://www.w3.org/2002/07/owl#sameAs"] = []
             if "target" in row:
-                _agrouped[_origin]["http://www.w3.org/2002/07/owl#sameAs"].append([row['target']['value'], _label, ""])
+                _agrouped[_origin]["http://www.w3.org/2002/07/owl#sameAs"].append([row['target']['value'], _label, "",""])
     print('---------api:exported_view_agrouped----------\n', _agrouped)
     return _agrouped
+
+# NEW 10/06/2024
+# def agroup_properties_in_exported_view(properties):
+#     print('--------api:agroup_properties_in_exported_view------')
+#     _agrouped = dict()
+#     count = 1
+#     _origin = properties[0]['origin']['value']
+#     _agrouped[_origin] = {}
+#     _provenance = Functions.getContextFromURI(_origin)
+#     for row in properties:
+#         print(count, ' - ', row, '\n')
+#         count += 1
+#         _label = ""
+#         if "p" in row:
+#             if not row['p']['value'] in _agrouped[_origin]:
+#                 _agrouped[_origin][row['p']['value']] = []
+#             if "label" in row:
+#                 _label = row['label']['value']
+#             # if "http://www.w3.org/2002/07/owl#sameAs" == prop['p']['value']:
+#             _agrouped[_origin][row['p']['value']].append([row['o']['value'], _label, _provenance])
+#         else:
+#             print('sem p')
+#             if not "http://www.w3.org/2002/07/owl#sameAs" in _agrouped[_origin]:
+#                 _agrouped[_origin]["http://www.w3.org/2002/07/owl#sameAs"] = []
+#             if "target" in row:
+#                 _agrouped[_origin]["http://www.w3.org/2002/07/owl#sameAs"].append([row['target']['value'], _label, ""])
+#     print('---------api:exported_view_agrouped----------\n', _agrouped)
+#     return _agrouped
 
 
 # def agroup_properties(properties):
@@ -569,15 +598,18 @@ def agroup_properties_in_unification_view(properties):
         print(count, ' - ', prop, '\n')
         count += 1
         _label = ""
+        _label_o = ""
         if not prop['p']['value'] in _agrouped[_origin]:
             _agrouped[_origin][prop['p']['value']] = []
         if "label" in prop:
             _label = prop['label']['value']
+        if "label_o" in prop:
+            _label_o = prop['label_o']['value']
         # if "http://www.w3.org/2002/07/owl#sameAs" == prop['p']['value']:
         if "target" == prop:
-            _agrouped[_origin][prop['p']['value']].append([prop['target']['value'], _label, prop['prov']['value']])
+            _agrouped[_origin][prop['p']['value']].append([prop['target']['value'], _label, prop['prov']['value'], _label_o])
         else:
-            _agrouped[_origin][prop['p']['value']].append([prop['o']['value'], _label, prop['prov']['value']])
+            _agrouped[_origin][prop['p']['value']].append([prop['o']['value'], _label, prop['prov']['value'], _label_o])
     agrouped = verifica_valores_divergentes(_agrouped, _origin)
     # print('G - ', _agrouped)
     return agrouped
@@ -611,7 +643,7 @@ def verifica_valores_divergentes(agrouped_props, resource_origin):
                       "http://www.w3.org/2000/01/rdf-schema#label", "http://www.w3.org/2000/01/rdf-schema#seeaAlso"
                       "http://purl.org/dc/elements/1.1/identifier", "http://www.w3.org/2002/07/owl#sameAs",
                       "http://purl.org/dc/terms/identifier", "http://schema.org/thumbnail"]):
-            print('------ avaliar apenas datatype properties ------', p)
+            # print('------ avaliar apenas datatype properties ------', p)
             # exemplo: [['valor','propriedade','proveniência'], ...]
 
             if p not in _agrouped_props[resource_origin]:
@@ -622,9 +654,9 @@ def verifica_valores_divergentes(agrouped_props, resource_origin):
             for dado in agrouped_props[resource_origin][p]:
                 # "http://" not in dado[0] => para não verificar os object-propeties
                 if (dado[0] != current_value and "http://" not in dado[0]): 
-                    _agrouped_props[resource_origin][p].append([dado[0], dado[1], dado[2], True])
+                    _agrouped_props[resource_origin][p].append([dado[0], dado[1], dado[2], dado[3], True])
                 else:
-                    _agrouped_props[resource_origin][p].append([dado[0], dado[1], dado[2], False])
+                    _agrouped_props[resource_origin][p].append([dado[0], dado[1], dado[2], dado[3], False])
         else:
             _agrouped_props[resource_origin][p] = agrouped_props[resource_origin][p]
     print(_agrouped_props)

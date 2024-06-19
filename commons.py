@@ -148,17 +148,19 @@ class OperationalSystem:
 class Endpoint:
   def __init__(self, repo:str=None):
     # self.name = name
-    self.PRODUCTION = f"http://localhost:7200/repositories/{repo}"
-    self.REPOSITORIES = "http://localhost:7200/repositories"
-    self.QUERY = "http://localhost:7200/rest/sparql/saved-queries"
-  NAME = "GRAFO_PRODUCAO_BIGSEMFORTALEZA"
-  REPOSITORIES = "http://localhost:7200/repositories/metagraph"
-  PRODUCTION = f"http://localhost:7200/repositories/{NAME}"
-  METAKG = "http://localhost:7200/repositories/metagraph"
-  TIMELINE_TBOX = "http://localhost:7200/repositories/TIMELINE_TBOX"
-  SEFAZMA_VEKG_ABOX = "http://10.33.96.18:7200/repositories/VEKG"
-  VSKG_ABOX = "http://localhost:7200/repositories/VSKG_ABOX" # só pra testar pegando os metaEKG
-  METADADOS_TULIO = "http://localhost:7200/repositories/Metadados_Tulio"
+    self.IP = "200.19.182.252"
+    self.PORT = "7200"
+    self.PRODUCTION = f"http://{self.IP}:{self.PORT}/repositories/{repo}"
+    self.REPOSITORIES = f"http://{self.IP}:{self.PORT}/repositories"
+    self.QUERY = f"http://{self.IP}:{self.PORT}/rest/sparql/saved-queries"
+    NAME = "GRAFO_PRODUCAO_BIGSEMFORTALEZA"
+    REPOSITORIES = f"http://{self.IP}:{self.PORT}/repositories/metagraph"
+    PRODUCTION = f"http://{self.IP}:{self.PORT}/repositories/{NAME}"
+    METAKG = f"http://{self.IP}:{self.PORT}/repositories/metagraph"
+    TIMELINE_TBOX = f"http://{self.IP}:{self.PORT}/repositories/TIMELINE_TBOX"
+    SEFAZMA_VEKG_ABOX = f"http://10.33.96.18:{self.PORT}/repositories/VEKG"
+    VSKG_ABOX = f"http://{self.IP}:{self.PORT}/repositories/VSKG_ABOX" # só pra testar pegando os metaEKG
+    METADADOS_TULIO = f"http://{self.IP}:{self.PORT}/repositories/Metadados_Tulio"
 
 
 class EndpointDEV:

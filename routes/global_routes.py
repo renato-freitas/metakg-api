@@ -102,7 +102,7 @@ async def retrieve_properties_from_unification_of_resource(data: ResoucesSameAsM
 
 @router.post("/properties/fusion/", tags=[TAG])
 async def retrieve_properties_from_unification_of_resource(data: ResoucesSameAsModel, req:Request):
-    """Obtém as propriedades unificadas dos recursos da lista."""
+    """Obtém a fusão das propriedades dos recursos."""
     try:
         repo = req.headers.get('repo')
         response = global_controller.retrieve_properties_at_fusion_view(data, repo)

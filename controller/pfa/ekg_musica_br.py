@@ -1,7 +1,7 @@
 def fusionFoafName(c, v):
   """
   c: canonical uri
-  v: set of values of p foaf:name
+  v: set of values of p 'foaf:name'
   """
   out = None
   for foafName in v[c]["http://xmlns.com/foaf/0.1/name"]:
@@ -15,7 +15,7 @@ def fusionFoafName(c, v):
 def fusionFoafHomepage(c, v):
   """
   c: canonical uri
-  v: set of values of p foaf:homepage
+  v: set of values of p 'foaf:homepage'
   """
   out = None
   for foafName in v[c]["http://xmlns.com/foaf/0.1/homepage"]:

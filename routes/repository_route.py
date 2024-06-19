@@ -7,8 +7,7 @@ TAG = "Repositórios"
 
 @router.get("/repositories/", tags=[TAG])
 async def retrieve_repositories():
-    """"""
-    print('/reposito')
+    """Recupera os repositórios criados no triplestore"""
     result = repository_controller.retrieve_repostories()
     return result
 
