@@ -11,7 +11,7 @@ from model.meta_mashup_model import MetaMashupModel, AddExporteViewsModel, AddSp
 
 def retrieve_generalization_classes(repo:str, language:str):
     print('----------route:retrieve_generalization_classes----------')
-    _lang = f"@{language}" if language != "" else "" 
+    # _lang = f"@{language}" if language != "" else "" 
     sparql = """
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
@@ -68,6 +68,7 @@ ORDER BY ?label"""
     return result
 
 
+
 def retrieve_semantic_view_exported_datasources(repo:str):
     sparql = """PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
@@ -75,22 +76,45 @@ PREFIX dc: <http://purl.org/dc/elements/1.1/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX : <http://www.arida.ufc.br/ontologies/music.owl#>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-SELECT DISTINCT ?datasource where {
+SELECT DISTINCT ?datasource from <""" +NamedGraph(repo).TBOX+"""> { 
 #    PEGAR TODAS AS SUBCLASSES
-    ?classURI rdf:type owl:Class.
+    {
+    	?classURI rdf:type owl:Class.    
+    }
+    union
+    {
+        ?classURI rdf:type rdfs:Class.  
+    }
     MINUS { ?sub rdfs:subClassOf ?classURI. }
-    ?i a ?classURI.
-#    GARANTIR QUE SÓ TENHA URI QUE É UM RECURSO
-    FILTER(!CONTAINS(STR(?i),"/resource/App")).
-    FILTER(!CONTAINS(LCASE(STR(?i)),"/resource/canonical")).
-    FILTER(!CONTAINS(LCASE(STR(?i)),"/resource/unification")).
-#    RECORTAR A URI PARA OBTER A FONTE DE DADOS DISTINTAS
-    BIND(STRAFTER(STR(?i), "resource/") AS ?_s)
-    BIND(STRBEFORE(STR(?_s), "/") AS ?datasource)
+    BIND(STRAFTER(STR(?classURI), "_") AS ?datasource)
 } ORDER BY ?datasource"""
     print('-------SPARQL GET EXPORTED VIEW---------\n', sparql)
     result = api.Tbox(repo).execute_query({"query": sparql})
     return result
+
+# def retrieve_semantic_view_exported_datasources(repo:str):
+#     sparql = """PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+# PREFIX owl: <http://www.w3.org/2002/07/owl#>
+# PREFIX dc: <http://purl.org/dc/elements/1.1/>
+# PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+# PREFIX : <http://www.arida.ufc.br/ontologies/music.owl#>
+# PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+# SELECT DISTINCT ?datasource where {
+# #    PEGAR TODAS AS SUBCLASSES
+#     ?classURI rdf:type owl:Class.
+#     MINUS { ?sub rdfs:subClassOf ?classURI. }
+#     ?i a ?classURI.
+# #    GARANTIR QUE SÓ TENHA URI QUE É UM RECURSO
+#     FILTER(!CONTAINS(STR(?i),"/resource/App")).
+#     FILTER(!CONTAINS(LCASE(STR(?i)),"/resource/canonical")).
+#     FILTER(!CONTAINS(LCASE(STR(?i)),"/resource/unification")).
+# #    RECORTAR A URI PARA OBTER A FONTE DE DADOS DISTINTAS
+#     BIND(STRAFTER(STR(?i), "resource/") AS ?_s)
+#     BIND(STRBEFORE(STR(?_s), "/") AS ?datasource)
+# } ORDER BY ?datasource"""
+#     print('-------SPARQL GET EXPORTED VIEW---------\n', sparql)
+#     result = api.Tbox(repo).execute_query({"query": sparql})
+#     return result
 
 
 def retrieve_semantic_view_exported_classes(repo:str, exported_view:str, language:str):
@@ -111,16 +135,19 @@ SELECT ?classURI ?label ?superclass ?comment ?image FROM <""" +NamedGraph(repo).
     # MINUS { ?sub rdfs:subClassOf ?classURI. }
     OPTIONAL { 
         ?classURI rdfs:label ?_label. 
-        FILTER(lang(?_label)="pt")
+        # FILTER(lang(?_label)="pt")
+        FILTER(lang(?_label)='"""+language+"""')  
     }
     OPTIONAL { 
         ?classURI rdfs:comment ?_comment. 
-        FILTER(lang(?_comment)="pt")
+        # FILTER(lang(?_comment)="pt")
+        FILTER(lang(?_comment)='"""+language+"""')
     }
     OPTIONAL
     {
         ?classURI dcterms:description ?_description.
-        FILTER(lang(?_description)="pt")
+        # FILTER(lang(?_description)="pt")
+        FILTER(lang(?_description)='"""+language+"""')
     }
     OPTIONAL
     {

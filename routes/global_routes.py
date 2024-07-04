@@ -76,7 +76,7 @@ async def retrieve_properties_of_one_resource(resourceURI:str, typeOfView:str, l
         repo = req.headers.get('repo')
         print('?tipo de visão:', typeOfView)
         if (eh_visao_unification):
-            response = global_controller.retrieve_properties_at_unification_view(resourceURI, repo)
+            response = global_controller.retrieve_properties_at_unification_view(resourceURI, language, repo)
         elif (eh_visao_exportada):
             response = global_controller.retrieve_properties_at_exported_view(resourceURI, language, repo)
         else:
@@ -113,11 +113,11 @@ async def retrieve_properties_from_unification_of_resource(data: ResoucesSameAsM
 
 
 @router.get("/timeline/", tags=[TAG])
-async def retrieve_timeline_of_one_resource(resourceURI:str, req:Request):
+async def retrieve_timeline_of_one_resource(resourceURI:str, owlProperty:str, req:Request):
     """Obtém a linha do tempo de um recurso."""
     try:
         repo = req.headers.get('repo')
-        response = global_controller.retrieve_timeline_of_one_resource(resourceURI, repo)
+        response = global_controller.retrieve_timeline_of_one_resource(resourceURI, owlProperty, repo)
         return response
     except Exception as err:
         return err
@@ -125,11 +125,11 @@ async def retrieve_timeline_of_one_resource(resourceURI:str, req:Request):
 
 
 @router.post("/timeline/unification/", tags=[TAG])
-async def retrieve_timeline_of_unification_resources(data: ResourcesSameAsModel, req:Request):
+async def retrieve_timeline_of_unification_resources(data: ResourcesSameAsModel, owlProperty:str, req:Request):
     """Obtém a linha do tempo de um recurso."""
     try:
         repo = req.headers.get('repo')
-        response = global_controller.retrieve_timeline_of_unification_resources(data, repo)
+        response = global_controller.retrieve_timeline_of_unification_resources(data, owlProperty, repo)
         return response
     except Exception as err:
         return err

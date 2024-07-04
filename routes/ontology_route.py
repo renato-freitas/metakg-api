@@ -10,12 +10,14 @@ async def retrieve_classes(type:str, exported_view:str, language:str, req: Reque
     """"""
     repo = req.headers.get('repo')
     print(f'repositório: {repo}\n tipo de classe: {type}')
-    if(type == TEXTS.GENERALIZATION):
+    if(type == TEXTS.CODE_OF_GENERALIZATION_CLASS):
         result = ontology_controller.retrieve_generalization_classes(repo, language)
-    elif (type == TEXTS.EXPORTED): 
+    elif (type == TEXTS.CODE_OF_EXPORTED_CLASS): 
         result = ontology_controller.retrieve_semantic_view_exported_classes(repo, exported_view, language)
     else:
-        result = ontology_controller.retrieve_metadata_classes(repo)
+        print('FUNSION VIEW')
+        result = ontology_controller.retrieve_generalization_classes(repo, language)
+        # result = ontology_controller.retrieve_metadata_classes(repo)
     return result
 
 

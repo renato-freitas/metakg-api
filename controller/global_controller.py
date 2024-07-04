@@ -2,7 +2,7 @@ from urllib.parse import unquote_plus
 import api
 from model.global_model import ResoucesSameAsModel
 from commons import NameSpaces as ns, Prefixies, VSKG, TBOX_SAVED_QUERY, NamedGraph
-from controller.pfa.ekg_musica_br import fusionFoafName, fusionFoafHomepage
+from controller.pfa.ekg_musica_br import fusionFoafName, fusionFoafHomepage, fusionSchemaThumbnail
 
 def check_resource(uri:str, repo:str):
     """Verifica se um recurso existe no repositório"""
@@ -228,7 +228,7 @@ def get_quantity_of_all_resources(classRDF:str, label:str, sameas:str, repo:str)
 
 
 # new
-def retrieve_properties_at_unification_view(uri:str, repo:str):
+def retrieve_properties_at_unification_view(uri:str, language:str, repo:str):
     print('\n-------controller:retrieve_properties_from_unification_view--------\n')
     if(uri is None):
         return "not found"
@@ -241,33 +241,33 @@ SELECT ?origin ?target ?label ?p ?o ?label_o ?prov where {{
     BIND(<{uri}> AS ?origin)
     {{      
      <{uri}> ?p ?o.
-     OPTIONAL {{ ?o rdfs:label ?_llang. FILTER(LANG(?_llang)="pt")}}
+     OPTIONAL {{ ?o rdfs:label ?_llang. FILTER(LANG(?_llang)="{language}")}}
      OPTIONAL {{ ?o rdfs:label ?_l. }}
      BIND(COALESCE(?_llang, ?_l) AS ?label_o)
      BIND(jsfn:getContext("{uri}") AS ?prov)
-     OPTIONAL {{ ?p rdfs:label ?label. FILTER(lang(?label)="pt") }}
+     OPTIONAL {{ ?p rdfs:label ?label. FILTER(lang(?label)="{language}") }}
     FILTER(!CONTAINS(LCASE(STR(?o)),"_:node") && !(?p = owl:topDataProperty))
     }}
 	UNION
     {{ 
         <{uri}> owl:sameAs+ ?same_r .
         ?same_r ?p ?o.
-        OPTIONAL {{ ?o rdfs:label ?_llang. FILTER(LANG(?_llang)="pt")}}
+        OPTIONAL {{ ?o rdfs:label ?_llang. FILTER(LANG(?_llang)="{language}")}}
     	OPTIONAL {{ ?o rdfs:label ?_l. }}
         BIND(COALESCE(?_llang, ?_l) AS ?label_o)
         BIND(jsfn:getContext(STR(?same_r)) AS ?prov)
-        OPTIONAL {{ ?p rdfs:label ?label. FILTER(lang(?label)="pt") }}
+        OPTIONAL {{ ?p rdfs:label ?label. FILTER(lang(?label)="{language}") }}
         bind(?same_r as ?target)
     }}
     UNION 
     {{
         ?same_l owl:sameAs+ <{uri}> .
         ?same_l ?p ?o.
-        OPTIONAL {{ ?o rdfs:label ?_llang. FILTER(LANG(?_llang)="pt")}}
+        OPTIONAL {{ ?o rdfs:label ?_llang. FILTER(LANG(?_llang)="{language}")}}
     	OPTIONAL {{ ?o rdfs:label ?_l. }}
         BIND(COALESCE(?_llang, ?_l) AS ?label_o)
         BIND(jsfn:getContext(STR(?same_l)) AS ?prov)
-        OPTIONAL {{ ?p rdfs:label ?label. FILTER(lang(?label)="pt") }}
+        OPTIONAL {{ ?p rdfs:label ?label. FILTER(lang(?label)="{language}") }}
         BIND(?same_l AS ?target)
     }}
     UNION 
@@ -275,11 +275,11 @@ SELECT ?origin ?target ?label ?p ?o ?label_o ?prov where {{
         ?same_l2 owl:sameAs+ <{uri}> .
 		?same_l2 owl:sameAs+ ?same_r2.	                        
         ?same_r2 ?p ?o.
-        OPTIONAL {{ ?o rdfs:label ?_llang. FILTER(LANG(?_llang)="pt")}}
+        OPTIONAL {{ ?o rdfs:label ?_llang. FILTER(LANG(?_llang)="{language}")}}
     	OPTIONAL {{ ?o rdfs:label ?_l. }}
         BIND(COALESCE(?_llang, ?_l) AS ?label_o)
         BIND(jsfn:getContext(STR(?same_r2)) AS ?prov)
-        OPTIONAL {{ ?p rdfs:label ?label. FILTER(lang(?label)="pt") }}
+        OPTIONAL {{ ?p rdfs:label ?label. FILTER(lang(?label)="{language}") }}
         FILTER(?same_r2 != <{uri}>).
         BIND(?same_r2 AS ?target)
     }}
@@ -392,6 +392,7 @@ SELECT ?can ?p ?label ?o ?label_o ?prov where {{
         for can_uri in result:
             _out = fusionFoafName(can_uri, result)
             _out = fusionFoafHomepage(can_uri, _out)
+            _out = fusionSchemaThumbnail(can_uri, _out)
     return _out
 
 
@@ -419,7 +420,7 @@ SELECT ?can ?p ?label ?o ?label_o ?prov where {{
 
 
 
-def retrieve_timeline_of_one_resource(resourceURI, repo):
+def retrieve_timeline_of_one_resource(resourceURI, owlProperty, repo):
     print('-----controller:retrieve_timeline_of_one_resource-----')
     uri_decoded = unquote_plus(resourceURI)
     existe = check_resource(uri_decoded, repo) 
@@ -429,7 +430,7 @@ def retrieve_timeline_of_one_resource(resourceURI, repo):
         sparql = f"""PREFIX tl: <http://purl.org/NET/c4dm/timeline.owl#>
 PREFIX tlo: <http://www.arida.ufc.br/ontologies/timeline#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-SELECT ?tl ?label ?inst ?update ?date ?property ?va ?vn WHERE {{        
+SELECT ?tl ?label ?inst ?update ?date ?property ?propertyRDF ?va ?vn WHERE {{        
     <{uri_decoded}> tlo:has_timeline ?tl.
     OPTIONAL {{ <{uri_decoded}> rdfs:label ?_llang. FILTER(lang(?_llang)="pt") }}
     OPTIONAL {{ <{uri_decoded}> rdfs:label ?_l. }}
@@ -440,8 +441,10 @@ SELECT ?tl ?label ?inst ?update ?date ?property ?va ?vn WHERE {{
         tl:atDate ?date.      
     ?update a tlo:Update;
         tlo:property ?property;
+        tlo:propertyRDF ?propertyRDF;
         tlo:old_value ?va;
         tlo:new_value ?vn.
+        {"FILTER(?propertyRDF = '"+owlProperty+"')" if owlProperty != '' else ''}
 }} ORDER BY ?date"""
         print(sparql)
         res = api.Global(repo).execute_sparql_query({'query': sparql})
@@ -452,7 +455,7 @@ SELECT ?tl ?label ?inst ?update ?date ?property ?va ?vn WHERE {{
 
 
 
-def retrieve_timeline_of_unification_resources(data: ResoucesSameAsModel, repo):
+def retrieve_timeline_of_unification_resources(data: ResoucesSameAsModel, owlProperty:str, repo):
     print('-----controller:retrieve_timeline_of_unification_resources-----')
     if(data.resources is None):
         return "not found"
@@ -461,7 +464,7 @@ def retrieve_timeline_of_unification_resources(data: ResoucesSameAsModel, repo):
         sparql = f"""PREFIX tl: <http://purl.org/NET/c4dm/timeline.owl#>
 PREFIX tlo: <http://www.arida.ufc.br/ontologies/timeline#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-SELECT ?tl ?label ?inst ?update ?date ?property ?va ?vn WHERE {{"""   
+SELECT ?tl ?label ?inst ?update ?date ?property ?propertyRDF ?va ?vn WHERE {{"""   
     for key in data.resources:
         sparql += f"""
         {{
@@ -480,8 +483,10 @@ SELECT ?tl ?label ?inst ?update ?date ?property ?va ?vn WHERE {{"""
                 tl:atDate ?date.      
             ?update a tlo:Update;
                 tlo:property ?property;
+                tlo:propertyRDF ?propertyRDF;
                 tlo:old_value ?va;
                 tlo:new_value ?vn.
+             {"FILTER(?propertyRDF = '"+owlProperty+"')" if owlProperty != '' else ''}
         }}
         {"UNION" if cont < len(data.resources) else ""}
         """

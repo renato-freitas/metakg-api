@@ -42,7 +42,7 @@ def delete_resource_metakg(query):
 
 class Global:
     def __init__(self, repo:str): 
-        self.endpoint = EndpointDEV(repo).PRODUCTION if ENVIROMENT == "DEV" else Endpoint.PRODUCTION
+        self.endpoint = EndpointDEV(repo).PRODUCTION if ENVIROMENT == "DEV" else Endpoint(repo).PRODUCTION
 
     def execute_sparql_query(self, query):
         """Função genérica. Entrada: sparql. Saída: json."""
@@ -216,7 +216,7 @@ class Global:
 class KG_Metadata:
     def __init__(self, repo): 
         self.repo = repo
-        self.endpoint = EndpointDEV(repo).PRODUCTION if ENVIROMENT == "DEV" else Endpoint.PRODUCTION
+        self.endpoint = EndpointDEV(repo).PRODUCTION if ENVIROMENT == "DEV" else Endpoint(repo).PRODUCTION
 
     def add_rdf(self, rdf:str):
         try:
@@ -265,7 +265,7 @@ class KG_Metadata:
 
 class CompetenceQuestion:
     def __init__(self, repo:str): 
-        self.endpoint = EndpointDEV(repo).PRODUCTION if ENVIROMENT == "DEV" else Endpoint.PRODUCTION
+        self.endpoint = EndpointDEV(repo).PRODUCTION if ENVIROMENT == "DEV" else Endpoint(repo).PRODUCTION
     
     def obtem_uma_questao_competencia(self, name:str, repository:str):
         # sparql = Prefixies.QUERIES + f"""SELECT * FROM <http://localhost:7200/repositories/{repository}/rdf-graphs/KG_QUERY> {{ 
@@ -302,7 +302,7 @@ class CompetenceQuestion:
 
 class PropertyFunctionAssertion:
     def __init__(self, repo:str): 
-        self.endpoint = EndpointDEV(repo).PRODUCTION if ENVIROMENT == "DEV" else Endpoint.PRODUCTION
+        self.endpoint = EndpointDEV(repo).PRODUCTION if ENVIROMENT == "DEV" else Endpoint(repo)(repo).PRODUCTION
     
     def obtem_uma_pfa(self, name:str, repository:str):
         # sparql = Prefixies.QUERIES + f"""SELECT * FROM <http://localhost:7200/repositories/{repository}/rdf-graphs/KG_QUERY> {{ 
@@ -339,7 +339,7 @@ class PropertyFunctionAssertion:
 
 class ConsultaSalva:
     def __init__(self, repo:str): 
-        self.endpoint = EndpointDEV(repo).PRODUCTION if ENVIROMENT == "DEV" else Endpoint.PRODUCTION
+        self.endpoint = EndpointDEV(repo).PRODUCTION if ENVIROMENT == "DEV" else Endpoint(repo).PRODUCTION
     
     def obtem_uma_consulta_salva(self, name:str, repository:str):
         sparql = Prefixies.QUERIES + f"""SELECT * FROM <http://localhost:7200/repositories/{repository}/rdf-graphs/KG_QUERY> {{ 
@@ -882,7 +882,7 @@ def get_properties_datakg(uri:str, expand_sameas:bool):
 
 class RDB:
     def __init__(self, repo): 
-        self.endpoint = EndpointDEV(repo).PRODUCTION if ENVIROMENT == "DEV" else Endpoint.PRODUCTION
+        self.endpoint = EndpointDEV(repo).PRODUCTION if ENVIROMENT == "DEV" else Endpoint(repo)(repo).PRODUCTION
     def get_data_from_table(db_conn_url, db_name, db_username, db_password, table_name):
         engine = create_engine(f"postgresql://{db_username}:{db_password}@{db_conn_url}:5432/{db_name}")
         with engine.connect() as connection:
@@ -911,7 +911,7 @@ class RDB:
 
 class ExportedView:
     def __init__(self, repo): 
-        self.endpoint = EndpointDEV(repo).PRODUCTION if ENVIROMENT == "DEV" else Endpoint.PRODUCTION
+        self.endpoint = EndpointDEV(repo).PRODUCTION if ENVIROMENT == "DEV" else Endpoint(repo).PRODUCTION
 
     def get_datasource_properties(self, exported_view_uri:str):
         try:
@@ -934,7 +934,7 @@ class ExportedView:
 
 class MetaMashup:
     def __init__(self, repo): 
-        self.endpoint = EndpointDEV(repo).PRODUCTION if ENVIROMENT == "DEV" else Endpoint.PRODUCTION
+        self.endpoint = EndpointDEV(repo).PRODUCTION if ENVIROMENT == "DEV" else Endpoint(repo)(repo).PRODUCTION
 
 
     def cria_um_recurso_meta_mashup(self, obj: MetaMashupModel):
@@ -966,7 +966,7 @@ class MetaMashup:
                     {o.P_LABEL} "MVS {obj.label}" .
               }} """
             sparql = {"update": q}
-            r = requests.post(Endpoint.METAKG + "/statements", params=sparql, headers=Headers.POST)
+            r = requests.post(Endpoint(repo).METAKG + "/statements", params=sparql, headers=Headers.POST)
             if(r.status_code == 200 or r.status_code == 201 or r.status_code == 204):
                 return {"code": 204, "message": "Criado com Sucesso!"}
             else:
@@ -989,7 +989,7 @@ class MetaMashup:
                     }}
                 }}"""
             sparql = {'query': q}
-            r = requests.get(Endpoint.METAKG, params=sparql, headers=Headers.GET)
+            r = requests.get(Endpoint(repo).METAKG, params=sparql, headers=Headers.GET)
             print(r.json())
             if(r.status_code == 200):
                 return r.json()['results']['bindings']
@@ -1008,7 +1008,7 @@ class MetaMashup:
                 OPTIONAL {{ ?p {o.P_LABEL} ?l . }}
             }}"""
             
-            r = requests.get(Endpoint.METAKG, params={'query': sparql}, headers=Headers.GET)
+            r = requests.get(Endpoint(repo).METAKG, params={'query': sparql}, headers=Headers.GET)
             if(r.status_code == 200):
                 return r.json()['results']['bindings']
             else:
@@ -1024,7 +1024,7 @@ class MetaMashup:
                 <{obj.uri_meta_mashup}> vskg:reuse_metadata_from <{obj.uri_meta_ekg}> . 
             }}"""
             sparql = {"update": q}
-            r = requests.post(Endpoint.METAKG + "/statements", params=sparql, headers=Headers.POST)
+            r = requests.post(Endpoint(repo).METAKG + "/statements", params=sparql, headers=Headers.POST)
             if(r.status_code == 200 or r.status_code == 201 or r.status_code == 204):
                 return {"code": 204, "message": "Criado com Sucesso!"}
             else:
@@ -1044,7 +1044,7 @@ class MetaMashup:
             q = Prefixies.ALL + \
                 f"SELECT DISTINCT ?l WHERE {{ <{uri}> rdfs:label ?l . }}"
             sparql = {'query': q}
-            r = requests.get(Endpoint.METAKG,
+            r = requests.get(Endpoint(repo).METAKG,
                              params=sparql, headers=Headers.GET)
             return r.json()['results']['bindings']
         except Exception as err:
@@ -1060,7 +1060,7 @@ class MetaMashup:
             #     }}"""
             # print(f'query: {q}')
             # sparql = {'query': q}
-            # r = requests.get(Endpoint.METADADOS_TULIO,
+            # r = requests.get(Endpoint(repo).METADADOS_TULIO,
             #                 params=sparql, headers=Headers.GET)
             # return r.json()['results']['bindings']
         except Exception as err:
@@ -1073,7 +1073,7 @@ class MetaMashup:
                 f"SELECT * WHERE {{ <{uri_gcl}> ?p ?o . }}"
             print(f'query: {q}')
             sparql = {'query': q}
-            r = requests.get(Endpoint.METADADOS_TULIO,
+            r = requests.get(Endpoint(repo).METADADOS_TULIO,
                             params=sparql, headers=Headers.GET)
             return r.json()['results']['bindings']
         except Exception as err:
@@ -1095,7 +1095,7 @@ class MetaMashup:
                                           rdfs:label "{data.label_gcl}" .
               }} """
             sparql = {"update": q}
-            r = requests.post(Endpoint.METAKG + "/statements",
+            r = requests.post(Endpoint(repo).METAKG + "/statements",
                               params=sparql, headers=Headers.POST)
             if(r.status_code == 200 or r.status_code == 201 or r.status_code == 204):
                 return {"code": 204, "message": "Criado com Sucesso!"}
@@ -1107,7 +1107,7 @@ class MetaMashup:
 
 class MetaEKG:
     def __init__(self, repo): 
-        self.endpoint = EndpointDEV(repo).PRODUCTION if ENVIROMENT == "DEV" else Endpoint.PRODUCTION
+        self.endpoint = EndpointDEV(repo).PRODUCTION if ENVIROMENT == "DEV" else Endpoint(repo).PRODUCTION
 
     # Genérica
     def lista_recursos_meta_ekg(self):
@@ -1208,7 +1208,7 @@ class MetaEKG:
         
 class Tbox:
     def __init__(self, repo:str): 
-        self.endpoint = EndpointDEV(repo).PRODUCTION if ENVIROMENT == "DEV" else Endpoint.PRODUCTION
+        self.endpoint = EndpointDEV(repo).PRODUCTION if ENVIROMENT == "DEV" else Endpoint(repo).PRODUCTION
 
     def execute_query(self, query):
         """Função genérica. Entrada: sparql. Saída: json."""
@@ -1228,7 +1228,7 @@ class Tbox:
 
 class Repository:
     def __init__(self): 
-        self.endpoint = EndpointDEV().REPOSITORIES if ENVIROMENT == "DEV" else Endpoint.PRODUCTION
+        self.endpoint = EndpointDEV().REPOSITORIES if ENVIROMENT == "DEV" else Endpoint().REPOSITORIES
 
     def retrieve_all(self):
         """"""

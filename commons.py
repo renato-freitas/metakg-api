@@ -4,11 +4,15 @@ from unidecode import unidecode
 from models import DataSource, HighLevelMapping, DataProperty
 
 ENVIROMENT:str = "DEV"
-# EKG:str = "EKG_CONTEXT"
+ENV:str = os.getenv("DEPLOY", "DEV")
+
 class TEXTS:  
   def __init__(self): pass
-  GENERALIZATION = "0"
-  EXPORTED = "1"
+  CODE_OF_GENERALIZATION_CLASS = "0"
+  CODE_OF_EXPORTED_CLASS = "1"
+  CODE_OF_UNIFICATION_VIEW = "0"
+  CODE_OF_EXPORTED_VIEW = "1"
+  CODE_OF_FUSION_VIEW = "2"
   METADATA = "2"
 
   
@@ -148,19 +152,20 @@ class OperationalSystem:
 class Endpoint:
   def __init__(self, repo:str=None):
     # self.name = name
-    self.IP = "200.19.182.252"
-    self.PORT = "7200"
-    self.PRODUCTION = f"http://{self.IP}:{self.PORT}/repositories/{repo}"
-    self.REPOSITORIES = f"http://{self.IP}:{self.PORT}/repositories"
-    self.QUERY = f"http://{self.IP}:{self.PORT}/rest/sparql/saved-queries"
+    self.PORT = ""
+    self.IP = "graphdb.arida.site"
+    self.SERVER = f"https://{self.IP}{self.PORT}"
+    self.PRODUCTION = f"{self.SERVER}/repositories/{repo}"
+    self.REPOSITORIES = f"{self.SERVER}/repositories"
+    self.QUERY = f"{self.SERVER}/rest/sparql/saved-queries"
     NAME = "GRAFO_PRODUCAO_BIGSEMFORTALEZA"
-    REPOSITORIES = f"http://{self.IP}:{self.PORT}/repositories/metagraph"
-    PRODUCTION = f"http://{self.IP}:{self.PORT}/repositories/{NAME}"
-    METAKG = f"http://{self.IP}:{self.PORT}/repositories/metagraph"
-    TIMELINE_TBOX = f"http://{self.IP}:{self.PORT}/repositories/TIMELINE_TBOX"
-    SEFAZMA_VEKG_ABOX = f"http://10.33.96.18:{self.PORT}/repositories/VEKG"
-    VSKG_ABOX = f"http://{self.IP}:{self.PORT}/repositories/VSKG_ABOX" # só pra testar pegando os metaEKG
-    METADADOS_TULIO = f"http://{self.IP}:{self.PORT}/repositories/Metadados_Tulio"
+    REPOSITORIES = f"{self.SERVER}/repositories/metagraph"
+    PRODUCTION = f"{self.SERVER}/repositories/{NAME}"
+    METAKG = f"{self.SERVER}/repositories/metagraph"
+    TIMELINE_TBOX = f"{self.SERVER}/repositories/TIMELINE_TBOX"
+    SEFAZMA_VEKG_ABOX = f"10.33.96.18/repositories/VEKG"
+    VSKG_ABOX = f"{self.SERVER}/repositories/VSKG_ABOX" # só pra testar pegando os metaEKG
+    METADADOS_TULIO = f"{self.SERVER}/repositories/Metadados_Tulio"
 
 
 class EndpointDEV:
@@ -192,22 +197,23 @@ class EndpointDEV:
 
 
 class NamedGraph:
+
   def __init__(self, repo:str):
     self.repo = repo
-    self.IP = "localhost"
     self.PORT = "7200"
-    self.TBOX = f"http://{self.IP}:{self.PORT}/repositories/{repo}/rdf-graphs/TBOX"
+    self.IP = f"http://localhost:{self.PORT}" if ENVIROMENT == "DEV" else "https://graphdb.arida.site"
+    self.TBOX = f"{self.IP}/repositories/{repo}/rdf-graphs/TBOX"
     # self.REPOSITORY_ID = "GRAFO_PRODUCAO_BIGDATAFORTALEZA"
     # REPOSITORY_ID = "EKG_CONTEXT"
-    # self.TBOX = f"http://{self.IP}:{self.PORT}/repositories/{repo}/rdf-graphs/TBOX"
-    self.TBOX_METADATA = f"http://{self.IP}:{self.PORT}/repositories/{repo}/rdf-graphs/TBOX_METADATA"
-    self.KG_METADATA = f"http://{self.IP}:{self.PORT}/repositories/{repo}/rdf-graphs/KG_METADATA"
-    self.KG_QUERY = f"http://{self.IP}:{self.PORT}/repositories/{repo}/rdf-graphs/KG_QUERY"
-    self.KG_COMPETENCE_QUESTION = f"http://{self.IP}:{self.PORT}/repositories/{repo}/rdf-graphs/KG_COMPETENCE-QUESTION"
-    self.KG_PFA = f"http://{self.IP}:{self.PORT}/repositories/{repo}/rdf-graphs/KG_PFA"
-  # KG_TBOX = "http://www.sefaz.ma.gov.br/named-graph/TBOX"
-  # KG_METADATA_BIGDATAFORTALEZA = f"http://{IP}:{PORT}/repositories/{REPOSITORY_ID}/rdf-graphs/KG_METADATA"
-  # KG_TBOX_BIGDATAFORTALEZA = f"http://{IP}:{PORT}/repositories/{REPOSITORY_ID}/rdf-graphS/KG_TBOX"
+    # self.TBOX = f"{self.IP}/repositories/{repo}/rdf-graphs/TBOX"
+    self.TBOX_METADATA = f"{self.IP}/repositories/{repo}/rdf-graphs/TBOX_METADATA"
+    self.KG_METADATA = f"{self.IP}/repositories/{repo}/rdf-graphs/KG_METADATA"
+    self.KG_QUERY = f"{self.IP}/repositories/{repo}/rdf-graphs/KG_QUERY"
+    self.KG_COMPETENCE_QUESTION = f"{self.IP}/repositories/{repo}/rdf-graphs/KG_COMPETENCE-QUESTION"
+    self.KG_PFA = f"{self.IP}/repositories/{repo}/rdf-graphs/KG_PFA"
+  # KG_TBOX = "www.sefaz.ma.gov.br/named-graph/TBOX"
+  # KG_METADATA_BIGDATAFORTALEZA = f"{IP}:{PORT}/repositories/{REPOSITORY_ID}/rdf-graphs/KG_METADATA"
+  # KG_TBOX_BIGDATAFORTALEZA = f"{IP}:{PORT}/repositories/{REPOSITORY_ID}/rdf-graphS/KG_TBOX"
 
 
 class NameSpaces:
