@@ -1,0 +1,5 @@
+pydantic==2.0.3
+requests
+unidecode
+psycopg2
+pandas

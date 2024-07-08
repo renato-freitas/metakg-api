@@ -2,9 +2,11 @@ import os
 import requests
 from unidecode import unidecode
 from models import DataSource, HighLevelMapping, DataProperty
+from dotenv import load_dotenv
+# Carregando as variáveis de ambiente do arquivo .env
+load_dotenv()
 
-ENVIROMENT:str = "DEV"
-ENV:str = os.getenv("DEPLOY", "DEV")
+ENVIROMENT:str = os.getenv("DEPLOY")
 
 class TEXTS:  
   def __init__(self): pass
@@ -201,7 +203,8 @@ class NamedGraph:
   def __init__(self, repo:str):
     self.repo = repo
     self.PORT = "7200"
-    self.IP = f"http://localhost:{self.PORT}" if ENVIROMENT == "DEV" else "https://graphdb.arida.site"
+    # self.IP = f"http://localhost:{self.PORT}" if ENVIROMENT == "DEV" else "https://graphdb.arida.site"
+    self.IP = f"https://graphdb.arida.site" if ENVIROMENT == "DEV" else "https://graphdb.arida.site"
     self.TBOX = f"{self.IP}/repositories/{repo}/rdf-graphs/TBOX"
     # self.REPOSITORY_ID = "GRAFO_PRODUCAO_BIGDATAFORTALEZA"
     # REPOSITORY_ID = "EKG_CONTEXT"
@@ -209,7 +212,7 @@ class NamedGraph:
     self.TBOX_METADATA = f"{self.IP}/repositories/{repo}/rdf-graphs/TBOX_METADATA"
     self.KG_METADATA = f"{self.IP}/repositories/{repo}/rdf-graphs/KG_METADATA"
     self.KG_QUERY = f"{self.IP}/repositories/{repo}/rdf-graphs/KG_QUERY"
-    self.KG_COMPETENCE_QUESTION = f"{self.IP}/repositories/{repo}/rdf-graphs/KG_COMPETENCE-QUESTION"
+    self.KG_COMPETENCE_QUESTION = f"{self.IP}/repositories/{repo}/rdf-graphs/KG_Competence-Questions"
     self.KG_PFA = f"{self.IP}/repositories/{repo}/rdf-graphs/KG_PFA"
   # KG_TBOX = "www.sefaz.ma.gov.br/named-graph/TBOX"
   # KG_METADATA_BIGDATAFORTALEZA = f"{IP}:{PORT}/repositories/{REPOSITORY_ID}/rdf-graphs/KG_METADATA"

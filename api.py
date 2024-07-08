@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI, HTTPException, status
 import uuid
 import requests
@@ -8,8 +9,12 @@ from models import DataSource, MetaMashupModel, HighLevelMapping, DataProperty, 
 import psycopg2
 from sqlalchemy import create_engine, text
 import pandas as pd
+from dotenv import load_dotenv
+# Carregando as variáveis de ambiente do arquivo .env
+load_dotenv()
 
-ENVIROMENT = "DEV"
+ENVIROMENT = os.getenv("DEPLOY")
+print('ENVIROMENT', os.getenv("DEPLOY"))
 
 def read_resources_metakg(query):
     try:

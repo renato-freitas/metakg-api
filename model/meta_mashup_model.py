@@ -1,6 +1,6 @@
 from typing import Union
 from .resource_model import ResourceModel
-from .exported_view_model import ExportedViewModel
+# from .exported_view_model import ExportedViewModel
 from pydantic import BaseModel
 
 

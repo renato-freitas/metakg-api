@@ -1,17 +1,17 @@
-from fastapi import FastAPI, Depends, status
+from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
-import requests
-import platform
-import os
-from pydantic import BaseModel
-from uuid import uuid4
-import json
-from urllib.parse import quote_plus, quote
-from commons import Endpoint, Prefixies, Functions, NameSpaces, RoutesPath, VSKG as o
-from models import DataSource, MetaMashupModel, HighLevelMapping, DataProperty, AddGCLMashupModel, AssociaMetaEKGAoMetaMashupModel
-from api import MetaEKG, MetaMashup
+# import requests
+# import platform
+# import os
+# from pydantic import BaseModel
+# from uuid import uuid4
+# import json
+# from urllib.parse import quote_plus, quote
+# from commons import VSKG as o
+# from models import DataSource, MetaMashupModel, HighLevelMapping, DataProperty, AddGCLMashupModel, AssociaMetaEKGAoMetaMashupModel
+# from api import MetaEKG, MetaMashup
 # from routes import datasource
-from routes import datasource_route, user, exported_view_route, mapping_route, global_routes, meta_mashup_route, meta_ekg_route
+from routes import datasource_route, exported_view_route, mapping_route, global_routes, meta_mashup_route, meta_ekg_route
 from routes import ontology_route, repository_route, query_route, competence_question_route, pfassetion_route
 
 app = FastAPI()

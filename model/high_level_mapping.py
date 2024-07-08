@@ -1,5 +1,5 @@
-from commons import Endpoint, Prefixies, Functions
-from models import DataSource, MetaMashupModel, HighLevelMapping
+from commons import Functions
+from models import HighLevelMapping
 
 @app.post("/high-level-mappings")
 def register_high_level_mapping(data: HighLevelMapping):
