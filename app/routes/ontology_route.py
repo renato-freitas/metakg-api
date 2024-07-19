@@ -6,13 +6,13 @@ router = APIRouter()
 TAG = "Classes" 
 
 @router.get("/classes/", tags=[TAG])
-async def retrieve_classes(type:str, exported_view:str, language:str, req: Request):
+async def retrieve_classes(view:str, exported_view:str, language:str, req: Request):
     """"""
     repo = req.headers.get('repo')
-    print(f'repositório: {repo}\n tipo de classe: {type}')
-    if(type == TEXTS.CODE_OF_GENERALIZATION_CLASS):
+    print(f'repositório: {repo}\n tipo de visão de contexto: {view}')
+    if(view == TEXTS.CODE_OF_UNIFICATION_VIEW):
         result = ontology_controller.retrieve_generalization_classes(repo, language)
-    elif (type == TEXTS.CODE_OF_EXPORTED_CLASS): 
+    elif (view == TEXTS.CODE_OF_EXPORTED_VIEW): 
         result = ontology_controller.retrieve_semantic_view_exported_classes(repo, exported_view, language)
     else:
         print('FUNSION VIEW')
