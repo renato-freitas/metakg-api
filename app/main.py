@@ -13,6 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 # from routes import datasource
 from routes import datasource_route, exported_view_route, mapping_route, global_routes, meta_mashup_route, meta_ekg_route
 from routes import ontology_route, repository_route, query_route, competence_question_route, pfassetion_route
+from routes import llm_route
 
 app = FastAPI()
 # app.include_router(user.router)
@@ -27,6 +28,7 @@ app.include_router(repository_route.router)
 app.include_router(query_route.router)
 app.include_router(competence_question_route.router)
 app.include_router(pfassetion_route.router)
+app.include_router(llm_route.router)
 
 origins = [
     "http://localhost:3002",

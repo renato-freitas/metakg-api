@@ -10,7 +10,7 @@ from model.meta_mashup_model import MetaMashupModel, AddExporteViewsModel, AddSp
 
 
 def retrieve_generalization_classes(repo:str, language:str):
-    print('----------route:retrieve_generalization_classes----------')
+    print('\n---controller:_retrieve_generalization_classes---')
     # _lang = f"@{language}" if language != "" else "" 
     sparql = """
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -63,32 +63,47 @@ SELECT ?classURI ?label (MAX(?__comment) as ?comment) ?image FROM <""" +NamedGra
     FILTER(!CONTAINS(STR(?classURI),"http://www.w3.org/2002/07/owl#"))           
 } GROUP BY ?classURI ?label ?image
 ORDER BY ?label"""
-    print('----sparql-----\n', sparql)
+    print('+ sparql:\n', sparql)
     result = api.Tbox(repo).execute_query({"query": sparql})
     return result
 
 
 
 def retrieve_semantic_view_exported_datasources(repo:str):
-    sparql = """PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-PREFIX owl: <http://www.w3.org/2002/07/owl#>
-PREFIX dc: <http://purl.org/dc/elements/1.1/>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX : <http://www.arida.ufc.br/ontologies/music.owl#>
-PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-SELECT DISTINCT ?datasource from <""" +NamedGraph(repo).TBOX+"""> { 
-#    PEGAR TODAS AS SUBCLASSES
-    {
-    	?classURI rdf:type owl:Class.    
-    }
-    union
-    {
-        ?classURI rdf:type rdfs:Class.  
-    }
-    MINUS { ?sub rdfs:subClassOf ?classURI. }
-    BIND(STRAFTER(STR(?classURI), "_") AS ?datasource)
-} ORDER BY ?datasource"""
-    print('-------SPARQL GET EXPORTED VIEW---------\n', sparql)
+    print('\n---controller:_retrieve_semantic_view_exported_datasources---')
+#     sparql = """PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+# PREFIX owl: <http://www.w3.org/2002/07/owl#>
+# PREFIX dc: <http://purl.org/dc/elements/1.1/>
+# PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+# PREFIX : <http://www.arida.ufc.br/ontologies/music.owl#>
+# PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+# SELECT DISTINCT ?datasource from <""" +NamedGraph(repo).TBOX+"""> { 
+# #    PEGAR TODAS AS SUBCLASSES
+#     {
+#     	?classURI rdf:type owl:Class.    
+#     }
+#     union
+#     {
+#         ?classURI rdf:type rdfs:Class.  
+#     }
+#     MINUS { ?sub rdfs:subClassOf ?classURI. }
+#     BIND(STRAFTER(STR(?classURI), "_") AS ?datasource)
+# } ORDER BY ?datasource"""
+    sparql = f"""PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+    PREFIX owl: <http://www.w3.org/2002/07/owl#>
+    PREFIX dc: <http://purl.org/dc/elements/1.1/>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX : <http://www.arida.ufc.br/ontologies/music.owl#>
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX vskg: <http://www.arida.ufc.br/VSKG/>
+    SELECT DISTINCT ?datasource 
+    FROM <""" +NamedGraph(repo).TBOX+"""> {{
+        {{ ?classURI a owl:Class. }}
+        union
+        {{ ?classURI a rdfs:Class. }}
+        ?classURI vskg:belongsToESV ?datasource .
+    }} ORDER BY ?datasource"""
+    print('+ sparql:', sparql)
     result = api.Tbox(repo).execute_query({"query": sparql})
     return result
 
@@ -117,8 +132,8 @@ SELECT DISTINCT ?datasource from <""" +NamedGraph(repo).TBOX+"""> {
 #     return result
 
 
-def retrieve_semantic_view_exported_classes(repo:str, exported_view:str, language:str):
-    print('===ONTOLOGY CONTROLLER===\n', repo)
+def retrieve_exported_semantic_view_classes(repo:str, exported_view:str, language:str):
+    print('\n---controller:_retrieve_exported_semantic_view_classes---\n')
     _lang = f"@{language}" if language != "" else "" 
     _exp_view = f"'{exported_view}'" + _lang
     sparql = """PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -164,7 +179,7 @@ SELECT ?classURI ?label ?superclass ?comment ?image FROM <""" +NamedGraph(repo).
 }""" 
 # GROUP BY ?classURI ?label ?superclass ?sub ?image
 # ORDER BY ?label"""
-    print('===SPAR GET EXPORTED VIEW===\n', sparql)
+    print('+ sparql:', sparql)
     result = api.Tbox(repo).execute_query({"query": sparql})
     return result
 

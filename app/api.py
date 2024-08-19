@@ -5,7 +5,7 @@ import requests
 # from unidecode import unidecode
 from commons import Prefixies, NameSpaces as ns, Endpoint, EndpointDEV, Headers, Functions, VSKG as o, NamedGraph
 from commons import VSKG, ENVIROMENT, TBOX_SAVED_QUERY
-from models import DataSource, MetaMashupModel, HighLevelMapping, DataProperty, AddGCLMashupModel, AssociaMetaEKGAoMetaMashupModel
+# from models import DataSource, MetaMashupModel, HighLevelMapping, DataProperty, AddGCLMashupModel, AssociaMetaEKGAoMetaMashupModel
 import psycopg2
 from sqlalchemy import create_engine, text
 import pandas as pd
@@ -519,6 +519,7 @@ def agroup_properties_in_exported_view(properties):
                 _label_o = row['label_o']['value']
             # if "http://www.w3.org/2002/07/owl#sameAs" == prop['p']['value']:
             _agrouped[_origin][row['p']['value']].append([row['o']['value'], _label, "", _label_o])
+            # _agrouped[_origin][row['p']['value']].append([_label_o, _label, "", _label_o])
         else:
             print('sem p')
             if not "http://www.w3.org/2002/07/owl#sameAs" in _agrouped[_origin]:
@@ -942,16 +943,16 @@ class MetaMashup:
         self.endpoint = EndpointDEV(repo).PRODUCTION if ENVIROMENT == "DEV" else Endpoint(repo)(repo).PRODUCTION
 
 
-    def cria_um_recurso_meta_mashup(self, obj: MetaMashupModel):
-        """Cria uma instância de Grafo de Metadados Mashup"""
-        try:
-            identifier = str(uuid.uuid4())
-            rotulo_com_underscore = Functions.removeAcentosEAdicionaUnderscore(obj.label)
-            # nome_app = Functions.removeAcentosEAdicionaUnderscore(obj.app_name)
+    # def cria_um_recurso_meta_mashup(self, obj: MetaMashupModel):
+    #     """Cria uma instância de Grafo de Metadados Mashup"""
+    #     try:
+    #         identifier = str(uuid.uuid4())
+    #         rotulo_com_underscore = Functions.removeAcentosEAdicionaUnderscore(obj.label)
+    #         # nome_app = Functions.removeAcentosEAdicionaUnderscore(obj.app_name)
 
-            existe = self.obtem_meta_mashup_by_uri(ns.VSKGR + rotulo_com_underscore)
-            if (len(existe) > 0):
-                return {"code": 409, "message": "URI Já existe!"}
+    #         existe = self.obtem_meta_mashup_by_uri(ns.VSKGR + rotulo_com_underscore)
+    #         if (len(existe) > 0):
+    #             return {"code": 409, "message": "URI Já existe!"}
             
             # <{obj.uri_camada_app}> 
                 #         {o.P_HAS_APPLICATION} <{obj.namespace_base + nome_app}> .
@@ -962,22 +963,22 @@ class MetaMashup:
 #                         rdfs:label "MVS {obj.label}" .                    
 
 
-            q = Prefixies.ALL + f"""INSERT DATA {{
-                <{ns.VSKGR + rotulo_com_underscore}> rdf:type vskg:MetadataGraphMashup ;
-                    {o.P_LABEL} "{obj.label}" ;
-                    {o.P_DC_IDENTIFIER} "{identifier}" ;
-                    vskg:has_mashup_view <{ns.VSKGR}MVS_{rotulo_com_underscore}> .
-                <{ns.VSKGR}MVS_{rotulo_com_underscore}> {o.P_IS_A} {o.C_MASHUP_VIEW_SPEC} ;
-                    {o.P_LABEL} "MVS {obj.label}" .
-              }} """
-            sparql = {"update": q}
-            r = requests.post(Endpoint(repo).METAKG + "/statements", params=sparql, headers=Headers.POST)
-            if(r.status_code == 200 or r.status_code == 201 or r.status_code == 204):
-                return {"code": 204, "message": "Criado com Sucesso!"}
-            else:
-                return {"code": 400, "message": "Não foi criado!"}
-        except Exception as err:
-            return err
+        #     q = Prefixies.ALL + f"""INSERT DATA {{
+        #         <{ns.VSKGR + rotulo_com_underscore}> rdf:type vskg:MetadataGraphMashup ;
+        #             {o.P_LABEL} "{obj.label}" ;
+        #             {o.P_DC_IDENTIFIER} "{identifier}" ;
+        #             vskg:has_mashup_view <{ns.VSKGR}MVS_{rotulo_com_underscore}> .
+        #         <{ns.VSKGR}MVS_{rotulo_com_underscore}> {o.P_IS_A} {o.C_MASHUP_VIEW_SPEC} ;
+        #             {o.P_LABEL} "MVS {obj.label}" .
+        #       }} """
+        #     sparql = {"update": q}
+        #     r = requests.post(Endpoint(repo).METAKG + "/statements", params=sparql, headers=Headers.POST)
+        #     if(r.status_code == 200 or r.status_code == 201 or r.status_code == 204):
+        #         return {"code": 204, "message": "Criado com Sucesso!"}
+        #     else:
+        #         return {"code": 400, "message": "Não foi criado!"}
+        # except Exception as err:
+        #     return err
         
 
 
@@ -1022,20 +1023,20 @@ class MetaMashup:
             return err
 
 
-    def associa_metaEKG(self, obj: AssociaMetaEKGAoMetaMashupModel):
-        """Registra o KG de Metadados cujos metadados serão utilizados"""
-        try:
-            q = Prefixies.ALL + f"""INSERT DATA {{ 
-                <{obj.uri_meta_mashup}> vskg:reuse_metadata_from <{obj.uri_meta_ekg}> . 
-            }}"""
-            sparql = {"update": q}
-            r = requests.post(Endpoint(repo).METAKG + "/statements", params=sparql, headers=Headers.POST)
-            if(r.status_code == 200 or r.status_code == 201 or r.status_code == 204):
-                return {"code": 204, "message": "Criado com Sucesso!"}
-            else:
-                return {"code": 400, "message": "Não foi criado!"}
-        except Exception as err:
-            return err
+    # def associa_metaEKG(self, obj: AssociaMetaEKGAoMetaMashupModel):
+    #     """Registra o KG de Metadados cujos metadados serão utilizados"""
+    #     try:
+    #         q = Prefixies.ALL + f"""INSERT DATA {{ 
+    #             <{obj.uri_meta_mashup}> vskg:reuse_metadata_from <{obj.uri_meta_ekg}> . 
+    #         }}"""
+    #         sparql = {"update": q}
+    #         r = requests.post(Endpoint(repo).METAKG + "/statements", params=sparql, headers=Headers.POST)
+    #         if(r.status_code == 200 or r.status_code == 201 or r.status_code == 204):
+    #             return {"code": 204, "message": "Criado com Sucesso!"}
+    #         else:
+    #             return {"code": 400, "message": "Não foi criado!"}
+    #     except Exception as err:
+    #         return err
 
 
 
@@ -1085,29 +1086,29 @@ class MetaMashup:
             return err
 
 
-    def add_gcl_visao_semantica_mashup(self, data: AddGCLMashupModel):
-        """Adiciona um GCL à Especifiação da Visão Semântica o MetaMashup.
-        A ideia é fazer uma cópia do GCL escolhido no EKG e depois selecionar as propriedades 
-        que comporão o mashup"""
-        try:
-            # Verificar se a uri já existe
-            # existe = self.obtem_meta_mashup_by_uri(uri_resource + rotulo_com_underscore)
-            # if (len(existe) > 0):
-            #     return {"code": 409, "message": "Já existe essa uri!"}
+    # def add_gcl_visao_semantica_mashup(self, data: AddGCLMashupModel):
+    #     """Adiciona um GCL à Especifiação da Visão Semântica o MetaMashup.
+    #     A ideia é fazer uma cópia do GCL escolhido no EKG e depois selecionar as propriedades 
+    #     que comporão o mashup"""
+    #     try:
+    #         # Verificar se a uri já existe
+    #         # existe = self.obtem_meta_mashup_by_uri(uri_resource + rotulo_com_underscore)
+    #         # if (len(existe) > 0):
+    #         #     return {"code": 409, "message": "Já existe essa uri!"}
 
-            q = Prefixies.ALL + f"""INSERT DATA {{ 
-                <{data.uri_visao_semantica_mashup}> vskg:hasLocalGraph <{data.uri_gcl}> ;
-                                          rdfs:label "{data.label_gcl}" .
-              }} """
-            sparql = {"update": q}
-            r = requests.post(Endpoint(repo).METAKG + "/statements",
-                              params=sparql, headers=Headers.POST)
-            if(r.status_code == 200 or r.status_code == 201 or r.status_code == 204):
-                return {"code": 204, "message": "Criado com Sucesso!"}
-            else:
-                return {"code": 400, "message": "Não foi criado!"}
-        except Exception as err:
-            return err
+    #         q = Prefixies.ALL + f"""INSERT DATA {{ 
+    #             <{data.uri_visao_semantica_mashup}> vskg:hasLocalGraph <{data.uri_gcl}> ;
+    #                                       rdfs:label "{data.label_gcl}" .
+    #           }} """
+    #         sparql = {"update": q}
+    #         r = requests.post(Endpoint(repo).METAKG + "/statements",
+    #                           params=sparql, headers=Headers.POST)
+    #         if(r.status_code == 200 or r.status_code == 201 or r.status_code == 204):
+    #             return {"code": 204, "message": "Criado com Sucesso!"}
+    #         else:
+    #             return {"code": 400, "message": "Não foi criado!"}
+    #     except Exception as err:
+    #         return err
 
 
 class MetaEKG:
@@ -1218,9 +1219,10 @@ class Tbox:
     def execute_query(self, query):
         """Função genérica. Entrada: sparql. Saída: json."""
         try:
-            print('*** API.TBOX, REPO ***', self.endpoint)
+            print('\n---api:_Tbox.execute_query---')
+            print('+ endpoint:', self.endpoint)
             r = requests.get(self.endpoint, params=query, headers=Headers.GET)
-            print(r.json()['results']['bindings'])
+            print('+ result of sparql:', r.json()['results']['bindings'])
             if(r.status_code == 200 or r.status_code == 201 or r.status_code == 204):
                 return r.json()['results']['bindings']
             else:

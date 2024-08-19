@@ -90,31 +90,105 @@ def retrieve_one_resource(uri, repo:str):
 def retrieve_properties_at_exported_view(uri:str, language:str, repo:str):
     """Recupera propriedades do repositório"""
     print('\n----------controller:retrieve_properties_from_exported_view---------------')
-    # _filter_language = f'FILTER(LANG(?l)="{language}")' if language != "" else "" 
     uri_decoded = unquote_plus(uri)
     existe = check_resource(uri_decoded, repo) 
     if(existe is None):
         return "not found"
     else:
-        sparql = f"""PREFIX owl: <http://www.w3.org/2002/07/owl#>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-SELECT DISTINCT ?origin ?p ?label ?o ?label_o {{
-    BIND(<{uri_decoded}> AS ?origin).
+        sparql = f"""PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT ?origin ?p ?label ?o ?label_o WHERE {{
     {{
-    <{uri_decoded}> ?p ?o. 
-    OPTIONAL {{ ?p rdfs:label ?_label_p_pt.  FILTER(LANG(?_label_p_pt)="{language}") }}
-    OPTIONAL {{ ?p rdfs:label ?_label_p. }}
-    BIND(COALESCE(?_label_p_pt, ?_label_p) AS ?label)
+        BIND(isIRI(?o) as ?l_o) # OBTER OS IRIS
+        FILTER(?l_o=true)
+        OPTIONAL {{ ?o rdfs:label ?label_o. FILTER(LANG(?label_o)="{language}") }}
+        {{
+            SELECT DISTINCT ?origin ?p ?label ?o {{
+                BIND(<{uri_decoded}> AS ?origin).
+    <{uri_decoded}> ?p ?o.
+                OPTIONAL # props que tem label no idioma selecionado
+                {{ ?p rdfs:label ?label_p_lan. FILTER(LANG(?label_p_lan)="{language}"). }}   
+                OPTIONAL # props em português
+                {{ ?p rdfs:label ?label_p_pt. FILTER(LANG(?label_p_pt)="pt"). }}   
+                 OPTIONAL # pode ter props sem idioma 
+                {{ ?p rdfs:label ?l_p_no_lan. FILTER(!LANGMATCHES(LANG(?l_p_no_lan), "*")). }}
+                BIND(COALESCE(?label_p_lan, ?label_p_pt) as ?l_ou). BIND(IF(BOUND(?l_ou), ?l_ou, ?l_p_no_lan) as ?label)
+            }}
+        }}
     }}
-    OPTIONAL {{ ?o rdfs:label ?_label_pt. FILTER(LANG(?_label_pt)="{language}")}}
-    OPTIONAL {{ ?o rdfs:label ?_label. }}
-    BIND(COALESCE(?_label_pt, ?_label) AS ?label_o)
+    UNION #1
+    {{
+        FILTER(LANG(?o)="{language}") #OBTER OS LITERAIS NO IDIOMA SELECIONADO
+        {{
+            SELECT DISTINCT ?origin ?p ?label ?o {{
+                BIND(<{uri_decoded}> AS ?origin).
+    <{uri_decoded}> ?p ?o.
+                OPTIONAL # props que tem label no idioma selecionado
+                {{ ?p rdfs:label ?label_p_lan. FILTER(LANG(?label_p_lan)="{language}"). }}   
+                OPTIONAL # props em português
+                {{ ?p rdfs:label ?label_p_pt. FILTER(LANG(?label_p_pt)="pt"). }}   
+                 OPTIONAL # pode ter props sem idioma 
+                {{ ?p rdfs:label ?l_p_no_lan. FILTER(!LANGMATCHES(LANG(?l_p_no_lan), "*")). }}
+                BIND(COALESCE(?label_p_lan, ?label_p_pt) as ?l_ou). BIND(IF(BOUND(?l_ou), ?l_ou, ?l_p_no_lan) as ?label)
+            }}
+        }}   
+    }}
+    UNION #2
+    {{
+        FILTER(!LANGMATCHES(LANG(?o), "*")) #OBTER VALORES QUE NÃO TEM NENHUM IDIOMA DEFINIDO
+        BIND(?o as ?label_o)
+        {{
+            SELECT DISTINCT ?origin ?p ?label ?o {{
+                BIND(<{uri_decoded}> AS ?origin).
+    <{uri_decoded}> ?p ?o.
+                OPTIONAL # props que tem label no idioma selecionado
+                {{ ?p rdfs:label ?label_p_lan. FILTER(LANG(?label_p_lan)="{language}"). }}   
+                OPTIONAL # props em português
+                {{ ?p rdfs:label ?label_p_pt. FILTER(LANG(?label_p_pt)="pt"). }}   
+                 OPTIONAL # pode ter props sem idioma 
+                {{ ?p rdfs:label ?l_p_no_lan. FILTER(!LANGMATCHES(LANG(?l_p_no_lan), "*")). }}
+                BIND(COALESCE(?label_p_lan, ?label_p_pt) as ?l_ou). BIND(IF(BOUND(?l_ou), ?l_ou, ?l_p_no_lan) as ?label)
+            }}
+        }}   
+    }}
 }}"""
         print(sparql)
         result = api.Global(repo).get_properties_of_resource_in_exported_view(sparql)
         return result
+        
 
 # ==================OLD===============
+
+
+# def retrieve_properties_at_exported_view(uri:str, language:str, repo:str):
+#     """Recupera propriedades do repositório"""
+#     print('\n----------controller:retrieve_properties_from_exported_view---------------')
+#     uri_decoded = unquote_plus(uri)
+#     existe = check_resource(uri_decoded, repo) 
+#     if(existe is None):
+#         return "not found"
+#     else:
+#         sparql = f"""PREFIX owl: <http://www.w3.org/2002/07/owl#>
+# PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+# # SELECT DISTINCT ?origin ?p ?label ?o ?label_o {{
+# SELECT DISTINCT ?origin ?p ?label ?o ?label_o {{
+#     BIND(<{uri_decoded}> AS ?origin).
+#     # {{
+#     <{uri_decoded}> ?p ?o. 
+#     OPTIONAL {{ ?p rdfs:label ?label_p_pt. FILTER(LANG(?label_p_pt)="{language}"). BIND(?label_p_pt AS ?label) }}
+#     # OPTIONAL {{ ?p rdfs:label ?_label_p. }}
+#     # BIND(COALESCE(?_label_p_pt, ?_label_p) AS ?label)
+#     # }}
+#     # OPTIONAL {{ FILTER(LANG(?o)="{language}"). BIND(?o AS ?label_o) }}
+#     # OPTIONAL {{ ?o rdfs:label ?_label. }}
+#     # BIND(COALESCE(?_label_pt, ?_label) AS ?label_o)
+#     # }}
+# }}"""
+#         print(sparql)
+#         result = api.Global(repo).get_properties_of_resource_in_exported_view(sparql)
+#         return result
+
+
+# ============old old=========
 # def retrieve_properties_at_exported_view(uri:str, language:str, repo:str):
 #     """Recupera propriedades do repositório"""
 #     print('----------controller:retrieve_properties_from_exported_view---------------\n')
@@ -240,13 +314,23 @@ PREFIX jsfn:<http://www.ontotext.com/js#>
 SELECT ?origin ?target ?label ?p ?o ?label_o ?prov where {{
     BIND(<{uri}> AS ?origin)
     {{      
-     <{uri}> ?p ?o.
-     OPTIONAL {{ ?o rdfs:label ?_llang. FILTER(LANG(?_llang)="{language}")}}
-     OPTIONAL {{ ?o rdfs:label ?_l. }}
-     BIND(COALESCE(?_llang, ?_l) AS ?label_o)
-     BIND(jsfn:getContext("{uri}") AS ?prov)
-     OPTIONAL {{ ?p rdfs:label ?label. FILTER(lang(?label)="{language}") }}
-    FILTER(!CONTAINS(LCASE(STR(?o)),"_:node") && !(?p = owl:topDataProperty))
+        <{uri}> ?p ?o.
+        OPTIONAL {{ ?o rdfs:label ?_llang. FILTER(LANG(?_llang)="{language}")}}
+        OPTIONAL {{ ?o rdfs:label ?_l. }}
+        BIND(COALESCE(?_llang, ?_l) AS ?label_o)
+        BIND(jsfn:getContext("{uri}") AS ?prov)
+        OPTIONAL {{ ?p rdfs:label ?label. FILTER(lang(?label)="{language}") }}
+        FILTER((isIRI(?o)=true) && !CONTAINS(LCASE(STR(?o)),"_:node") && !(?p = owl:topDataProperty))
+        # FILTER(!CONTAINS(LCASE(STR(?o)),"_:node") && !(?p = owl:topDataProperty))
+    }}
+    union #1
+    {{
+        <{uri}> ?p ?o.
+        BIND(jsfn:getContext("{uri}") AS ?prov)
+        OPTIONAL {{ ?p rdfs:label ?label. FILTER(lang(?label)="pt") }}
+        FILTER(!CONTAINS(LCASE(STR(?o)),"_:node") && !(?p = owl:topDataProperty))
+        FILTER(!isIRI(?o) && LANG(?o)="pt")
+        BIND(?o AS ?label_o)
     }}
 	UNION
     {{ 

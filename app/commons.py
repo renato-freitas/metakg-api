@@ -1,7 +1,7 @@
 import os
 import requests
 from unidecode import unidecode
-from models import DataSource, HighLevelMapping, DataProperty
+# from models import DataSource, HighLevelMapping, DataProperty
 from dotenv import load_dotenv
 # Carregando as variáveis de ambiente do arquivo .env
 load_dotenv()
@@ -67,17 +67,17 @@ class Functions:
   
   
 
-  def create_high_level_mapping(data: HighLevelMapping):
-    file_name = f'mappings\\{data.table_or_file_name}.py'
-    with open(file_name, 'w') as file:
-      txt = f"""{{
-      'nome': '{data.table_or_file_name}',
-      'uri': '{data.uri}',
-      'chaves': {data.keys},
-      'tipos': {data.types},
-      'propriedade_de_dados': {list(map(transforma_basemodel_em_json, data.data_properties))},
-      'propriedade_de_objeto': {list(map(transforma_basemodel_em_json, data.object_properties))}\n}}"""
-      file.write(txt)
+  # def create_high_level_mapping(data: HighLevelMapping):
+  #   file_name = f'mappings\\{data.table_or_file_name}.py'
+  #   with open(file_name, 'w') as file:
+  #     txt = f"""{{
+  #     'nome': '{data.table_or_file_name}',
+  #     'uri': '{data.uri}',
+  #     'chaves': {data.keys},
+  #     'tipos': {data.types},
+  #     'propriedade_de_dados': {list(map(transforma_basemodel_em_json, data.data_properties))},
+  #     'propriedade_de_objeto': {list(map(transforma_basemodel_em_json, data.object_properties))}\n}}"""
+  #     file.write(txt)
 
 
   

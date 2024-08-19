@@ -1,13 +1,11 @@
-FROM node:20.15.0
+FROM python:3.9
 
-EXPOSE 3001
+WORKDIR /code
 
-WORKDIR /backend
+COPY ./requirements.txt /code/requirements.txt
 
-COPY package.json package.lock*.json ./
+RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
 
-RUN npm install
+COPY ./app /code/app
 
-COPY . . 
-
-CMD ["npm", "start"]
+CMD ["fastapi", "run", "metakg-api/main.py", "--proxy-headers", "--port", "80"]''
