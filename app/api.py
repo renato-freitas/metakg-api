@@ -12,6 +12,7 @@ import pandas as pd
 from dotenv import load_dotenv
 # Carregando as variáveis de ambiente do arquivo .env
 load_dotenv()
+# dotenv = Dotenv(".env")
 
 ENVIROMENT = os.getenv("DEPLOY")
 print('ENVIROMENT', os.getenv("DEPLOY"))
@@ -119,7 +120,6 @@ class Global:
         print('-------api:get_properties_from_resources_in_unification_view----------')
         try:
             r = requests.get(self.endpoint, params={'query': sparql}, headers=Headers.GET)
-            # print('***', r.json()['results']['bindings'])
             return agroup_properties_in_unification_view(r.json()['results']['bindings'])
         except Exception as err:
             return err
@@ -634,39 +634,71 @@ def agroup_properties_in_unification_view(properties):
 #     return agrouped
 
 
-
 # new
 def verifica_valores_divergentes(agrouped_props, resource_origin):
     print('-------api:verifica_valores_divergentes----------')
-    print('valores agrupadaos:', agrouped_props)
+    # print('valores agrupadaos:', agrouped_props)
     _agrouped_props = dict()
     if resource_origin not in _agrouped_props: 
         _agrouped_props[resource_origin] = {}
     for p in agrouped_props[resource_origin]:
-        # print('-----------novo group-----------\n',p)
-        # if _agrouped_props[resource_origin][p] = []
         if (p not in ["http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
                       "http://www.w3.org/2000/01/rdf-schema#label", "http://www.w3.org/2000/01/rdf-schema#seeaAlso"
                       "http://purl.org/dc/elements/1.1/identifier", "http://www.w3.org/2002/07/owl#sameAs",
                       "http://purl.org/dc/terms/identifier", "http://schema.org/thumbnail"]):
-            # print('------ avaliar apenas datatype properties ------', p)
-            # exemplo: [['valor','propriedade','proveniência'], ...]
 
             if p not in _agrouped_props[resource_origin]:
                 _agrouped_props[resource_origin][p] = []
 
-
-            current_value = agrouped_props[resource_origin][p][0][0]
+            current_value = agrouped_props[resource_origin][p][0][0] if "http://" not in agrouped_props[resource_origin][p][0][0] else agrouped_props[resource_origin][p][0][3]
+            print('-- currente value --', p, current_value)
             for dado in agrouped_props[resource_origin][p]:
-                # "http://" not in dado[0] => para não verificar os object-propeties
-                if (dado[0] != current_value and "http://" not in dado[0]): 
+                # precisa verificar os labels dos owl:ObjectProperties
+                _dado = dado[0] if not "http" in dado else dado[3]
+                if (_dado != current_value and "http://" not in dado[0]): 
+                    _agrouped_props[resource_origin][p].append([dado[0], dado[1], dado[2], dado[3], True])
+                elif (_dado != current_value and "http://" in dado[0]): 
                     _agrouped_props[resource_origin][p].append([dado[0], dado[1], dado[2], dado[3], True])
                 else:
                     _agrouped_props[resource_origin][p].append([dado[0], dado[1], dado[2], dado[3], False])
         else:
             _agrouped_props[resource_origin][p] = agrouped_props[resource_origin][p]
-    print(_agrouped_props)
+    # print(_agrouped_props)
     return _agrouped_props
+
+
+# # new -> precisa de um novo new (agora é old, 2024-08-28)
+# def verifica_valores_divergentes(agrouped_props, resource_origin):
+#     print('-------api:verifica_valores_divergentes----------')
+#     print('valores agrupadaos:', agrouped_props)
+#     _agrouped_props = dict()
+#     if resource_origin not in _agrouped_props: 
+#         _agrouped_props[resource_origin] = {}
+#     for p in agrouped_props[resource_origin]:
+#         # print('-----------novo group-----------\n',p)
+#         # if _agrouped_props[resource_origin][p] = []
+#         if (p not in ["http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+#                       "http://www.w3.org/2000/01/rdf-schema#label", "http://www.w3.org/2000/01/rdf-schema#seeaAlso"
+#                       "http://purl.org/dc/elements/1.1/identifier", "http://www.w3.org/2002/07/owl#sameAs",
+#                       "http://purl.org/dc/terms/identifier", "http://schema.org/thumbnail"]):
+#             # print('------ avaliar apenas datatype properties ------', p)
+#             # exemplo: [['valor','propriedade','proveniência'], ...]
+
+#             if p not in _agrouped_props[resource_origin]:
+#                 _agrouped_props[resource_origin][p] = []
+
+
+#             current_value = agrouped_props[resource_origin][p][0][0]
+#             for dado in agrouped_props[resource_origin][p]:
+#                 # "http://" not in dado[0] => para não verificar os object-propeties
+#                 if (dado[0] != current_value and "http://" not in dado[0]): 
+#                     _agrouped_props[resource_origin][p].append([dado[0], dado[1], dado[2], dado[3], True])
+#                 else:
+#                     _agrouped_props[resource_origin][p].append([dado[0], dado[1], dado[2], dado[3], False])
+#         else:
+#             _agrouped_props[resource_origin][p] = agrouped_props[resource_origin][p]
+#     print(_agrouped_props)
+#     return _agrouped_props
 # old
 # def verify_values_divergency(agrouped_props):
 #     _agrouped_props = dict()

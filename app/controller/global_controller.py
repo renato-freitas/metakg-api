@@ -310,68 +310,146 @@ def retrieve_properties_at_unification_view(uri:str, language:str, repo:str):
         sparql = f"""PREFIX owl: <http://www.w3.org/2002/07/owl#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+PREFIX vcard: <http://www.w3.org/2006/vcard/ns#>
 PREFIX jsfn:<http://www.ontotext.com/js#>
-SELECT ?origin ?target ?label ?p ?o ?label_o ?prov where {{
-    BIND(<{uri}> AS ?origin)
-    {{      
-        <{uri}> ?p ?o.
-        OPTIONAL {{ ?o rdfs:label ?_llang. FILTER(LANG(?_llang)="{language}")}}
-        OPTIONAL {{ ?o rdfs:label ?_l. }}
-        BIND(COALESCE(?_llang, ?_l) AS ?label_o)
-        BIND(jsfn:getContext("{uri}") AS ?prov)
-        OPTIONAL {{ ?p rdfs:label ?label. FILTER(lang(?label)="{language}") }}
+SELECT ?origin ?target ?p ?label ?o ?label_o ?s ?prov where {{
+VALUES ?origin {{ <{uri}> }}
+    {{ # APENAS ?O COMO RECURSOS (IRIs)
+        ?origin ?p ?o.
+        OPTIONAL {{ ?p rdfs:label ?label. FILTER(lang(?label)="{language}" || !LANGMATCHES(LANG(?label), "*")) }}
+        BIND(jsfn:getContext(STR(?origin)) AS ?prov)  
         FILTER((isIRI(?o)=true) && !CONTAINS(LCASE(STR(?o)),"_:node") && !(?p = owl:topDataProperty))
-        # FILTER(!CONTAINS(LCASE(STR(?o)),"_:node") && !(?p = owl:topDataProperty))
+        OPTIONAL {{ ?o rdfs:label ?_llang. 
+            FILTER(LANG(?_llang)="{language}" || !LANGMATCHES(LANG(?_llang), "*"))
+            BIND(?_llang AS ?label_o)
+        }}
     }}
-    union #1
+    UNION #1 - OBTER VALORES LITERAIS, PREFERENCIALMENTE, NO IDIOMA SELECIONADO
     {{
-        <{uri}> ?p ?o.
-        BIND(jsfn:getContext("{uri}") AS ?prov)
-        OPTIONAL {{ ?p rdfs:label ?label. FILTER(lang(?label)="pt") }}
-        FILTER(!CONTAINS(LCASE(STR(?o)),"_:node") && !(?p = owl:topDataProperty))
-        FILTER(!isIRI(?o) && LANG(?o)="pt")
-        BIND(?o AS ?label_o)
+        ?origin ?p ?o.
+        # OPTIONAL {{ ?p rdfs:label ?label. FILTER(lang(?label)="{language}") }}
+        OPTIONAL {{ ?p rdfs:label ?label. FILTER(lang(?label)="{language}" || !LANGMATCHES(LANG(?label), "*")) }}
+        BIND(jsfn:getContext(STR(?origin)) AS ?prov)   
+        FILTER(!isIRI(?o))
+        FILTER(LANG(?o)="{language}" || !LANGMATCHES(LANG(?o), "*"))
     }}
-	UNION
-    {{ 
-        <{uri}> owl:sameAs+ ?same_r .
-        ?same_r ?p ?o.
-        OPTIONAL {{ ?o rdfs:label ?_llang. FILTER(LANG(?_llang)="{language}")}}
-    	OPTIONAL {{ ?o rdfs:label ?_l. }}
-        BIND(COALESCE(?_llang, ?_l) AS ?label_o)
+    UNION #2 - OBTER SAMEA AS À DIREITA
+    {{
+        ?origin owl:sameAs+ ?same_r .
+        ?same_r ?p ?o. # o sameAs da Spotify não tem propriedadas importadas por isso não é listada
+        OPTIONAL {{ ?p rdfs:label ?label. FILTER(lang(?label)="{language}" || !LANGMATCHES(LANG(?label), "*")) }}
         BIND(jsfn:getContext(STR(?same_r)) AS ?prov)
-        OPTIONAL {{ ?p rdfs:label ?label. FILTER(lang(?label)="{language}") }}
-        bind(?same_r as ?target)
+        OPTIONAL {{ ?o rdfs:label ?_llang. 
+            FILTER(LANG(?_llang)="{language}" || !LANGMATCHES(LANG(?_llang), "*"))
+            BIND(?_llang AS ?label_o)
+        }}
+        BIND(?same_r AS ?target)
     }}
-    UNION 
+    UNION #3 - OBTER SAMEA AS À ESQUERDA
     {{
-        ?same_l owl:sameAs+ <{uri}> .
-        ?same_l ?p ?o.
-        OPTIONAL {{ ?o rdfs:label ?_llang. FILTER(LANG(?_llang)="{language}")}}
-    	OPTIONAL {{ ?o rdfs:label ?_l. }}
-        BIND(COALESCE(?_llang, ?_l) AS ?label_o)
+        ?same_l owl:sameAs+ ?origin .
+        ?same_r ?p ?o.
+        OPTIONAL {{ ?p rdfs:label ?label. FILTER(lang(?label)="{language}" || !LANGMATCHES(LANG(?label), "*")) }}
         BIND(jsfn:getContext(STR(?same_l)) AS ?prov)
-        OPTIONAL {{ ?p rdfs:label ?label. FILTER(lang(?label)="{language}") }}
+        OPTIONAL {{ ?o rdfs:label ?_llang. 
+            FILTER(LANG(?_llang)="{language}" || !LANGMATCHES(LANG(?_llang), "*"))
+            BIND(?_llang AS ?label_o)
+        }}
         BIND(?same_l AS ?target)
     }}
-    UNION 
+    UNION # OBTER SAME AS TRANSITIVO
     {{
-        ?same_l2 owl:sameAs+ <{uri}> .
-		?same_l2 owl:sameAs+ ?same_r2.	                        
+        ?same_l2 owl:sameAs+ ?origin .
+        ?same_l2 owl:sameAs+ ?same_r2.
         ?same_r2 ?p ?o.
-        OPTIONAL {{ ?o rdfs:label ?_llang. FILTER(LANG(?_llang)="{language}")}}
-    	OPTIONAL {{ ?o rdfs:label ?_l. }}
-        BIND(COALESCE(?_llang, ?_l) AS ?label_o)
-        BIND(jsfn:getContext(STR(?same_r2)) AS ?prov)
-        OPTIONAL {{ ?p rdfs:label ?label. FILTER(lang(?label)="{language}") }}
-        FILTER(?same_r2 != <{uri}>).
+        OPTIONAL {{ ?p rdfs:label ?label. FILTER(lang(?label)="{language}" || !LANGMATCHES(LANG(?label), "*")) }}
+        BIND(jsfn:getContext(STR(?same_r2)) AS ?prov)	
+        OPTIONAL {{ ?o rdfs:label ?_llang. 
+            FILTER(LANG(?_llang)="{language}" || !LANGMATCHES(LANG(?_llang), "*")
+            BIND(?_llang AS ?label_o)
+        }}
         BIND(?same_r2 AS ?target)
     }}
-     FILTER(!CONTAINS(LCASE(STR(?o)),"_:node") && !(?p = owl:topDataProperty))
-}}"""
+    FILTER(!CONTAINS(LCASE(STR(?o)),"_:node") && !(?p = owl:topDataProperty))
+}}
+ORDER BY ?label_o"""
         print(sparql)
         result = api.Global(repo).get_properties_from_resources_in_unification_view(sparql)
     return result
+
+
+
+# old 2024-08-22
+# def retrieve_properties_at_unification_view(uri:str, language:str, repo:str):
+#     print('\n-------controller:retrieve_properties_from_unification_view--------\n')
+#     if(uri is None):
+#         return "not found"
+#     else:
+#         sparql = f"""PREFIX owl: <http://www.w3.org/2002/07/owl#>
+# PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+# PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+# PREFIX jsfn:<http://www.ontotext.com/js#>
+# SELECT ?origin ?target ?label ?p ?o ?label_o ?prov where {{
+#     BIND(<{uri}> AS ?origin)
+#     {{      
+#         <{uri}> ?p ?o.
+#         OPTIONAL {{ ?o rdfs:label ?_llang. FILTER(LANG(?_llang)="{language}")}}
+#         OPTIONAL {{ ?o rdfs:label ?_l. }}
+#         BIND(COALESCE(?_llang, ?_l) AS ?label_o)
+#         BIND(jsfn:getContext("{uri}") AS ?prov)
+#         OPTIONAL {{ ?p rdfs:label ?label. FILTER(lang(?label)="{language}") }}
+#         FILTER((isIRI(?o)=true) && !CONTAINS(LCASE(STR(?o)),"_:node") && !(?p = owl:topDataProperty))
+#         # FILTER(!CONTAINS(LCASE(STR(?o)),"_:node") && !(?p = owl:topDataProperty))
+#     }}
+#     union #1
+#     {{
+#         <{uri}> ?p ?o.
+#         BIND(jsfn:getContext("{uri}") AS ?prov)
+#         OPTIONAL {{ ?p rdfs:label ?label. FILTER(lang(?label)="pt") }}
+#         FILTER(!CONTAINS(LCASE(STR(?o)),"_:node") && !(?p = owl:topDataProperty))
+#         FILTER(!isIRI(?o) && LANG(?o)="pt")
+#         BIND(?o AS ?label_o)
+#     }}
+# 	UNION
+#     {{ 
+#         <{uri}> owl:sameAs+ ?same_r .
+#         ?same_r ?p ?o.
+#         OPTIONAL {{ ?o rdfs:label ?_llang. FILTER(LANG(?_llang)="{language}")}}
+#     	OPTIONAL {{ ?o rdfs:label ?_l. }}
+#         BIND(COALESCE(?_llang, ?_l) AS ?label_o)
+#         BIND(jsfn:getContext(STR(?same_r)) AS ?prov)
+#         OPTIONAL {{ ?p rdfs:label ?label. FILTER(lang(?label)="{language}") }}
+#         bind(?same_r as ?target)
+#     }}
+#     UNION 
+#     {{
+#         ?same_l owl:sameAs+ <{uri}> .
+#         ?same_l ?p ?o.
+#         OPTIONAL {{ ?o rdfs:label ?_llang. FILTER(LANG(?_llang)="{language}")}}
+#     	OPTIONAL {{ ?o rdfs:label ?_l. }}
+#         BIND(COALESCE(?_llang, ?_l) AS ?label_o)
+#         BIND(jsfn:getContext(STR(?same_l)) AS ?prov)
+#         OPTIONAL {{ ?p rdfs:label ?label. FILTER(lang(?label)="{language}") }}
+#         BIND(?same_l AS ?target)
+#     }}
+#     UNION 
+#     {{
+#         ?same_l2 owl:sameAs+ <{uri}> .
+# 		?same_l2 owl:sameAs+ ?same_r2.	                        
+#         ?same_r2 ?p ?o.
+#         OPTIONAL {{ ?o rdfs:label ?_llang. FILTER(LANG(?_llang)="{language}")}}
+#     	OPTIONAL {{ ?o rdfs:label ?_l. }}
+#         BIND(COALESCE(?_llang, ?_l) AS ?label_o)
+#         BIND(jsfn:getContext(STR(?same_r2)) AS ?prov)
+#         OPTIONAL {{ ?p rdfs:label ?label. FILTER(lang(?label)="{language}") }}
+#         FILTER(?same_r2 != <{uri}>).
+#         BIND(?same_r2 AS ?target)
+#     }}
+#      FILTER(!CONTAINS(LCASE(STR(?o)),"_:node") && !(?p = owl:topDataProperty))
+# }}"""
+#         print(sparql)
+#         result = api.Global(repo).get_properties_from_resources_in_unification_view(sparql)
+#     return result
 
 # OPTIONAL { ?r rdfs:label ?_label.  }
 
@@ -428,7 +506,7 @@ def retrieve_properties_at_fusion_view(uri:str, language:str, repo:str):
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 PREFIX jsfn:<http://www.ontotext.com/js#>
-SELECT ?can ?p ?label ?o ?label_o ?prov where {{
+SELECT ?can ?p ?label ?o ?label_o ?prov ?name where {{
     {{
      <{uri}> ?p ?o.
      OPTIONAL {{ ?o rdfs:label ?_llang. FILTER(LANG(?_llang)="pt")}}
@@ -467,9 +545,9 @@ SELECT ?can ?p ?label ?o ?label_o ?prov where {{
     }}
     FILTER(!CONTAINS(LCASE(STR(?o)),"_:node") && !(?p = owl:topDataProperty) && !(?p = owl:sameAs))
     # FUSÃO DA PROPRIEDADE FOAF:NAME
-    # BIND(jsfn:fusionOfName("MusicBrainz",?prov, STR(?p), ?o) as ?name)
+    BIND(jsfn:fusionOfName("MusicBrainz",?prov, STR(?p), ?o) as ?name)
 }}"""
-        print('--------sparql visão de fusão--------\n', sparql)
+        print('?sparql visão de fusão\n', sparql)
         result = api.Global(repo).get_properties_from_resources_in_fusion_view(sparql)
 
         # APLICAR AS FUNÇÕES DE FUSÃO DE PROPRIEDADE
@@ -478,6 +556,7 @@ SELECT ?can ?p ?label ?o ?label_o ?prov where {{
             _out = fusionFoafHomepage(can_uri, _out)
             _out = fusionSchemaThumbnail(can_uri, _out)
     return _out
+    # return result
 
 
 

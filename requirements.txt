@@ -4,3 +4,4 @@ requests
 unidecode
 psycopg2
 pandas
+python-dotenv=1.0.1

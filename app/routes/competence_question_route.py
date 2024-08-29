@@ -17,20 +17,20 @@ async def create_competence_question(data:CompetenceQuestionModel , req:Request)
 
 
 @router.get("/competence-questions/", tags=[TAG])
-async def retrieve_saved_queries(req:Request):
+async def retrieve_saved_queries(req:Request, language:str):
     try:
         repo = req.headers.get('repo')
-        response = competence_question_controller.retrieve_competence_questions(repo)
+        response = competence_question_controller.retrieve_competence_questions(repo, language)
         return response
     except Exception as err:
         return err
  
 
 @router.get("/competence-questions/execute", tags=[TAG])
-async def execute_competence_question(uri:str, req:Request):
+async def execute_competence_question(uri:str, language:str, req:Request):
     try:
         repo = req.headers.get('repo')
-        response = competence_question_controller.execute_competence_question(uri, repo)
+        response = competence_question_controller.execute_competence_question(uri, language, repo)
         return response
     except Exception as err:
         return err

@@ -1,10 +1,11 @@
 import os
 import requests
 from unidecode import unidecode
-# from models import DataSource, HighLevelMapping, DataProperty
 from dotenv import load_dotenv
-# Carregando as variáveis de ambiente do arquivo .env
+
 load_dotenv()
+
+# dotenv = os.getenv(".env")
 
 ENVIROMENT:str = os.getenv("DEPLOY")
 

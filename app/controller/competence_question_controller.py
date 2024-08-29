@@ -30,7 +30,7 @@ def create_pfa(data:SavedQueryModel, repo:str):
 
 
 
-def retrieve_competence_questions(repo:str):
+def retrieve_competence_questions(repo:str, language:str):
     """Recupera recursos do repositório usando paginação. [falta testar paginação]"""
     sparql = Prefixies.COMPETENCE_QUESTION + f"""SELECT * FROM <{NamedGraph(repo).KG_COMPETENCE_QUESTION}> {{ 
     ?uri {VSKG.P_IS_A} {VSKG.C_COMPETENCE_QUESTION};
@@ -38,7 +38,11 @@ def retrieve_competence_questions(repo:str):
             {VSKG.P_LABEL} ?label; 
             {VSKG.P_NAME} ?name; 
             {VSKG.P_SPARQL} ?sparql.
-      OPTIONAL {{ ?uri {VSKG.P_DC_DESCRIPTION} ?description. }}
+      FILTER(LANG(?sparql)="{language}")
+      OPTIONAL {{ 
+        ?uri {VSKG.P_DC_DESCRIPTION} ?description. 
+        FILTER(LANG(?description)="{language}")
+      }}
     }}"""
     query = {"query": sparql}
     print('----controller:sparql---------\n', sparql)
@@ -48,24 +52,26 @@ def retrieve_competence_questions(repo:str):
     # return result
 
 
-def retrieve_one_competence_question(uri:str, repo:str):
+def retrieve_one_competence_question(uri:str, language:str, repo:str):
     uri_decoded = unquote_plus(uri)
     sparql = F"""SELECT * FROM
       <{NamedGraph(repo).KG_COMPETENCE_QUESTION}> {{
-        <{uri_decoded}> ?p ?o. 
+        <{uri_decoded}> ?p ?o ;
+        FILTER(LANG(?o)="{language}")
       }}"""
+    print('+sparql:', sparql)
     result = api.Global(repo).execute_sparql_query({"query": sparql})
     return result
 
 
-def execute_competence_question(uri:str, repo:str):
+def execute_competence_question(uri:str, language:str, repo:str):
     _sparql = ""
     uri_decoded = unquote_plus(uri)
-    exist = retrieve_one_competence_question(uri_decoded, repo)
+    exist = retrieve_one_competence_question(uri_decoded, language, repo)
     if(len(exist) == 0):
         return "not found"
     else:
-      print('-------existe\n', exist)
+      print('+competence-question:', exist)
       for row in exist:
           if row["p"]["value"] == ns.VSKG + "sparql":
             print('>>>>>>>>>>>', row)
