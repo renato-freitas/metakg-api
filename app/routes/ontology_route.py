@@ -11,7 +11,7 @@ TAG = "Classes"
 @router.get("/classes/", tags=[TAG])
 async def retrieve_classes(view:str, exported_view:str, language:str, req: Request):
     """"""
-    print('\n---routes:_retrieve_classes---')
+    print('\n---routes: retrieve_classes---')
     repo = req.headers.get('repo')
     print(f'+ repositório: {repo}')
     print(f'+ tipo de visão de contexto: {view}')
@@ -30,6 +30,7 @@ async def retrieve_exported_views(req: Request):
     print('\n---routes:_retrieve_exported_views---')
     repo = req.headers.get('repo')
     print('+ repo:', repo)
-    result = ontology_controller.retrieve_semantic_view_exported_datasources(repo)
+    result = ontology_controller.retrieve_exported_semantic_view_datasources(repo)
     return result
+
 

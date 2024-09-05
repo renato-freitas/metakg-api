@@ -10,7 +10,7 @@ from model.meta_mashup_model import MetaMashupModel, AddExporteViewsModel, AddSp
 
 
 def retrieve_generalization_classes(repo:str, language:str):
-    print('\n---controller:_retrieve_generalization_classes---')
+    print('\n---controller: retrieve_generalization_classes---')
     # _lang = f"@{language}" if language != "" else "" 
     sparql = """
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -20,7 +20,8 @@ PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 PREFIX schema: <http://schema.org/>
 PREFIX sfz: <http://www.sefaz.ma.gov.br/ontology/>
 PREFIX : <http://www.sefaz.ma.gov.br/ontology/>
-SELECT ?classURI ?label (MAX(?__comment) as ?comment) ?image FROM <""" +NamedGraph(repo).TBOX+"""> { 
+SELECT ?classURI ?label (MAX(?__comment) as ?comment) ?image 
+FROM <""" +NamedGraph(repo).TBOX+"""> { 
     {
         ?subclass rdfs:subClassOf ?classURI.
         ?classURI a owl:Class.
@@ -33,17 +34,17 @@ SELECT ?classURI ?label (MAX(?__comment) as ?comment) ?image FROM <""" +NamedGra
     OPTIONAL
     {
         ?classURI rdfs:label ?_label.
-        FILTER(lang(?_label)='"""+language+"""')    
+        FILTER(LANG(?_label)='"""+language+"""' || !LANGMATCHES(LANG(?_label), "*"))  
     }
     OPTIONAL
     {
         ?classURI rdfs:comment ?_comment.
-        FILTER(lang(?_comment)='"""+language+"""')
+        FILTER(LANG(?_comment)='"""+language+"""' || !LANGMATCHES(LANG(?_label), "*"))
     }
     OPTIONAL
     {
         ?classURI dcterms:description ?_description.
-        FILTER(lang(?_description)='"""+language+"""')
+        FILTER(lang(?_description)='"""+language+"""' || !LANGMATCHES(LANG(?_label), "*"))
     }
     OPTIONAL
     {
@@ -69,8 +70,8 @@ ORDER BY ?label"""
 
 
 
-def retrieve_semantic_view_exported_datasources(repo:str):
-    print('\n---controller:_retrieve_semantic_view_exported_datasources---')
+def retrieve_exported_semantic_view_datasources(repo:str):
+    print('\n---controller..retrieve_exported_semantic_view_datasources---')
 #     sparql = """PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 # PREFIX owl: <http://www.w3.org/2002/07/owl#>
 # PREFIX dc: <http://purl.org/dc/elements/1.1/>
@@ -89,11 +90,9 @@ def retrieve_semantic_view_exported_datasources(repo:str):
 #     MINUS { ?sub rdfs:subClassOf ?classURI. }
 #     BIND(STRAFTER(STR(?classURI), "_") AS ?datasource)
 # } ORDER BY ?datasource"""
-    sparql = f"""PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+    sparql = f"""
     PREFIX owl: <http://www.w3.org/2002/07/owl#>
-    PREFIX dc: <http://purl.org/dc/elements/1.1/>
     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-    PREFIX : <http://www.arida.ufc.br/ontologies/music.owl#>
     PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
     PREFIX vskg: <http://www.arida.ufc.br/VSKG/>
     SELECT DISTINCT ?datasource 
@@ -133,7 +132,7 @@ def retrieve_semantic_view_exported_datasources(repo:str):
 
 
 def retrieve_exported_semantic_view_classes(repo:str, exported_view:str, language:str):
-    print('\n---controller:_retrieve_exported_semantic_view_classes---\n')
+    print('\n---controller:_retrieve_exported_semantic_view_classes---')
     _lang = f"@{language}" if language != "" else "" 
     _exp_view = f"'{exported_view}'" + _lang
     sparql = """PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -141,27 +140,21 @@ PREFIX owl: <http://www.w3.org/2002/07/owl#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 PREFIX schema: <http://schema.org/>
-PREFIX moa: <http://www.arida.ufc.br/ontologies/music#>
+PREFIX svm: <http://www.arida.ufc.br/ontologies/music#>
 PREFIX vskg: <http://www.arida.ufc.br/VSKG/>
 SELECT ?classURI ?label ?superclass ?comment ?image FROM <""" +NamedGraph(repo).TBOX+"""> { 
-    ?classURI rdf:type owl:Class;
-              vskg:belongsToESV '"""+exported_view+"""'.
-    # FILTER(CONTAINS(LCASE(STR(?classURI)),"""+ _exp_view.lower() +"""))          
-    # MINUS { ?sub rdfs:subClassOf ?classURI. }
+    ?classURI vskg:belongsToESV '"""+exported_view+"""'.
     OPTIONAL { 
         ?classURI rdfs:label ?_label. 
-        # FILTER(lang(?_label)="pt")
         FILTER(lang(?_label)='"""+language+"""')  
     }
     OPTIONAL { 
         ?classURI rdfs:comment ?_comment. 
-        # FILTER(lang(?_comment)="pt")
         FILTER(lang(?_comment)='"""+language+"""')
     }
     OPTIONAL
     {
         ?classURI dcterms:description ?_description.
-        # FILTER(lang(?_description)="pt")
         FILTER(lang(?_description)='"""+language+"""')
     }
     OPTIONAL

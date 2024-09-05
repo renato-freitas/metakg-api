@@ -219,6 +219,24 @@ class NamedGraph:
   # KG_METADATA_BIGDATAFORTALEZA = f"{IP}:{PORT}/repositories/{REPOSITORY_ID}/rdf-graphs/KG_METADATA"
   # KG_TBOX_BIGDATAFORTALEZA = f"{IP}:{PORT}/repositories/{REPOSITORY_ID}/rdf-graphS/KG_TBOX"
 
+  def get_named_graph_via_class_RDF(self, classRDF:str):
+    print('---obtendo o named graph para consulta----\n')
+    named_graph = ""
+    if "MusicArtist_MusicBrainz" in classRDF:
+        named_graph = "https://graphdb.arida.site/repositories/EKG_MUSICA_BR/rdf-graphs/KG_Artists_MusicBrainz"
+    elif "MusicArtist_Spotify" in classRDF:
+        named_graph = "https://graphdb.arida.site/repositories/EKG_MUSICA_BR/rdf-graphs/KG_Artists_Spotify"
+    elif "MusicArtist_Wikidata" in classRDF:
+        named_graph = "https://graphdb.arida.site/repositories/EKG_MUSICA_BR/rdf-graphs/KG_Artists_Wikidata"
+    elif "Record_MusicBrainz" in classRDF:
+        named_graph = "https://graphdb.arida.site/repositories/EKG_MUSICA_BR/rdf-graphs/KG_Record_MusicBrainz"
+    elif "Record_Spotify" in classRDF:
+        named_graph = "https://graphdb.arida.site/repositories/EKG_MUSICA_BR/rdf-graphs/KG_Record_Spotify"
+    elif "Record_Wikidata" in classRDF:
+        named_graph = "https://graphdb.arida.site/repositories/EKG_MUSICA_BR/rdf-graphs/KG_Record_Wikidata"
+    elif "Track_MusicBrainz" in classRDF:
+        named_graph = "https://graphdb.arida.site/repositories/EKG_MUSICA_BR/rdf-graphs/KG_Tracks_MusicBrainz"
+    return named_graph
 
 class NameSpaces:
   def __init__(self): pass

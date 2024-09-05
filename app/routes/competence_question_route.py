@@ -17,10 +17,10 @@ async def create_competence_question(data:CompetenceQuestionModel , req:Request)
 
 
 @router.get("/competence-questions/", tags=[TAG])
-async def retrieve_saved_queries(req:Request, language:str):
+async def retrieve_saved_queries(language:str, req:Request):
     try:
         repo = req.headers.get('repo')
-        response = competence_question_controller.retrieve_competence_questions(repo, language)
+        response = competence_question_controller.retrieve_competence_questions(language, repo)
         return response
     except Exception as err:
         return err

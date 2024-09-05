@@ -30,7 +30,7 @@ def create_pfa(data:SavedQueryModel, repo:str):
 
 
 
-def retrieve_competence_questions(repo:str, language:str):
+def retrieve_competence_questions(language:str, repo:str):
     """Recupera recursos do repositório usando paginação. [falta testar paginação]"""
     sparql = Prefixies.COMPETENCE_QUESTION + f"""SELECT * FROM <{NamedGraph(repo).KG_COMPETENCE_QUESTION}> {{ 
     ?uri {VSKG.P_IS_A} {VSKG.C_COMPETENCE_QUESTION};

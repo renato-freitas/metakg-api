@@ -43,3 +43,19 @@ def fusionSchemaThumbnail(c, v):
         break
     v[c]["http://schema.org/thumbnail"] = out
   return v
+
+
+
+def fusionGenres(c, v):
+  """
+  c: canonical uri
+  v: set of values of p 'foaf:name'
+  """
+  out = None
+  if "http://www.arida.ufc.br/ontologies/music#genres" in v[c]:
+    for foafName in v[c]["http://www.arida.ufc.br/ontologies/music#genres"]:
+      if (foafName[2] == "Spotify"):
+        out = [[foafName[0], foafName[1], foafName[2]]]
+        break
+    v[c]["http://www.arida.ufc.br/ontologies/music#genres"] = out
+  return v

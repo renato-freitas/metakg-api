@@ -8,12 +8,22 @@ TAG = "Global"
 @router.get("/resources/", tags=[TAG])
 async def retrieve_resources(classRDF:str, page:int, rowPerPage:int, label:str, language:str, req:Request):
     try:
+        print('\n---routes: retriever_resources---')
         repo = req.headers.get('repo')
         response = global_controller.retrieve_resources(classRDF, page, rowPerPage, label, language, repo)
         return response
     except Exception as err:
         return err
-    
+
+
+@router.get("/resources/exported-view", tags=[TAG])
+async def retrieve_resources(classRDF:str, page:int, rowPerPage:int, label:str, language:str, req:Request):
+    try:
+        repo = req.headers.get('repo')
+        response = global_controller.retrieve_resources(classRDF, page, rowPerPage, label, language, repo)
+        return response
+    except Exception as err:
+        return err  
 
 
 @router.get("/resources/generalization", tags=[TAG])
@@ -28,11 +38,11 @@ async def retrieve_resources(classRDF:str, page:int, rowPerPage:int, label:str, 
 
 
 @router.get("/resources/count/", tags=[TAG])
-async def retrieve_quantity_resources(classURI:str, label:str, sameas: bool, req:Request):
+async def retrieve_quantity_resources(classURI:str, label:str, sameas: bool, language:str, req:Request):
     try:
         repo = req.headers.get('repo')
         # print('-----sameas--------\n', sameas)
-        response = global_controller.get_quantity_of_all_resources(classURI, label, sameas, repo)
+        response = global_controller.get_quantity_of_all_resources(classURI, label, sameas, language, repo)
         # print('-----total de recursos---\n', response)
         return response
     except Exception as err:

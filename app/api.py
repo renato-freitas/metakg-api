@@ -176,10 +176,11 @@ class Global:
             count += 1
             _label =  prop['label']['value'] if "label" in prop else ""
             _label_o = prop['label_o']['value'] if "label_o" in prop else ""
+            _prov = prop['prov']['value'] if "prov" in prop else ""
             if not prop['p']['value'] in _agrouped[_can]:
-                _agrouped[_can][prop['p']['value']] = [[prop['o']['value'], _label, prop["prov"]["value"], _label_o]] 
+                _agrouped[_can][prop['p']['value']] = [[prop['o']['value'], _label, _prov, _label_o]] 
             else:
-                _agrouped[_can][prop['p']['value']].append([prop['o']['value'], _label, prop["prov"]["value"], _label_o])
+                _agrouped[_can][prop['p']['value']].append([prop['o']['value'], _label, _prov, _label_o])
         # print('---fusion view-------\n', _agrouped)
         return _agrouped
 
@@ -1251,7 +1252,7 @@ class Tbox:
     def execute_query(self, query):
         """Função genérica. Entrada: sparql. Saída: json."""
         try:
-            print('\n---api:_Tbox.execute_query---')
+            print('\n---api..Tbox.execute_query---')
             print('+ endpoint:', self.endpoint)
             r = requests.get(self.endpoint, params=query, headers=Headers.GET)
             print('+ result of sparql:', r.json()['results']['bindings'])
