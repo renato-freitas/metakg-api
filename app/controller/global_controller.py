@@ -2,7 +2,7 @@ from urllib.parse import unquote_plus
 import api
 from model.global_model import ResoucesSameAsModel
 from commons import NameSpaces as ns, Prefixies, VSKG, TBOX_SAVED_QUERY, NamedGraph
-from controller.pfa.ekg_musica_br import fusionFoafName, fusionFoafHomepage, fusionSchemaThumbnail, fusionGenres
+from controller.pfa.ekg_musica_br import fusionFoafName, fusionFoafHomepage, fusionSchemaThumbnail, function_resolution_artists_genres
 
 def check_resource(uri:str, repo:str):
     """Verifica se um recurso existe no repositório"""
@@ -621,9 +621,8 @@ SELECT ?can ?p ?label ?o ?label_o ?prov ?name where {{
         _out = {}
         for can_uri in result:
             _out = fusionFoafName(can_uri, result)
-            _out = fusionGenres(can_uri, _out)
             # _out = fusionFoafHomepage(can_uri, _out)
-
+            exec(function_resolution_artists_genres)
             _out = fusionSchemaThumbnail(can_uri, _out)
         return result
     # return _out

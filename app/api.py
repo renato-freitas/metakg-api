@@ -129,9 +129,6 @@ class Global:
         print('-------api:get_properties_from_resources_in_fusion_view----------')
         try:
             r = requests.get(self.endpoint, params={'query': sparql}, headers=Headers.GET)
-            # print('***', r.json()['results']['bindings'])
-            # return r.json()['results']['bindings']
-            # return agroup_properties_in_fu(r.json()['results']['bindings'])
             return self.agroup_properties_in_fusion_view2(r.json()['results']['bindings'])
         except Exception as err:
             print('-----err--\n', err)
@@ -166,13 +163,12 @@ class Global:
     
    
     def agroup_properties_in_fusion_view2(self, properties):
-        print('--------api:agroup_properties_in_fusion_view------')
+        print('--------api:agroup_properties_in_fusion_view2------')
         _agrouped = dict()
         _can = properties[0]['can']['value']
         _agrouped[_can] = {}
         count = 1
         for prop in properties:
-            print(count, ' - ', prop, '\n')
             count += 1
             _label =  prop['label']['value'] if "label" in prop else ""
             _label_o = prop['label_o']['value'] if "label_o" in prop else ""
@@ -181,7 +177,6 @@ class Global:
                 _agrouped[_can][prop['p']['value']] = [[prop['o']['value'], _label, _prov, _label_o]] 
             else:
                 _agrouped[_can][prop['p']['value']].append([prop['o']['value'], _label, _prov, _label_o])
-        # print('---fusion view-------\n', _agrouped)
         return _agrouped
 
 

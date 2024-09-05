@@ -40,22 +40,47 @@ def fusionSchemaThumbnail(c, v):
         break
       else:
         out = [[schemaThumb[0], schemaThumb[1], schemaThumb[1]]]
-        break
     v[c]["http://schema.org/thumbnail"] = out
   return v
 
 
 
-def fusionGenres(c, v):
-  """
-  c: canonical uri
-  v: set of values of p 'foaf:name'
-  """
-  out = None
+
+def fusionGenres_Union(c, v):
+    """
+    c: canonical uri
+    v: set of values of p 'vsm:genres'
+    """
+    out, prov, prop, completed = set(), "", "", 0 
+    if "http://www.arida.ufc.br/ontologies/music#genres" in v[c]:
+      for genre in v[c]["http://www.arida.ufc.br/ontologies/music#genres"]:
+        aux = set(genre[0].split(","))
+        out = out.union(aux)
+        print('aux->', aux, 'tam aux', len(aux))
+        if (len(aux) > completed):
+          completed = len(aux)
+          prov = genre[2]
+          prop = genre[1]
+      print('out -> ', [[", ".join(list(out)), prop, prov]])
+      v[c]["http://www.arida.ufc.br/ontologies/music#genres"] = [[", ".join(list(out)), prop, prov]]
+    return v
+
+
+function_resolution_artists_genres = """
+def fusionGenres_Union(c, v):
+  out, prov, prop, completed = set(), "", "", 0 
   if "http://www.arida.ufc.br/ontologies/music#genres" in v[c]:
-    for foafName in v[c]["http://www.arida.ufc.br/ontologies/music#genres"]:
-      if (foafName[2] == "Spotify"):
-        out = [[foafName[0], foafName[1], foafName[2]]]
-        break
-    v[c]["http://www.arida.ufc.br/ontologies/music#genres"] = out
+    for genre in v[c]["http://www.arida.ufc.br/ontologies/music#genres"]:
+      aux = set(genre[0].split(","))
+      out = out.union(aux)
+      print('aux->', aux, 'tam aux', len(aux))
+      if (len(aux) > completed):
+        completed = len(aux)
+        prov = genre[2]
+        prop = genre[1]
+    print('out -> ', [[", ".join(list(out)), prop, prov]])
+    v[c]["http://www.arida.ufc.br/ontologies/music#genres"] = [[", ".join(list(out)), prop, prov]]
   return v
+
+_out = fusionGenres_Union(can_uri, _out)
+"""
