@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Request
-from model.global_model import ResoucesSameAsModel, ResourcesSameAsModel
+from model.global_model import ResoucesSameAsModel, ResourcesSameAsModel, ListResourcesSameAsModel
 from controller import global_controller
 router = APIRouter()
 
@@ -41,9 +41,7 @@ async def retrieve_resources(classRDF:str, page:int, rowPerPage:int, label:str, 
 async def retrieve_quantity_resources(classURI:str, label:str, sameas: bool, language:str, req:Request):
     try:
         repo = req.headers.get('repo')
-        # print('-----sameas--------\n', sameas)
         response = global_controller.get_quantity_of_all_resources(classURI, label, sameas, language, repo)
-        # print('-----total de recursos---\n', response)
         return response
     except Exception as err:
         return err
@@ -97,12 +95,14 @@ async def retrieve_properties_of_one_resource(resourceURI:str, typeOfView:str, l
 
 
 
-@router.post("/properties/unification/", tags=[TAG])
-async def retrieve_properties_from_unification_of_resource(data: ResoucesSameAsModel, req:Request):
+@router.post("/properties/unification", tags=[TAG])
+async def retrieve_properties_from_unification_of_resource(language:str, data: ListResourcesSameAsModel, req:Request):
     """Obtém as propriedades unificadas dos recursos da lista."""
     try:
+        print('\n-routes: retrieve_properties_from_unification_of_resource-\n')
+        print('+ resources:', data.resources)
         repo = req.headers.get('repo')
-        response = global_controller.retrieve_properties_from_unification_view(data, repo)
+        response = global_controller.retrieve_properties_from_list_of_resources_to_unification_view(data, language, repo)
         return response
     except Exception as err:
         return err
@@ -111,11 +111,14 @@ async def retrieve_properties_from_unification_of_resource(data: ResoucesSameAsM
 
 
 @router.post("/properties/fusion/", tags=[TAG])
-async def retrieve_properties_from_unification_of_resource(data: ResoucesSameAsModel, req:Request):
+# async def retrieve_properties_from_unification_of_resource(data: ResoucesSameAsModel, req:Request):
+async def retrieve_properties_from_fusion_of_resource(language:str, data: ListResourcesSameAsModel, req:Request):
     """Obtém a fusão das propriedades dos recursos."""
     try:
+        print('\n---ROUTES: retrieve_properties_from_fusion_of_resource( )---\n')
+        print('+ data:',data)
         repo = req.headers.get('repo')
-        response = global_controller.retrieve_properties_at_fusion_view(data, repo)
+        response = global_controller.retrieve_properties_from_list_of_resources_to_fusion_view(data, language, repo)
         return response
     except Exception as err:
         return err
@@ -135,7 +138,7 @@ async def retrieve_timeline_of_one_resource(resourceURI:str, owlProperty:str, re
 
 
 @router.post("/timeline/unification/", tags=[TAG])
-async def retrieve_timeline_of_unification_resources(data: ResourcesSameAsModel, owlProperty:str, req:Request):
+async def retrieve_timeline_of_unification_resources(data: ListResourcesSameAsModel, owlProperty:str, req:Request):
     """Obtém a linha do tempo de um recurso."""
     try:
         repo = req.headers.get('repo')

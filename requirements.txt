@@ -1,7 +1,5 @@
-fastapi>=0.112.0,<0.113.0
-# pydantic>=2.7.0,<3.0.0
-requests
-unidecode
-psycopg2
-pandas
-python-dotenv=1.0.1
+fastapi[standard]>=0.113.0,<0.114.0
+pydantic>=2.7.0,<3.0.0
+requests>=2.32.3
+Unidecode>=1.3.6
+python-dotenv>=1.0.1

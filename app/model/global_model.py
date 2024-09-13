@@ -3,8 +3,11 @@ from pydantic import BaseModel
 
 class ResoucesSameAsModel(BaseModel):
   resources: Union[dict, None] = None 
-    
+
   
+class ListResourcesSameAsModel(BaseModel):
+  resources: list
+
 class ResourcesSameAsModel(BaseModel):
   resources: Union[list, None] = None  
 

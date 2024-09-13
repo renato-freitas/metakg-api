@@ -5,8 +5,6 @@ import api
 from commons import NameSpaces as ns, Functions, Prefixies, RMLConstructs, OperationalSystem, VSKG, NamedGraph
 import commons
 from uuid import uuid4
-from model.datasource_model import DataSourceModel
-from model.meta_mashup_model import MetaMashupModel, AddExporteViewsModel, AddSparqlQueryParamsModel
 
 
 def retrieve_generalization_classes(repo:str, language:str):
