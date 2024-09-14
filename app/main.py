@@ -11,10 +11,13 @@ from fastapi.middleware.cors import CORSMiddleware
 # from models import DataSource, MetaMashupModel, HighLevelMapping, DataProperty, AddGCLMashupModel, AssociaMetaEKGAoMetaMashupModel
 # from api import MetaEKG, MetaMashup
 # from routes import datasource
-from routes import global_routes, ontology_route, query_route, competence_question_route, pfassetion_route
+from routes import global_routes, \
+    ontology_route, query_route, competence_question_route, \
+    pfassetion_route, repository_routes
 
 app = FastAPI()
 # app.include_router(user.router)
+app.include_router(repository_routes.router)
 app.include_router(ontology_route.router)
 # app.include_router(datasource_route.router)
 # app.include_router(exported_view_route.router)
@@ -24,6 +27,7 @@ app.include_router(competence_question_route.router)
 app.include_router(pfassetion_route.router)
 
 origins = [
+    "http://localhost:3000",
     "http://localhost:3002",
     "https://localhost.tiangolo.com",
     "http://localhost",

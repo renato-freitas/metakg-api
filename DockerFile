@@ -4,8 +4,13 @@ WORKDIR /temp
 
 COPY ./requirements.txt /temp/requirements.txt
 
+ENV DEPLOY=PRODUCTION
+
 RUN pip install --no-cache-dir --upgrade -r /temp/requirements.txt
 
-COPY ./app /temp/app
+COPY ./app /temp
 
-CMD ["fastapi", "run", "app/main.py", "--proxy-headers", "--port", "3000"]
+EXPOSE 8000
+
+# CMD ["fastapi", "run", "app/main.py", "--proxy-headers", "--port", "3000"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers"]

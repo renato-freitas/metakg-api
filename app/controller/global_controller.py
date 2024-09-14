@@ -50,7 +50,7 @@ LIMIT {rowPerPage} OFFSET {offset}
 def retrieve_resources(classRDF:str, page:int, rowPerPage:int, label:str, language:str, repo:str):
     """Recupera recursos do repositório usando paginação. [falta testar paginação]"""
     print('-----controller: retrieve_resources--------')
-    _filter_language = f'FILTER(LANG(?l)="{language.lower()}")' if language != "" else "" 
+    _filter_language = f'FILTER(LANG(?l)="{language.lower()}" || !LANGMATCHES(LANG(?l),"*"))' if language != "" else "" 
     _filter_search = f'FILTER(CONTAINS(LCASE(?l), "{label.lower()}"))' if label != "" else "" 
     offset = page * rowPerPage
     uri_decoded = unquote_plus(classRDF)
@@ -71,8 +71,9 @@ def retrieve_resources(classRDF:str, page:int, rowPerPage:int, label:str, langua
         SELECT distinct ?uri ?label {where_or_from} {named_graph} {{ 
             ?uri a <{uri_decoded}>; 
                  dc:identifier ?id.
-            OPTIONAL{{ ?uri rdfs:label ?l. {_filter_language} }}
-            # OPTIONAL{{ ?uri rdfs:label ?l. }}
+            OPTIONAL{{ 
+                ?uri rdfs:label ?l. 
+                {_filter_language} }}
             {_filter_search}
             BIND(COALESCE(?l,?uri) AS ?label)
             FILTER(!CONTAINS(LCASE(STR(?uri)),"resource/App"))
