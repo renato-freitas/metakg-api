@@ -134,6 +134,7 @@ class Global:
         print('-----api:get_properties_from_sameAs_resources-----')
         try:
             r = requests.get(self.endpoint, params={'query': sparql}, headers=Headers.GET)
+            print('+ RESPONSE:', r.json()['results']['bindings'])
             return agroup_properties_in_sameas(r.json()['results']['bindings'])
         except Exception as err:
             return err
@@ -612,7 +613,11 @@ def agroup_properties_in_unification_view(properties):
 
 def agroup_properties_in_sameas(properties):
     _agrouped = dict()
-    canonical = properties[0]['can']['value']
+    # canonical = properties[0]['can']['value']
+    for prop in properties:
+        if "can" in prop:
+            canonical = prop['can']['value']
+            break
     _agrouped[canonical] = {}
     for prop in properties:
         _label = ""

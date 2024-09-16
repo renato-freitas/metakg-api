@@ -29,6 +29,8 @@ app.include_router(pfassetion_route.router)
 origins = [
     "http://localhost:3000",
     "http://localhost:3002",
+    "http://explorer.arida.site",
+    "https://explorer.arida.site",
     "https://localhost.tiangolo.com",
     "http://localhost",
     "http://localhost:80",
