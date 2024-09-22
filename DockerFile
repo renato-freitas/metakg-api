@@ -13,5 +13,5 @@ COPY ./app /tmp
 EXPOSE 9000
 
 # CMD ["fastapi", "run", "app/main.py", "--proxy-headers", "--port", "3000"]
-# CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers"]
-CMD ["uvicorn", "main:app", "0.0.0.0:8000", "--proxy-headers"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "9000", "--proxy-headers"]
+# CMD ["uvicorn", "main:app", "0.0.0.0:9000", "--proxy-headers"]
