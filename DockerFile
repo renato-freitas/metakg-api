@@ -1,16 +1,17 @@
 FROM python:3.10
 
-WORKDIR /temp
+WORKDIR /tmp
 
-COPY ./requirements.txt /temp/requirements.txt
+COPY ./requirements.txt /tmp/requirements.txt
 
 ENV DEPLOY=PRODUCTION
 
-RUN pip install --no-cache-dir --upgrade -r /temp/requirements.txt
+RUN pip install --no-cache-dir --upgrade -r /tmp/requirements.txt
 
-COPY ./app /temp
+COPY ./app /tmp
 
-EXPOSE 8000
+EXPOSE 9000
 
 # CMD ["fastapi", "run", "app/main.py", "--proxy-headers", "--port", "3000"]
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers"]
+# CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers"]
+CMD ["uvicorn", "main:app", "0.0.0.0:8000", "--proxy-headers"]

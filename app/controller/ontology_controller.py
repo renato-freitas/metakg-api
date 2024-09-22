@@ -144,16 +144,16 @@ SELECT ?classURI ?label ?superclass ?comment ?image FROM <""" +NamedGraph(repo).
     ?classURI vskg:belongsToESV '"""+exported_view+"""'.
     OPTIONAL { 
         ?classURI rdfs:label ?_label. 
-        FILTER(lang(?_label)='"""+language+"""')  
+        FILTER(lang(?_label)='"""+language+"""' || !LANGMATCHES(LANG(?_label), "*"))   
     }
     OPTIONAL { 
         ?classURI rdfs:comment ?_comment. 
-        FILTER(lang(?_comment)='"""+language+"""')
+        FILTER(lang(?_comment)='"""+language+"""' || !LANGMATCHES(LANG(?_comment), "*")) 
     }
     OPTIONAL
     {
         ?classURI dcterms:description ?_description.
-        FILTER(lang(?_description)='"""+language+"""')
+        FILTER(lang(?_description)='"""+language+"""' || !LANGMATCHES(LANG(?_description), "*")) 
     }
     OPTIONAL
     {
